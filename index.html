@@ -194,14 +194,42 @@
     </div>
   </div>
 
-  <!-- Tutorial Modal -->
+  <!-- Tutorial / User Guide Modal -->
   <div id="tutorialModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">🏡</div>
-        <h2 class="text-2xl font-extrabold text-slate-800">מאזן הבית שלנו</h2>
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-lg shadow-inner">🏡</div>
+          <h2 class="text-lg font-extrabold text-slate-800">מדריך השימוש במאזן הבית</h2>
+        </div>
+        <button onclick="closeTutorialModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
       </div>
-      <button onclick="closeTutorialModal()" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-2xl text-sm">שיהיה לנו בהצלחה! 💪</button>
+
+      <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
+        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-indigo-600"></i> 1. מבט על ומאזן</h3>
+          <p>כאן רואים את סיכום ההכנסות, ההוצאות והתזרים נטו לחודש. בלחיצה על כפתור העודף ניתן להעביר חיסכון ישירות לקופות. בנוסף תמצאו כאן את מודל 50/30/20, תקרות התקציב וקופות החיסכון.</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-circle-plus text-indigo-600"></i> 2. הזנת תנועה</h3>
+          <p>הוספת הכנסות או הוצאות בקלות. בחירת אמצעי תשלום, קטגוריה ראשית ותת-קטגוריה ספציפית, סיווג תקציבי (צרכים/רצונות/חסכונות), סוג הוצאה (קבועה/משתנה/בלת"מ) וסימון הוראות קבע מחזוריות.</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-list-check text-indigo-600"></i> 3. פירוט תנועות</h3>
+          <p>טבלה מרווחת ונוחה עם גלילה אופקית המציגה את כל פרטי התנועות לחודש, אפשרויות סינון מתקדמות לפי קטגוריה ואמצעי תשלום, אפשרויות עריכה/מחיקה מהירות, וייצוא קל לאקסל (CSV).</p>
+        </div>
+
+        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-indigo-600"></i> 4. דוחות וקטגוריות</h3>
+          <p>סיכום חודשי מדויק של סך הכל ההוצאות לכל קטגוריה, מלווה בגרף עוגה (Doughnut), השוואת מגמות לאורך חודשים, וניתוח הוצאות קבועות מול משתנות.</p>
+        </div>
+      </div>
+
+      <button onclick="closeTutorialModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
+        הבנתי, בואו נתחיל! 💪
+      </button>
     </div>
   </div>
 
@@ -256,7 +284,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h1 class="text-lg md:text-xl font-extrabold tracking-tight">מאזן הבית שלנו</h1>
-              <button onclick="openTutorialModal()" class="bg-amber-400 text-indigo-900 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md">?</button>
+              <button onclick="openTutorialModal()" class="bg-amber-400 text-indigo-900 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md hover:bg-amber-300 transition" title="מדריך למשתמש">?</button>
             </div>
             <div class="flex items-center gap-1.5 text-[11px] text-indigo-100 mt-0.5">
               <span>בית:</span>
@@ -431,7 +459,7 @@
       </section>
     </div>
 
-    <!-- TAB 3: DETAILS (Transactions Table with Smooth Horizontal Scroll) -->
+    <!-- TAB 3: DETAILS -->
     <div id="tabContentDetails" class="hidden space-y-6">
       <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-3">
@@ -455,7 +483,6 @@
           </div>
         </div>
 
-        <!-- Scrollable Table Container -->
         <div class="w-full overflow-x-auto pb-2 border border-slate-100 rounded-2xl shadow-inner">
           <table class="w-full text-right text-sm whitespace-nowrap min-w-[750px]">
             <thead>
@@ -480,7 +507,7 @@
       </section>
     </div>
 
-    <!-- TAB 4: REPORTS & CATEGORIES SUMMARY -->
+    <!-- TAB 4: REPORTS -->
     <div id="tabContentReports" class="hidden space-y-6">
       <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
         <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">📊 פילוח קטגוריות</button>
@@ -548,7 +575,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.6";
+    const APP_VERSION = "1.1.7";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -764,7 +791,12 @@
       localStorage.setItem('budget_house_code', activeHouseCode);
       document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
       document.getElementById('loginOverlay').classList.add('hidden');
-      if (isNewUser) openTutorialModal();
+      
+      // Open tutorial automatically for brand new users
+      if (isNewUser) {
+        openTutorialModal();
+      }
+
       initRealtimeSync();
     }
 
@@ -1263,4 +1295,5 @@
     }
   </script>
 </body>
+</html>
 </html>
