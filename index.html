@@ -313,6 +313,17 @@
             </div>
           </div>
 
+          <!-- Payment Method Field -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">אמצעי תשלום / כרטיס</label>
+            <select id="paymentMethod" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="כרטיס 1">💳 כרטיס אשראי 1</option>
+              <option value="כרטיס 2">💳 כרטיס אשראי 2</option>
+              <option value="מזומן / העברה">💵 מזומן / העברה בנקאית</option>
+              <option value="הוראת קבע">📄 הוראת קבע / צ'ק</option>
+            </select>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
@@ -425,6 +436,7 @@
           <thead>
             <tr class="bg-slate-50 text-slate-500 border-b border-slate-100">
               <th class="p-3 font-semibold">תאריך</th>
+              <th class="p-3 font-semibold">אמצעי תשלום</th>
               <th class="p-3 font-semibold">סוג</th>
               <th class="p-3 font-semibold">קטגוריה</th>
               <th class="p-3 font-semibold">תת-קטגוריה</th>
@@ -696,6 +708,7 @@
         houseCode: activeHouseCode,
         type: currentTransactionType,
         amount: amount,
+        paymentMethod: document.getElementById('paymentMethod').value,
         mainCategory: mainCat,
         subCategory: document.getElementById('subCategory').value,
         date: date,
@@ -996,8 +1009,11 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
         const isExpense = t.type === 'expense';
+        const methodBadge = t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-';
+
         tr.innerHTML = `
           <td class="p-3 text-slate-600 font-mono">${t.date}</td>
+          <td class="p-3">${methodBadge}</td>
           <td class="p-3 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
           <td class="p-3 font-semibold">${t.mainCategory}</td>
           <td class="p-3">${t.subCategory}</td>
