@@ -524,7 +524,7 @@
           📊 פילוח קטגוריות
         </button>
         <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">
-          📈 השוואת מגמות (רבעוני / שנתי)
+          📈 השוואת מגמות (רבעוני / חציוני / שנתי)
         </button>
         <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">
           💳 קבועות מול משתנות
@@ -550,7 +550,7 @@
         </div>
       </section>
 
-      <!-- REPORT VIEW 2: Trend Comparison Line Chart (With Quarterly / Yearly Selector) -->
+      <!-- REPORT VIEW 2: Trend Comparison Line Chart (With Ordered Range Selector) -->
       <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
           <div>
@@ -560,10 +560,11 @@
             </h2>
             <p class="text-xs text-slate-500">מעקב רציף אחרי ההוצאות וההכנסות בטווחים לבחירתך</p>
           </div>
-          <!-- Range Picker inside Trend View -->
-          <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-            <button id="trendRangeMonthly" onclick="setTrendRange('monthly')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition">חודשי (6 אחרונים)</button>
+          <!-- Ordered Range Picker inside Trend View: Monthly, Quarterly, Half-Yearly, Yearly -->
+          <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold flex-wrap gap-1">
+            <button id="trendRangeMonthly" onclick="setTrendRange('monthly')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition">חודשי</button>
             <button id="trendRangeQuarterly" onclick="setTrendRange('quarterly')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">רבעוני</button>
+            <button id="trendRangeHalfYear" onclick="setTrendRange('halfYear')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">חציוני</button>
             <button id="trendRangeYearly" onclick="setTrendRange('yearly')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">שנתי</button>
           </div>
         </div>
@@ -664,10 +665,10 @@
   </script>
 
   <script>
-    // 🔔 גרסה 1.0.6 - כוללת אפשרות בחירה מלאה לטווח זמן בגרף המגמות (חודשי / רבעוני / שנתי)
-    const APP_VERSION = "1.0.6";
+    // 🔔 גרסה 1.0.7 - סידור כפתורי הטווחים: חודשי, רבעוני, חציוני, שנתי
+    const APP_VERSION = "1.0.7";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
-    let currentTrendRange = 'monthly'; // 'monthly', 'quarterly', 'yearly'
+    let currentTrendRange = 'monthly'; // 'monthly', 'quarterly', 'halfYear', 'yearly'
     
     const DEFAULT_CATEGORIES = {
       "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
@@ -756,6 +757,7 @@
       currentTrendRange = range;
       document.getElementById('trendRangeMonthly').className = range === 'monthly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
       document.getElementById('trendRangeQuarterly').className = range === 'quarterly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
+      document.getElementById('trendRangeHalfYear').className = range === 'halfYear' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
       document.getElementById('trendRangeYearly').className = range === 'yearly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
       renderTrendChart();
     }
@@ -1149,7 +1151,7 @@
       });
     }
 
-    // Render Trend Line Chart with range selection (Monthly / Quarterly / Yearly)
+    // Render Trend Line Chart with ordered ranges: Monthly, Quarterly, Half-Yearly, Yearly
     function renderTrendChart() {
       const ctx = document.getElementById('trendChart').getContext('2d');
       const groupedData = {};
@@ -1162,6 +1164,10 @@
           const [yr, mn] = t.monthKey.split('-');
           const q = Math.ceil(parseInt(mn) / 3);
           key = `${yr} Q${q}`;
+        } else if (currentTrendRange === 'halfYear') {
+          const [yr, mn] = t.monthKey.split('-');
+          const h = parseInt(mn) <= 6 ? 'H1' : 'H2';
+          key = `${yr} ${h}`;
         } else if (currentTrendRange === 'yearly') {
           key = t.monthKey.split('-')[0];
         }
@@ -1172,8 +1178,7 @@
       });
 
       const sortedKeys = Object.keys(groupedData).sort();
-      // Slice based on range choice
-      let sliceLimit = currentTrendRange === 'monthly' ? -6 : (currentTrendRange === 'quarterly' ? -8 : -5);
+      let sliceLimit = currentTrendRange === 'monthly' ? -6 : (currentTrendRange === 'quarterly' ? -8 : (currentTrendRange === 'halfYear' ? -6 : -5));
       const labels = sortedKeys.slice(sliceLimit);
       const incomeData = labels.map(k => groupedData[k].income);
       const expenseData = labels.map(k => groupedData[k].expense);
