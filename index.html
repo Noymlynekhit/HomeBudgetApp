@@ -38,7 +38,7 @@
     </button>
   </div>
 
-  <!-- Budget Cap Modal (With Main or Sub-Category option) -->
+  <!-- Budget Cap Modal (Fixed Main + Sub Category dependent selection) -->
   <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -48,20 +48,12 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">סוג תקרה</label>
-          <select id="budgetCapTypeSelect" onchange="handleCapTypeChange()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-            <option value="main">קטגוריה ראשית (כללית)</option>
-            <option value="sub">תת-קטגוריה ספציפית</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">בחר קטגוריה ראשית</label>
+          <label class="block font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
           <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
         </div>
 
-        <div id="subCatCapWrapper" class="hidden">
-          <label class="block font-semibold text-slate-600 mb-1">בחר תת-קטגוריה</label>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">תת-קטגוריה ספציפית</label>
           <select id="budgetCapSubCatSelect" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
         </div>
 
@@ -551,7 +543,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.3";
+    const APP_VERSION = "1.1.4";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -636,7 +628,7 @@
     function openIncomeCategoriesModal() { renderIncomeCategoriesManager(); document.getElementById('incomeCategoriesModal').classList.remove('hidden'); }
     function closeIncomeCategoriesModal() { document.getElementById('incomeCategoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
 
-    // --- Budget Cap Modal Functions (Main vs Sub-category) ---
+    // --- Budget Cap Modal Functions (Main + Sub dependent dropdowns) ---
     function openBudgetCapModal() {
       const mainSelect = document.getElementById('budgetCapMainCatSelect');
       mainSelect.innerHTML = '';
@@ -647,16 +639,9 @@
         opt.textContent = cat;
         mainSelect.appendChild(opt);
       });
-      document.getElementById('budgetCapTypeSelect').value = 'main';
-      document.getElementById('subCatCapWrapper').classList.add('hidden');
       populateCapSubCategorySelect();
       document.getElementById('budgetCapAmountInput').value = '';
       document.getElementById('budgetCapModal').classList.remove('hidden');
-    }
-
-    function handleCapTypeChange() {
-      const type = document.getElementById('budgetCapTypeSelect').value;
-      document.getElementById('subCatCapWrapper').classList.toggle('hidden', type !== 'sub');
     }
 
     function populateCapSubCategorySelect() {
@@ -677,18 +662,17 @@
     }
 
     async function saveBudgetCap() {
-      const type = document.getElementById('budgetCapTypeSelect').value;
       const mainCat = document.getElementById('budgetCapMainCatSelect').value;
       const subCat = document.getElementById('budgetCapSubCatSelect').value;
       const amount = parseFloat(document.getElementById('budgetCapAmountInput').value);
 
-      if (!mainCat || isNaN(amount) || amount <= 0) {
-        alert("נא להזין סכום תקרה תקין.");
+      if (!mainCat || !subCat || isNaN(amount) || amount <= 0) {
+        alert("נא למלא את כל השדות ולהזין סכום תקרה תקין.");
         return;
       }
 
-      // Key format: "MainCategory" for general, or "MainCategory > SubCategory" for sub-category cap
-      const capKey = type === 'sub' ? `${mainCat} > ${subCat}` : mainCat;
+      // Key format: "MainCategory > SubCategory"
+      const capKey = `${mainCat} > ${subCat}`;
 
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
         caps: { ...houseConfig.caps, [capKey]: amount }
@@ -1019,7 +1003,6 @@
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
       
-      // Check budget caps for main category and specific sub-category cap if applicable
       if (currentTransactionType === 'expense') {
         checkBudgetCapWarnings(mainCat, newTx.subCategory, amount);
       }
@@ -1032,22 +1015,12 @@
     function checkBudgetCapWarnings(mainCat, subCat, newAmount) {
       const monthTx = getTransactionsForCurrentCycle();
       const caps = houseConfig.caps || {};
+      const capKey = `${mainCat} > ${subCat}`;
 
-      // Check main category cap
-      if (caps[mainCat]) {
-        let currentTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat).reduce((sum, t) => sum + t.amount, 0);
-        const updatedTotal = currentTotal + newAmount;
-        if (updatedTotal >= caps[mainCat]) {
-          showBudgetAlert("חריגה מתקציב קטגוריה ראשית!", `חרגתם מתקרת התקציב בקטגוריית "${mainCat}".`);
-        }
-      }
-
-      // Check specific sub-category cap (Key format: "Main > Sub")
-      const subCapKey = `${mainCat} > ${subCat}`;
-      if (caps[subCapKey]) {
+      if (caps[capKey]) {
         let currentSubTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat && t.subCategory === subCat).reduce((sum, t) => sum + t.amount, 0);
         const updatedSubTotal = currentSubTotal + newAmount;
-        if (updatedSubTotal >= caps[subCapKey]) {
+        if (updatedSubTotal >= caps[capKey]) {
           showBudgetAlert("חריגה מתקציב תת-קטגוריה!", `חרגתם מתקרת התקציב עבור "${subCat}" (תחת ${mainCat}).`);
         }
       }
@@ -1105,11 +1078,11 @@
       document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
       document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
-      renderBudgetCaps(catTotals, subCatTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
+      renderBudgetCaps(subCatTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
       renderCategorySummaryList(catTotals); renderTransactionsTable(monthTx);
     }
 
-    function renderBudgetCaps(catTotals, subCatTotals) {
+    function renderBudgetCaps(subCatTotals) {
       const container = document.getElementById('budgetCapsContainer'); container.innerHTML = '';
       const caps = houseConfig.caps || {}; const capKeys = Object.keys(caps);
       if (capKeys.length === 0) {
@@ -1118,19 +1091,9 @@
       }
       capKeys.forEach(key => {
         const cap = caps[key];
-        let spent = 0;
-        let displayName = key;
-
-        if (key.includes(' > ')) {
-          // Sub-category cap
-          spent = subCatTotals[key] || 0;
-          const parts = key.split(' > ');
-          displayName = `תת-קטגוריה: ${parts[1]} <span class="text-[11px] text-slate-400 font-normal">(${parts[0]})</span>`;
-        } else {
-          // Main category cap
-          spent = catTotals[key] || 0;
-          displayName = `קטגוריה ראשית: ${key}`;
-        }
+        const spent = subCatTotals[key] || 0;
+        const parts = key.split(' > ');
+        const displayName = `תת-קטגוריה: ${parts[1]} <span class="text-[11px] text-slate-400 font-normal">(${parts[0]})</span>`;
 
         const remaining = cap - spent; 
         const pct = Math.min(100, Math.round((spent / cap) * 100));
