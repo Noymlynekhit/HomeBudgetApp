@@ -518,8 +518,21 @@
     <!-- TAB 3: REPORTS & HISTORY -->
     <div id="tabContentReports" class="hidden space-y-6">
       
-      <!-- Charts & Breakdown Section -->
-      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Report Selector Tabs (Clean Selection so not everything shows at once) -->
+      <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
+        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">
+          📊 פילוח קטגוריות
+        </button>
+        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">
+          📈 השוואת מגמות (רבעוני / שנתי)
+        </button>
+        <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">
+          💳 קבועות מול משתנות
+        </button>
+      </section>
+
+      <!-- REPORT VIEW 1: Category Breakdown (Default) -->
+      <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
           <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-chart-donut text-indigo-600"></i>
@@ -529,17 +542,46 @@
             <canvas id="categoryChart"></canvas>
           </div>
         </div>
+        <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center space-y-3">
+          <h3 class="text-xs font-bold text-slate-500 uppercase">סיכום קטגוריות החודש</h3>
+          <div id="categorySummaryList" class="space-y-2 max-h-52 overflow-y-auto text-xs">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
 
-        <div class="lg:col-span-5 space-y-3 flex flex-col justify-center">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+      <!-- REPORT VIEW 2: Trend Comparison Line Chart -->
+      <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <div>
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-indigo-600"></i>
+              השוואת הוצאות לאורך זמן (מגמה רב-חודשית)
+            </h2>
+            <p class="text-xs text-slate-500">מעקב רציף אחרי ההוצאות וההכנסות בחודשים האחרונים</p>
+          </div>
+        </div>
+        <div class="relative h-72 w-full flex items-center justify-center">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </section>
+
+      <!-- REPORT VIEW 3: Fixed vs Variable Types -->
+      <section id="reportViewTypes" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
+        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-wallet text-indigo-600"></i>
+          פירוט סוגי הוצאות (קבועות, משתנות ובלת"מ)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
             <span class="text-xs font-bold text-slate-600">הוצאות קבועות</span>
             <span id="fixedExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span>
           </div>
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
             <span class="text-xs font-bold text-slate-600">הוצאות משתנות</span>
             <span id="variableExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span>
           </div>
-          <div class="bg-white p-4 rounded-2xl border border-amber-100 bg-amber-50/50 shadow-sm flex justify-between items-center">
+          <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center">
             <span class="text-xs font-bold text-amber-800">הוצאות בלת"מ</span>
             <span id="unplannedExpensesTotal" class="font-extrabold text-amber-700 text-base">₪0</span>
           </div>
@@ -616,8 +658,8 @@
   </script>
 
   <script>
-    // 🔔 כאן מעדכנים את מספר הגרסה לבדיקה ל- 1.0.4
-    const APP_VERSION = "1.0.4";
+    // 🔔 גרסה 1.0.5 הכוללת את תפריט הדוחות ובחירת הגרפים החכמים
+    const APP_VERSION = "1.0.5";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -646,6 +688,7 @@
     let transactions = [];
     let currentTransactionType = 'expense';
     let categoryChartInstance = null;
+    let trendChartInstance = null;
     let unsubscribeFirestore = null;
     let unsubscribeConfig = null;
 
@@ -670,7 +713,6 @@
       if (!savedVersion) {
         localStorage.setItem('app_user_version', APP_VERSION);
       } else if (savedVersion !== APP_VERSION) {
-        // Show update banner if versions don't match
         document.getElementById('updateBanner').classList.remove('hidden');
       }
     }
@@ -688,6 +730,21 @@
       document.getElementById('mainTabOverview').className = tab === 'overview' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
       document.getElementById('mainTabAdd').className = tab === 'add' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
       document.getElementById('mainTabReports').className = tab === 'reports' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
+    }
+
+    // Switch between Sub-reports
+    function switchReportSubTab(subTab) {
+      document.getElementById('reportViewCategory').classList.toggle('hidden', subTab !== 'category');
+      document.getElementById('reportViewTrend').classList.toggle('hidden', subTab !== 'trend');
+      document.getElementById('reportViewTypes').classList.toggle('hidden', subTab !== 'types');
+
+      document.getElementById('reportTabCategoryBtn').className = subTab === 'category' ? 'flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center font-bold' : 'flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center font-bold';
+      document.getElementById('reportTabTrendBtn').className = subTab === 'trend' ? 'flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center font-bold' : 'flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center font-bold';
+      document.getElementById('reportTabTypesBtn').className = subTab === 'types' ? 'flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center font-bold' : 'flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center font-bold';
+
+      if (subTab === 'trend') {
+        renderTrendChart();
+      }
     }
 
     function openTutorialModal() {
@@ -900,7 +957,6 @@
       renderPaymentMethodsManager();
     }
 
-    // Categories Management Functions
     function renderCategoriesManager() {
       const listDiv = document.getElementById('categoriesListManager');
       const targetSelect = document.getElementById('targetMainCategorySelect');
@@ -909,7 +965,7 @@
 
       const cats = houseConfig.categories || DEFAULT_CATEGORIES;
 
-      Object.keys(cats).forEach((mainCat, mIdx) => {
+      Object.keys(cats).forEach((mainCat) => {
         const subs = cats[mainCat] || [];
         
         const opt = document.createElement('option');
@@ -1179,6 +1235,7 @@
       renderBudgetCaps(catTotals);
       renderSavingsGoals();
       renderCategoryChart(catTotals);
+      renderCategorySummaryList(catTotals);
       renderTransactionsTable(monthTx);
     }
 
@@ -1340,6 +1397,28 @@
       alert(`העודף החודשי בסך ₪${surplus.toLocaleString()} הועבר בהצלחה לקופת "${updatedGoals[choice].name}"!`);
     }
 
+    function renderCategorySummaryList(catTotals) {
+      const listDiv = document.getElementById('categorySummaryList');
+      listDiv.innerHTML = '';
+      const keys = Object.keys(catTotals);
+
+      if (keys.length === 0) {
+        listDiv.innerHTML = `<p class="text-slate-400 text-center py-4">אין הוצאות רשומות בחודש זה.</p>`;
+        return;
+      }
+
+      keys.forEach(cat => {
+        const val = catTotals[cat];
+        const row = document.createElement('div');
+        row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100";
+        row.innerHTML = `
+          <span class="font-bold text-slate-700">${cat}</span>
+          <span class="font-extrabold text-slate-900">₪${val.toLocaleString()}</span>
+        `;
+        listDiv.appendChild(row);
+      });
+    }
+
     function renderTransactionsTable(monthTx) {
       const tbody = document.getElementById('transactionsTableBody');
       tbody.innerHTML = '';
@@ -1383,7 +1462,6 @@
       const data = Object.values(catTotals);
 
       if (categoryChartInstance) categoryChartInstance.destroy();
-
       if (labels.length === 0) return;
 
       categoryChartInstance = new Chart(ctx, {
@@ -1396,6 +1474,63 @@
           }]
         },
         options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    // Render Trend Line Chart (Multi-month comparison)
+    function renderTrendChart() {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      
+      // Group last 6 months data
+      const monthMap = {};
+      transactions.forEach(t => {
+        if (!t.monthKey) return;
+        if (!monthMap[t.monthKey]) {
+          monthMap[t.monthKey] = { income: 0, expense: 0 };
+        }
+        if (t.type === 'income') monthMap[t.monthKey].income += t.amount;
+        else monthMap[t.monthKey].expense += t.amount;
+      });
+
+      const sortedMonths = Object.keys(monthMap).sort().slice(-6); // Last 6 months
+      const incomeData = sortedMonths.map(m => monthMap[m].income);
+      const expenseData = sortedMonths.map(m => monthMap[m].expense);
+
+      if (trendChartInstance) trendChartInstance.destroy();
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: sortedMonths,
+          datasets: [
+            {
+              label: 'הכנסות',
+              data: incomeData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: 'הוצאות',
+              data: expenseData,
+              borderColor: '#f43f5e',
+              backgroundColor: 'rgba(244, 63, 94, 0.1)',
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { family: 'Rubik', weight: 'bold' } } }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
       });
     }
   </script>
