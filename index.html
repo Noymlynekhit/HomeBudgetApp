@@ -38,6 +38,39 @@
     </button>
   </div>
 
+  <!-- Budget Cap Modal (Dropdown Selection) -->
+  <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-800">הגדרת תקרת תקציב</h3>
+        <button onclick="closeBudgetCapModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">בחר קטגוריה ראשית</label>
+          <select id="budgetCapCategorySelect" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">תקרת תקציב חודשית (בש"ח)</label>
+          <input type="number" step="0.01" id="budgetCapAmountInput" placeholder="לדוגמה: 2500" class="w-full text-base font-bold bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveBudgetCap()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
+          שמור תקרה
+        </button>
+        <button onclick="closeBudgetCapModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">
+          ביטול
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Transaction Modal -->
   <div id="editTransactionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
@@ -288,7 +321,7 @@
       <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-bullseye text-indigo-600"></i> תקרות תקציב וקאונטר</h2>
-          <button onclick="promptSetBudgetCap()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg border border-indigo-200 transition">+ הגדר תקרת קטגוריה</button>
+          <button onclick="openBudgetCapModal()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg border border-indigo-200 transition">+ הגדר תקרת קטגוריה</button>
         </div>
         <div id="budgetCapsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
       </section>
@@ -507,7 +540,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.1";
+    const APP_VERSION = "1.1.2";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -591,6 +624,40 @@
     function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
     function openIncomeCategoriesModal() { renderIncomeCategoriesManager(); document.getElementById('incomeCategoriesModal').classList.remove('hidden'); }
     function closeIncomeCategoriesModal() { document.getElementById('incomeCategoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
+
+    // --- Budget Cap Selection Modal Functions ---
+    function openBudgetCapModal() {
+      const select = document.getElementById('budgetCapCategorySelect');
+      select.innerHTML = '';
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+      Object.keys(cats).forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+      document.getElementById('budgetCapAmountInput').value = '';
+      document.getElementById('budgetCapModal').classList.remove('hidden');
+    }
+
+    function closeBudgetCapModal() {
+      document.getElementById('budgetCapModal').classList.add('hidden');
+    }
+
+    async function saveBudgetCap() {
+      const cat = document.getElementById('budgetCapCategorySelect').value;
+      const amount = parseFloat(document.getElementById('budgetCapAmountInput').value);
+
+      if (!cat || isNaN(amount) || amount <= 0) {
+        alert("נא להזין סכום תקרה תקין.");
+        return;
+      }
+
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
+        caps: { ...houseConfig.caps, [cat]: amount }
+      });
+      closeBudgetCapModal();
+    }
 
     // --- Edit Transaction Functions ---
     function openEditModal(id, amount, date, description) {
@@ -992,15 +1059,17 @@
         let barColor = "bg-emerald-500"; if (pct >= 100) barColor = "bg-rose-500"; else if (pct >= 75) barColor = "bg-amber-500";
         const div = document.createElement('div');
         div.className = "p-4 bg-slate-50 rounded-2xl border space-y-2";
-        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm">${cat}</span></div><div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${barColor} h-full" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-500"><span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span><span>נותר: ₪${remaining.toLocaleString()}</span></div>`;
+        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm">${cat}</span><button onclick="removeBudgetCap('${cat}')" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-regular fa-trash-can"></i></button></div><div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${barColor} h-full" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-500"><span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span><span>נותר: ₪${remaining.toLocaleString()}</span></div>`;
         container.appendChild(div);
       });
     }
 
-    async function promptSetBudgetCap() {
-      const cat = prompt("שם קטגוריית ההוצאה עבורה תרצי להגדיר תקרה:"); if (!cat) return;
-      const amount = parseFloat(prompt(`תקרת תקציב ל-"${cat}":`)); if (isNaN(amount) || amount <= 0) return;
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps: { ...houseConfig.caps, [cat]: amount } });
+    async function removeBudgetCap(cat) {
+      if (confirm(`להסיר את תקרת התקציב עבור "${cat}"?`)) {
+        const caps = { ...(houseConfig.caps || {}) };
+        delete caps[cat];
+        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps: caps });
+      }
     }
 
     function renderSavingsGoals() {
@@ -1066,8 +1135,6 @@
       filteredTx.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
         const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 border-b";
         const isExpense = t.type === 'expense';
-        
-        // Escape description for safe inline JS string passing
         const safeDesc = (t.description || '').replace(/'/g, "\\'");
 
         tr.innerHTML = `
@@ -1080,12 +1147,8 @@
           <td class="p-4 font-medium max-w-xs truncate">${t.description}</td>
           <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
           <td class="p-4 text-center space-x-2 space-x-reverse">
-            <button onclick="openEditModal('${t.id}', ${t.amount}, '${t.date}', '${safeDesc}')" class="text-indigo-400 hover:text-indigo-600 p-1" title="ערוך תנועה">
-              <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="מחק תנועה">
-              <i class="fa-regular fa-trash-can"></i>
-            </button>
+            <button onclick="openEditModal('${t.id}', ${t.amount}, '${t.date}', '${safeDesc}')" class="text-indigo-400 hover:text-indigo-600 p-1" title="ערוך תנועה"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="מחק תנועה"><i class="fa-regular fa-trash-can"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
