@@ -38,7 +38,7 @@
     </button>
   </div>
 
-  <!-- Budget Cap Modal (Dropdown Selection) -->
+  <!-- Budget Cap Modal (With Main or Sub-Category option) -->
   <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -48,10 +48,21 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">בחר קטגוריה ראשית</label>
-          <select id="budgetCapCategorySelect" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-            <!-- Populated dynamically -->
+          <label class="block font-semibold text-slate-600 mb-1">סוג תקרה</label>
+          <select id="budgetCapTypeSelect" onchange="handleCapTypeChange()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+            <option value="main">קטגוריה ראשית (כללית)</option>
+            <option value="sub">תת-קטגוריה ספציפית</option>
           </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">בחר קטגוריה ראשית</label>
+          <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
+        </div>
+
+        <div id="subCatCapWrapper" class="hidden">
+          <label class="block font-semibold text-slate-600 mb-1">בחר תת-קטגוריה</label>
+          <select id="budgetCapSubCatSelect" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
         </div>
 
         <div>
@@ -165,7 +176,7 @@
   <div id="incomeCategoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הכנסה (כמו משכורות)</h3>
+        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הכנסה</h3>
         <button onclick="closeIncomeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-2">
@@ -176,7 +187,7 @@
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
-        <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה (משכורת 1, 2 וכו')</label>
+        <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה</label>
         <select id="targetIncomeMainCategorySelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 mb-2 focus:outline-none"></select>
         <div class="flex gap-2">
           <input type="text" id="newIncomeSubCategoryInput" placeholder="שם תת-קטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
@@ -540,7 +551,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.2";
+    const APP_VERSION = "1.1.3";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -625,19 +636,40 @@
     function openIncomeCategoriesModal() { renderIncomeCategoriesManager(); document.getElementById('incomeCategoriesModal').classList.remove('hidden'); }
     function closeIncomeCategoriesModal() { document.getElementById('incomeCategoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
 
-    // --- Budget Cap Selection Modal Functions ---
+    // --- Budget Cap Modal Functions (Main vs Sub-category) ---
     function openBudgetCapModal() {
-      const select = document.getElementById('budgetCapCategorySelect');
-      select.innerHTML = '';
+      const mainSelect = document.getElementById('budgetCapMainCatSelect');
+      mainSelect.innerHTML = '';
       const cats = houseConfig.categories || DEFAULT_CATEGORIES;
       Object.keys(cats).forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
         opt.textContent = cat;
-        select.appendChild(opt);
+        mainSelect.appendChild(opt);
       });
+      document.getElementById('budgetCapTypeSelect').value = 'main';
+      document.getElementById('subCatCapWrapper').classList.add('hidden');
+      populateCapSubCategorySelect();
       document.getElementById('budgetCapAmountInput').value = '';
       document.getElementById('budgetCapModal').classList.remove('hidden');
+    }
+
+    function handleCapTypeChange() {
+      const type = document.getElementById('budgetCapTypeSelect').value;
+      document.getElementById('subCatCapWrapper').classList.toggle('hidden', type !== 'sub');
+    }
+
+    function populateCapSubCategorySelect() {
+      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
+      const subSelect = document.getElementById('budgetCapSubCatSelect');
+      subSelect.innerHTML = '';
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+      (cats[mainCat] || []).forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.textContent = sub;
+        subSelect.appendChild(opt);
+      });
     }
 
     function closeBudgetCapModal() {
@@ -645,16 +677,21 @@
     }
 
     async function saveBudgetCap() {
-      const cat = document.getElementById('budgetCapCategorySelect').value;
+      const type = document.getElementById('budgetCapTypeSelect').value;
+      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
+      const subCat = document.getElementById('budgetCapSubCatSelect').value;
       const amount = parseFloat(document.getElementById('budgetCapAmountInput').value);
 
-      if (!cat || isNaN(amount) || amount <= 0) {
+      if (!mainCat || isNaN(amount) || amount <= 0) {
         alert("נא להזין סכום תקרה תקין.");
         return;
       }
 
+      // Key format: "MainCategory" for general, or "MainCategory > SubCategory" for sub-category cap
+      const capKey = type === 'sub' ? `${mainCat} > ${subCat}` : mainCat;
+
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
-        caps: { ...houseConfig.caps, [cat]: amount }
+        caps: { ...houseConfig.caps, [capKey]: amount }
       });
       closeBudgetCapModal();
     }
@@ -933,7 +970,7 @@
 
       const manageBtn = document.getElementById('manageCategoriesBtn');
       if (type === 'income') {
-        manageBtn.textContent = "⚙️ ניהול קטגוריות הכנסה (משכורות)";
+        manageBtn.textContent = "⚙️ ניהול קטגוריות הכנסה";
         manageBtn.setAttribute("onclick", "openIncomeCategoriesModal()");
       } else {
         manageBtn.textContent = "⚙️ ניהול קטגוריות הוצאה";
@@ -981,18 +1018,39 @@
       }
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
-      if (currentTransactionType === 'expense' && houseConfig.caps[mainCat]) { checkBudgetCapWarning(mainCat, amount); }
+      
+      // Check budget caps for main category and specific sub-category cap if applicable
+      if (currentTransactionType === 'expense') {
+        checkBudgetCapWarnings(mainCat, newTx.subCategory, amount);
+      }
       
       document.getElementById('amount').value = ''; document.getElementById('description').value = '';
       document.getElementById('isRecurringInput').checked = false; toggleRecurringOptions();
       switchMainTab('overview');
     }
 
-    function checkBudgetCapWarning(category, newAmount) {
-      const monthTx = getTransactionsForCurrentCycle(); const cap = houseConfig.caps[category];
-      let currentTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === category).reduce((sum, t) => sum + t.amount, 0);
-      const updatedTotal = currentTotal + newAmount; const percentage = (updatedTotal / cap) * 100;
-      if (percentage >= 100) { showBudgetAlert("חריגה מתקציב הקטגוריה!", `חרגתם מתקרת התקציב בקטגוריית "${category}".`); }
+    function checkBudgetCapWarnings(mainCat, subCat, newAmount) {
+      const monthTx = getTransactionsForCurrentCycle();
+      const caps = houseConfig.caps || {};
+
+      // Check main category cap
+      if (caps[mainCat]) {
+        let currentTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat).reduce((sum, t) => sum + t.amount, 0);
+        const updatedTotal = currentTotal + newAmount;
+        if (updatedTotal >= caps[mainCat]) {
+          showBudgetAlert("חריגה מתקציב קטגוריה ראשית!", `חרגתם מתקרת התקציב בקטגוריית "${mainCat}".`);
+        }
+      }
+
+      // Check specific sub-category cap (Key format: "Main > Sub")
+      const subCapKey = `${mainCat} > ${subCat}`;
+      if (caps[subCapKey]) {
+        let currentSubTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat && t.subCategory === subCat).reduce((sum, t) => sum + t.amount, 0);
+        const updatedSubTotal = currentSubTotal + newAmount;
+        if (updatedSubTotal >= caps[subCapKey]) {
+          showBudgetAlert("חריגה מתקציב תת-קטגוריה!", `חרגתם מתקרת התקציב עבור "${subCat}" (תחת ${mainCat}).`);
+        }
+      }
     }
 
     function showBudgetAlert(title, msg) {
@@ -1015,6 +1073,7 @@
       let totalIncome = 0, totalExpenses = 0, needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
       let fixedTotal = 0, variableTotal = 0, unplannedTotal = 0;
       const catTotals = {};
+      const subCatTotals = {};
 
       monthTx.forEach(t => {
         if (t.type === 'income') { totalIncome += t.amount; }
@@ -1026,7 +1085,10 @@
           if (t.expenseType === 'קבועות') fixedTotal += t.amount;
           else if (t.expenseType === 'משתנות') variableTotal += t.amount;
           else if (t.expenseType === 'בלתי מתוכננות') unplannedTotal += t.amount;
+          
           catTotals[t.mainCategory] = (catTotals[t.mainCategory] || 0) + t.amount;
+          const subKey = `${t.mainCategory} > ${t.subCategory}`;
+          subCatTotals[subKey] = (subCatTotals[subKey] || 0) + t.amount;
         }
       });
 
@@ -1043,31 +1105,61 @@
       document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
       document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
-      renderBudgetCaps(catTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
+      renderBudgetCaps(catTotals, subCatTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
       renderCategorySummaryList(catTotals); renderTransactionsTable(monthTx);
     }
 
-    function renderBudgetCaps(catTotals) {
+    function renderBudgetCaps(catTotals, subCatTotals) {
       const container = document.getElementById('budgetCapsContainer'); container.innerHTML = '';
-      const caps = houseConfig.caps || {}; const categoriesWithCaps = Object.keys(caps);
-      if (categoriesWithCaps.length === 0) {
+      const caps = houseConfig.caps || {}; const capKeys = Object.keys(caps);
+      if (capKeys.length === 0) {
         container.innerHTML = `<div class="col-span-2 text-center py-6 text-slate-400 text-xs border border-dashed rounded-xl">טרם הגדרתם תקרות תקציב.</div>`;
         return;
       }
-      categoriesWithCaps.forEach(cat => {
-        const cap = caps[cat]; const spent = catTotals[cat] || 0; const remaining = cap - spent; const pct = Math.min(100, Math.round((spent / cap) * 100));
-        let barColor = "bg-emerald-500"; if (pct >= 100) barColor = "bg-rose-500"; else if (pct >= 75) barColor = "bg-amber-500";
+      capKeys.forEach(key => {
+        const cap = caps[key];
+        let spent = 0;
+        let displayName = key;
+
+        if (key.includes(' > ')) {
+          // Sub-category cap
+          spent = subCatTotals[key] || 0;
+          const parts = key.split(' > ');
+          displayName = `תת-קטגוריה: ${parts[1]} <span class="text-[11px] text-slate-400 font-normal">(${parts[0]})</span>`;
+        } else {
+          // Main category cap
+          spent = catTotals[key] || 0;
+          displayName = `קטגוריה ראשית: ${key}`;
+        }
+
+        const remaining = cap - spent; 
+        const pct = Math.min(100, Math.round((spent / cap) * 100));
+        let barColor = "bg-emerald-500"; 
+        if (pct >= 100) barColor = "bg-rose-500"; 
+        else if (pct >= 75) barColor = "bg-amber-500";
+
         const div = document.createElement('div');
         div.className = "p-4 bg-slate-50 rounded-2xl border space-y-2";
-        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm">${cat}</span><button onclick="removeBudgetCap('${cat}')" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-regular fa-trash-can"></i></button></div><div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${barColor} h-full" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-500"><span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span><span>נותר: ₪${remaining.toLocaleString()}</span></div>`;
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-slate-800">${displayName}</span>
+            <button onclick="removeBudgetCap('${key}')" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
+          <div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+            <div class="${barColor} h-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500">
+            <span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span>
+            <span class="font-bold ${remaining < 0 ? 'text-rose-600' : 'text-slate-700'}">${remaining < 0 ? 'חריגה:' : 'נותר:'} ₪${Math.abs(remaining).toLocaleString()}</span>
+          </div>`;
         container.appendChild(div);
       });
     }
 
-    async function removeBudgetCap(cat) {
-      if (confirm(`להסיר את תקרת התקציב עבור "${cat}"?`)) {
+    async function removeBudgetCap(key) {
+      if (confirm(`להסיר את תקרת התקציב הזו?`)) {
         const caps = { ...(houseConfig.caps || {}) };
-        delete caps[cat];
+        delete caps[key];
         await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps: caps });
       }
     }
