@@ -11,18 +11,30 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
     body {
       font-family: 'Rubik', sans-serif;
       background-color: #f8fafc;
     }
-    .modal-backdrop {
-      background-color: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-    }
   </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col pb-12">
+
+  <!-- Alert Modal for Budget Cap Warnings -->
+  <div id="budgetAlertModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 border border-rose-100">
+      <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-inner text-3xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-extrabold text-slate-800" id="budgetAlertTitle">התראת תקציב!</h3>
+        <p class="text-sm text-slate-600 mt-2" id="budgetAlertMessage"></p>
+      </div>
+      <button onclick="closeBudgetAlert()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition">
+        הבנתי, תודה
+      </button>
+    </div>
+  </div>
 
   <!-- Screen 1: Home Code Login & Registration Screen -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
@@ -56,13 +68,21 @@
       <!-- Form 2: Register -->
       <form id="registerForm" onsubmit="handleHouseRegister(event)" class="space-y-4 text-right hidden">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">בחרו שם/קוד לבית החדש</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">שם/קוד לבית החדש</label>
           <input type="text" id="newHouseCodeInput" required placeholder="לדוגמה: MLYNEK2026" class="w-full text-center font-bold text-lg bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase tracking-wider">
-          <p class="text-[11px] text-slate-400 mt-1">זה הקוד שתעבירו לבן הזוג כדי להתחבר יחד.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">יום תחילת מחזור התקציב החודשי</label>
+          <select id="cycleStartDayInput" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="1">1 בחודש (חודש קלנדרי רגיל)</option>
+            <option value="10">10 בחודש (כניסת משכורות)</option>
+            <option value="15">15 בחודש</option>
+            <option value="25">25 בחודש</option>
+          </select>
         </div>
         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2">
           <i class="fa-solid fa-house-medical"></i>
-          <span>צור בית חדש</span>
+          <span>צור בית חדש והגדר</span>
         </button>
       </form>
 
@@ -80,14 +100,14 @@
         <div>
           <h1 class="text-xl md:text-2xl font-bold tracking-tight">ניהול תקציב ומאזן ביתי</h1>
           <div class="flex items-center gap-2 text-xs text-indigo-200">
-            <span>קוד בית פעיל:</span>
+            <span>קוד בית:</span>
             <span id="activeHouseCodeDisplay" class="bg-indigo-800 px-2 py-0.5 rounded font-mono font-bold text-amber-300"></span>
             <button onclick="switchHouseCode()" class="underline hover:text-white text-[11px]">(החלף)</button>
           </div>
         </div>
       </div>
       
-      <!-- Month Selector & Actions -->
+      <!-- Month Selector -->
       <div class="flex items-center gap-2">
         <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-indigo-800 text-white text-sm font-semibold rounded-lg px-3 py-1.5 border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-amber-300">
       </div>
@@ -98,38 +118,35 @@
 
     <!-- Overview Balance Cards -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Income Card -->
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100 flex items-center justify-between">
         <div>
           <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider block mb-1">סה"כ הכנסות</span>
           <div id="totalIncomeDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-          <span class="text-xs text-slate-400 mt-1 block">משכורת, קצבאות, מענקים</span>
+          <span class="text-xs text-slate-400 mt-1 block">משכורות ותקציב שנכנס</span>
         </div>
         <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
           <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-inside text-2xl"></i>
         </div>
       </div>
 
-      <!-- Expenses Card -->
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-rose-100 flex items-center justify-between">
         <div>
           <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block mb-1">סה"כ הוצאות</span>
           <div id="totalExpensesDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-          <span class="text-xs text-slate-400 mt-1 block">כלל החיובים החודשיים</span>
+          <span class="text-xs text-slate-400 mt-1 block">כלל החיובים במחזור</span>
         </div>
         <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
           <i class="fa-solid fa-credit-card text-2xl"></i>
         </div>
       </div>
 
-      <!-- Balance Card -->
       <div id="balanceCard" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">תזרים נטו (מאזן)</span>
           <div id="netBalanceDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-          <span id="balanceStatusText" class="text-xs text-slate-500 mt-1 block">מאוזן</span>
+          <button id="transferSurplusBtn" onclick="transferSurplusToSavings()" class="text-xs font-bold text-indigo-600 underline mt-1 hidden">העבר עודף חודשי לקופת חיסכון ➔</button>
         </div>
-        <div id="balanceIconContainer" class="p-3.5 bg-slate-100 text-slate-600 rounded-2xl">
+        <div class="p-3.5 bg-slate-100 text-slate-600 rounded-2xl">
           <i class="fa-solid fa-wallet text-2xl"></i>
         </div>
       </div>
@@ -137,39 +154,74 @@
 
     <!-- 50/30/20 Rule Breakdown -->
     <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-        <div>
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-indigo-600"></i>
-            חלוקה תקציבית (מודל 50 / 30 / 20)
-          </h2>
-          <p class="text-xs text-slate-500">השוואה בין צרכים בסיסיים, רצונות וחסכונות מתוך ההכנסות</p>
-        </div>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+          חלוקה תקציבית (מודל 50 / 30 / 20)
+        </h2>
       </div>
-
-      <div class="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex mb-4 shadow-inner">
-        <div id="barNeeds" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%" title="צרכים"></div>
-        <div id="barWants" class="bg-pink-500 h-full transition-all duration-500" style="width: 0%" title="רצונות"></div>
-        <div id="barSavings" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%" title="חסכונות"></div>
+      <div class="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden flex mb-3 shadow-inner">
+        <div id="barNeeds" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+        <div id="barWants" class="bg-pink-500 h-full transition-all duration-500" style="width: 0%"></div>
+        <div id="barSavings" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
       </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-xs">
-        <div class="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
-          <span class="font-bold text-blue-700 block">🔷 צרכים (יעד: ~50%)</span>
-          <span id="needsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="p-2 bg-blue-50 rounded-xl border border-blue-100">
+          <span class="font-bold text-blue-700 block">🔷 צרכים (~50%)</span>
+          <span id="needsAmount" class="font-extrabold text-slate-800">₪0</span>
         </div>
-        <div class="p-2.5 bg-pink-50 rounded-xl border border-pink-100">
-          <span class="font-bold text-pink-700 block">💖 רצונות (יעד: ~30%)</span>
-          <span id="wantsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
+        <div class="p-2 bg-pink-50 rounded-xl border border-pink-100">
+          <span class="font-bold text-pink-700 block">💖 רצונות (~30%)</span>
+          <span id="wantsAmount" class="font-extrabold text-slate-800">₪0</span>
         </div>
-        <div class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
-          <span class="font-bold text-emerald-700 block">🌱 חסכונות (יעד: ~20%)</span>
-          <span id="savingsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
+        <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-100">
+          <span class="font-bold text-emerald-700 block">🌱 חסכונות (~20%)</span>
+          <span id="savingsAmount" class="font-extrabold text-slate-800">₪0</span>
         </div>
       </div>
     </section>
 
-    <!-- Main Content Grid -->
+    <!-- Budget Caps & Remaining Counters Section -->
+    <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-bullseye text-indigo-600"></i>
+            תקרות תקציב וקאונטר "כמה נשאר לבזבז"
+          </h2>
+          <p class="text-xs text-slate-500">מעקב חכם אחרי תקרות ההוצאה שהגדרתם לקטגוריות</p>
+        </div>
+        <button onclick="promptSetBudgetCap()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg border border-indigo-200 transition">
+          + הגדר תקרת קטגוריה
+        </button>
+      </div>
+
+      <div id="budgetCapsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Budget Caps rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Savings Goals Section -->
+    <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-piggy-bank text-emerald-600"></i>
+            קופות ויעדי חיסכון משותפים
+          </h2>
+          <p class="text-xs text-slate-500">חסכונות מתמשכים לטווח קצר וארוך</p>
+        </div>
+        <button onclick="promptCreateSavingsGoal()" class="text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 transition">
+          + יעד חיסכון חדש
+        </button>
+      </div>
+
+      <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Savings goals rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Form & Chart Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- Form Section -->
@@ -231,6 +283,22 @@
             </div>
           </div>
 
+          <!-- Standing Order / Recurring Options -->
+          <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100 space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-indigo-900">
+              <input type="checkbox" id="isRecurringInput" onchange="toggleRecurringOptions()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+              <span>הוראת קבע / תנועה מחזורית חודשית</span>
+            </label>
+            
+            <div id="recurringDetails" class="hidden space-y-2 pt-2 border-t border-indigo-100 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">תאריך סיום (אופציונלי):</label>
+                <input type="month" id="recurringEndDateInput" class="w-full bg-white border border-slate-200 rounded-lg p-2 focus:outline-none">
+                <span class="text-[10px] text-slate-500 mt-0.5 block">ללא תאריך סיום = תימשך ללא הגבלה</span>
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך</label>
@@ -281,13 +349,11 @@
 
     <!-- History Table -->
     <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-        <div>
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-indigo-600"></i>
-            פירוט תנועות החודש
-          </h2>
-        </div>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-indigo-600"></i>
+          פירוט תנועות החודש
+        </h2>
       </div>
 
       <div class="overflow-x-auto">
@@ -319,7 +385,7 @@
   <!-- Firebase Integration -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDepkiZnVn0Qk_6Nk_BeYOVbQwBKh3inN0",
@@ -341,6 +407,7 @@
     window.doc = doc;
     window.getDoc = getDoc;
     window.setDoc = setDoc;
+    window.updateDoc = updateDoc;
     window.onSnapshot = onSnapshot;
     window.query = query;
     window.where = where;
@@ -348,10 +415,12 @@
 
   <script>
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
+    let houseConfig = { cycleStartDay: 1, caps: {}, savingsGoals: [] };
     let transactions = [];
     let currentTransactionType = 'expense';
     let categoryChartInstance = null;
     let unsubscribeFirestore = null;
+    let unsubscribeConfig = null;
 
     const DEFAULT_CATEGORIES = {
       expenses: {
@@ -410,7 +479,6 @@
       const codeInput = document.getElementById('houseCodeInput').value.trim().toLowerCase();
       if (!codeInput) return;
 
-      // בדיקה אם הבית קיים ב-Firebase
       const houseRef = window.doc(window.db, "registered_houses", codeInput);
       const houseSnap = await window.getDoc(houseRef);
 
@@ -425,14 +493,13 @@
     async function handleHouseRegister(e) {
       e.preventDefault();
       const newCodeInput = document.getElementById('newHouseCodeInput').value.trim().toLowerCase();
-      if (!newCodeInput) return;
+      const cycleStartDay = parseInt(document.getElementById('cycleStartDayInput').value) || 1;
 
-      if (newCodeInput.length < 3) {
+      if (!newCodeInput || newCodeInput.length < 3) {
         showAuthError("שם הבית חייב להכיל לפחות 3 תווים.");
         return;
       }
 
-      // בדיקה אם השם תפוס
       const houseRef = window.doc(window.db, "registered_houses", newCodeInput);
       const houseSnap = await window.getDoc(houseRef);
 
@@ -441,10 +508,12 @@
         return;
       }
 
-      // רישום הבית החדש בענן
       await window.setDoc(houseRef, {
         createdAt: new Date().toISOString(),
-        houseCode: newCodeInput
+        houseCode: newCodeInput,
+        cycleStartDay: cycleStartDay,
+        caps: {},
+        savingsGoals: []
       });
 
       loginToHouse(newCodeInput);
@@ -470,7 +539,20 @@
       }
 
       if (unsubscribeFirestore) unsubscribeFirestore();
+      if (unsubscribeConfig) unsubscribeConfig();
 
+      // Listen to House Settings & Config
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      unsubscribeConfig = window.onSnapshot(houseRef, (snap) => {
+        if (snap.exists()) {
+          houseConfig = snap.data();
+          if (!houseConfig.caps) houseConfig.caps = {};
+          if (!houseConfig.savingsGoals) houseConfig.savingsGoals = [];
+          loadCurrentMonthData();
+        }
+      });
+
+      // Listen to Transactions
       const q = window.query(
         window.collection(window.db, "house_transactions"),
         window.where("houseCode", "==", activeHouseCode)
@@ -483,6 +565,11 @@
         });
         loadCurrentMonthData();
       });
+    }
+
+    function toggleRecurringOptions() {
+      const isChecked = document.getElementById('isRecurringInput').checked;
+      document.getElementById('recurringDetails').classList.toggle('hidden', !isChecked);
     }
 
     function setTransactionType(type) {
@@ -523,17 +610,23 @@
       e.preventDefault();
       const amount = parseFloat(document.getElementById('amount').value);
       const date = document.getElementById('transactionDate').value;
+      const mainCat = document.getElementById('mainCategory').value;
 
       if (!amount || amount <= 0) return;
+
+      const isRecurring = document.getElementById('isRecurringInput').checked;
+      const recurringEndDate = isRecurring ? document.getElementById('recurringEndDateInput').value : null;
 
       const newTx = {
         houseCode: activeHouseCode,
         type: currentTransactionType,
         amount: amount,
-        mainCategory: document.getElementById('mainCategory').value,
+        mainCategory: mainCat,
         subCategory: document.getElementById('subCategory').value,
         date: date,
         description: document.getElementById('description').value || '-',
+        isRecurring: isRecurring,
+        recurringEndDate: recurringEndDate,
         monthKey: date.slice(0, 7)
       };
 
@@ -544,17 +637,69 @@
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
 
+      // Check Budget Cap Warning
+      if (currentTransactionType === 'expense' && houseConfig.caps[mainCat]) {
+        checkBudgetCapWarning(mainCat, amount);
+      }
+
       document.getElementById('amount').value = '';
       document.getElementById('description').value = '';
+      document.getElementById('isRecurringInput').checked = false;
+      toggleRecurringOptions();
+    }
+
+    function checkBudgetCapWarning(category, newAmount) {
+      const monthTx = getTransactionsForCurrentCycle();
+      const cap = houseConfig.caps[category];
+      let currentTotal = monthTx
+        .filter(t => t.type === 'expense' && t.mainCategory === category)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const updatedTotal = currentTotal + newAmount;
+      const percentage = (updatedTotal / cap) * 100;
+
+      if (percentage >= 100) {
+        showBudgetAlert("חריגה מתקציב הקטגוריה!", `חרגתם מתקרת התקציב בקטגוריית "${category}". ההוצאה הכוללת הגיעה ל-₪${updatedTotal.toLocaleString()} מתוך ₪${cap.toLocaleString()}.`);
+      } else if (percentage >= 90) {
+        showBudgetAlert("שימו לב! כמעט הכלתם את התקציב", `הגעתם ל-${percentage.toFixed(0)}% מתקרת התקציב בקטגוריית "${category}". נותר לבזבז: ₪${(cap - updatedTotal).toLocaleString()}.`);
+      }
+    }
+
+    function showBudgetAlert(title, msg) {
+      document.getElementById('budgetAlertTitle').textContent = title;
+      document.getElementById('budgetAlertMessage').textContent = msg;
+      document.getElementById('budgetAlertModal').classList.remove('hidden');
+    }
+
+    function closeBudgetAlert() {
+      document.getElementById('budgetAlertModal').classList.add('hidden');
     }
 
     async function deleteTransaction(id) {
       await window.deleteDoc(window.doc(window.db, "house_transactions", id));
     }
 
+    function getTransactionsForCurrentCycle() {
+      const selectedMonthKey = document.getElementById('selectedMonth').value; // e.g. "2026-10"
+      const cycleStartDay = houseConfig.cycleStartDay || 1;
+
+      if (cycleStartDay === 1) {
+        return transactions.filter(t => t.monthKey === selectedMonthKey);
+      }
+
+      // Calculate Custom Date Range
+      const [year, month] = selectedMonthKey.split('-').map(Number);
+      const startDate = new Date(year, month - 1, cycleStartDay);
+      const endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
+
+      return transactions.filter(t => {
+        const txDate = new Date(t.date);
+        return txDate >= startDate && txDate <= endDate;
+      });
+    }
+
     function loadCurrentMonthData() {
-      const selectedMonth = document.getElementById('selectedMonth').value;
-      const monthTx = transactions.filter(t => t.monthKey === selectedMonth);
+      const monthTx = getTransactionsForCurrentCycle();
 
       let totalIncome = 0, totalExpenses = 0;
       let needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
@@ -583,6 +728,14 @@
       document.getElementById('totalExpensesDisplay').textContent = `₪${totalExpenses.toLocaleString()}`;
       document.getElementById('netBalanceDisplay').textContent = `₪${netBalance.toLocaleString()}`;
 
+      // Surplus Transfer Button
+      const surplusBtn = document.getElementById('transferSurplusBtn');
+      if (netBalance > 0 && houseConfig.savingsGoals.length > 0) {
+        surplusBtn.classList.remove('hidden');
+      } else {
+        surplusBtn.classList.add('hidden');
+      }
+
       document.getElementById('needsAmount').textContent = `₪${needsTotal.toLocaleString()}`;
       document.getElementById('wantsAmount').textContent = `₪${wantsTotal.toLocaleString()}`;
       document.getElementById('savingsAmount').textContent = `₪${savingsTotal.toLocaleString()}`;
@@ -591,32 +744,189 @@
       document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
       document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
+      renderBudgetCaps(catTotals);
+      renderSavingsGoals();
       renderCategoryChart(catTotals);
-      renderTransactionsTable();
+      renderTransactionsTable(monthTx);
     }
 
-    function renderTransactionsTable() {
-      const selectedMonth = document.getElementById('selectedMonth').value;
-      let list = transactions.filter(t => t.monthKey === selectedMonth);
+    function renderBudgetCaps(catTotals) {
+      const container = document.getElementById('budgetCapsContainer');
+      container.innerHTML = '';
 
+      const caps = houseConfig.caps || {};
+      const categoriesWithCaps = Object.keys(caps);
+
+      if (categoriesWithCaps.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-2 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
+            טרם הגדרתם תקרות תקציב. לחצו על "+ הגדר תקרת קטגוריה" כדי להתחיל.
+          </div>
+        `;
+        return;
+      }
+
+      categoriesWithCaps.forEach(cat => {
+        const cap = caps[cat];
+        const spent = catTotals[cat] || 0;
+        const remaining = cap - spent;
+        const pct = Math.min(100, Math.round((spent / cap) * 100));
+
+        let barColor = "bg-emerald-500";
+        let statusBadge = `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">תקין</span>`;
+
+        if (pct >= 100) {
+          barColor = "bg-rose-500";
+          statusBadge = `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded">חריגה!</span>`;
+        } else if (pct >= 75) {
+          barColor = "bg-amber-500";
+          statusBadge = `<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded">אזהרה</span>`;
+        }
+
+        const div = document.createElement('div');
+        div.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-slate-800">${cat}</span>
+            ${statusBadge}
+          </div>
+          <div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+            <div class="${barColor} h-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500 pt-1">
+            <span>נוצלו: <b>₪${spent.toLocaleString()}</b> מתוך ₪${cap.toLocaleString()}</span>
+            <span class="font-bold ${remaining < 0 ? 'text-rose-600' : 'text-slate-700'}">
+              ${remaining < 0 ? 'חריגה:' : 'נותר:'} ₪${Math.abs(remaining).toLocaleString()}
+            </span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function promptSetBudgetCap() {
+      const cat = prompt("הקלידי את שם הקטגוריה הראשית עבורה תרצי להגדיר תקרה (למשל: אוכל וקניות):");
+      if (!cat) return;
+
+      const amountStr = prompt(`הקלידי את תקרת התקציב החודשית ב-₪ עבור "${cat}":`);
+      const amount = parseFloat(amountStr);
+      if (isNaN(amount) || amount <= 0) return;
+
+      const updatedCaps = { ...houseConfig.caps, [cat]: amount };
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { caps: updatedCaps });
+    }
+
+    function renderSavingsGoals() {
+      const container = document.getElementById('savingsGoalsContainer');
+      container.innerHTML = '';
+
+      const goals = houseConfig.savingsGoals || [];
+
+      if (goals.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-3 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
+            אין יעדי חיסכון פעילים. לחצו על "+ יעד חיסכון חדש" כדי להגדיר יעד משותף!
+          </div>
+        `;
+        return;
+      }
+
+      goals.forEach((goal, idx) => {
+        const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+        const div = document.createElement('div');
+        div.className = "p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-3";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-slate-800">${goal.name}</span>
+            <span class="text-xs font-bold text-emerald-600">${pct}%</span>
+          </div>
+          <div class="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden">
+            <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-slate-600 font-semibold">
+            <span>נצבר: ₪${goal.saved.toLocaleString()}</span>
+            <span>יעד: ₪${goal.target.toLocaleString()}</span>
+          </div>
+          <button onclick="promptDepositToGoal(${idx})" class="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg transition shadow-sm">
+            + הפקד לקופה
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function promptCreateSavingsGoal() {
+      const name = prompt("שם קופת החיסכון (למשל: טיסה לחו\"ל, קרן חירום):");
+      if (!name) return;
+
+      const targetStr = prompt("סכום היעד בש\"ח:");
+      const target = parseFloat(targetStr);
+      if (isNaN(target) || target <= 0) return;
+
+      const newGoal = { name, target, saved: 0 };
+      const updatedGoals = [...(houseConfig.savingsGoals || []), newGoal];
+      
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
+    }
+
+    async function promptDepositToGoal(idx) {
+      const amountStr = prompt(`כמה תרצו להפקיד לקופת "${houseConfig.savingsGoals[idx].name}"?`);
+      const amount = parseFloat(amountStr);
+      if (isNaN(amount) || amount <= 0) return;
+
+      const updatedGoals = [...houseConfig.savingsGoals];
+      updatedGoals[idx].saved += amount;
+
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
+    }
+
+    async function transferSurplusToSavings() {
+      if (!houseConfig.savingsGoals || houseConfig.savingsGoals.length === 0) return;
+
+      const goalNames = houseConfig.savingsGoals.map((g, i) => `${i + 1}. ${g.name}`).join("\n");
+      const choiceStr = prompt(`בחר את קופת החיסכון אליה תרצה להעביר את העודף החודשי:\n${goalNames}\n\nהקלידו את מספר הקופה (למשל 1):`);
+      const choice = parseInt(choiceStr) - 1;
+
+      if (isNaN(choice) || choice < 0 || choice >= houseConfig.savingsGoals.length) return;
+
+      const monthTx = getTransactionsForCurrentCycle();
+      let totalInc = 0, totalExp = 0;
+      monthTx.forEach(t => { t.type === 'income' ? totalInc += t.amount : totalExp += t.amount; });
+      const surplus = totalInc - totalExp;
+
+      if (surplus <= 0) return;
+
+      const updatedGoals = [...houseConfig.savingsGoals];
+      updatedGoals[choice].saved += surplus;
+
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
+
+      alert(`העודף החודשי בסך ₪${surplus.toLocaleString()} הועבר בהצלחה לקופת "${updatedGoals[choice].name}"!`);
+    }
+
+    function renderTransactionsTable(monthTx) {
       const tbody = document.getElementById('transactionsTableBody');
       tbody.innerHTML = '';
 
-      if (list.length === 0) {
+      if (monthTx.length === 0) {
         document.getElementById('emptyTableMessage').classList.remove('hidden');
         return;
       }
       document.getElementById('emptyTableMessage').classList.add('hidden');
 
-      list.sort((a, b) => new Date(b.date) - new Date(a.date));
+      monthTx.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      list.forEach(t => {
+      monthTx.forEach(t => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
         const isExpense = t.type === 'expense';
         tr.innerHTML = `
-          <td class="p-3 text-slate-600">${t.date}</td>
-          <td class="p-3">${isExpense ? 'הוצאה' : 'הכנסה'}</td>
+          <td class="p-3 text-slate-600 font-mono">${t.date}</td>
+          <td class="p-3 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
           <td class="p-3 font-semibold">${t.mainCategory}</td>
           <td class="p-3">${t.subCategory}</td>
           <td class="p-3">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
