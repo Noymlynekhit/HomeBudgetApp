@@ -20,6 +20,65 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col pb-12">
 
+  <!-- First-Time Onboarding / Tutorial Modal -->
+  <div id="tutorialModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
+      
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
+          🏡
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-800">מאזן הבית שלנו</h2>
+        <p class="text-xs text-slate-500">כך נשתמש באפליקציה המשותפת בקלות וביעילות:</p>
+      </div>
+
+      <div class="space-y-4 text-xs leading-relaxed text-slate-700">
+        
+        <!-- Step 1 -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 items-start">
+          <div class="p-2 bg-blue-100 text-blue-600 rounded-xl text-base">🗓️</div>
+          <div>
+            <h4 class="font-extrabold text-slate-800 text-sm mb-0.5">הגדרת מחזור התקציב</h4>
+            <p>בפעם הראשונה בוחרים מתי מתחיל החודש שלכם (למשל ב-10 לחודש, יום המשכורת). המערכת תתאים את עצמה אוטומטית!</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 items-start">
+          <div class="p-2 bg-amber-100 text-amber-600 rounded-xl text-base">🎯</div>
+          <div>
+            <h4 class="font-extrabold text-slate-800 text-sm mb-0.5">תקרות תקציב חכמות</h4>
+            <p>קובעים תקציב חודשי לקטגוריות (כמו סופרמרקט). המערכת תראה לכם בדיוק כמה נשאר לבזבז, ותתריע כשתתקרבו לתקרה.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 items-start">
+          <div class="p-2 bg-rose-100 text-rose-600 rounded-xl text-base">🐷</div>
+          <div>
+            <h4 class="font-extrabold text-slate-800 text-sm mb-0.5">קופות ויעדי חיסכון</h4>
+            <p>מגדירים יעד (כמו חופשה או קרן חירום) ומעדכנים כשחוסכים. בסוף חודש, תוכלו להעביר את העודף שנשאר ישירות לקופה!</p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 items-start">
+          <div class="p-2 bg-emerald-100 text-emerald-600 rounded-xl text-base">🔄</div>
+          <div>
+            <h4 class="font-extrabold text-slate-800 text-sm mb-0.5">הוראות קבע ומנויים</h4>
+            <p>להוצאות קבועות (כמו שכירות, מנויים, ארנונה) מסמנים 'הוראת קבע' והיא תתווסף לבד בכל חודש. אפשר גם לקבוע לה תאריך סיום!</p>
+          </div>
+        </div>
+
+      </div>
+
+      <button onclick="closeTutorialModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition shadow-lg shadow-indigo-200 text-sm flex items-center justify-center gap-2">
+        <span>שיהיה לנו בהצלחה! 💪</span>
+      </button>
+
+    </div>
+  </div>
+
   <!-- Alert Modal for Budget Cap Warnings -->
   <div id="budgetAlertModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 border border-rose-100">
@@ -98,8 +157,13 @@
           <i class="fa-solid fa-scale-balanced text-2xl text-amber-300"></i>
         </div>
         <div>
-          <h1 class="text-xl md:text-2xl font-bold tracking-tight">ניהול תקציב ומאזן ביתי</h1>
-          <div class="flex items-center gap-2 text-xs text-indigo-200">
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">ניהול תקציב ומאזן ביתי</h1>
+            <button onclick="openTutorialModal()" title="מדריך שימוש באפליקציה" class="bg-indigo-600 hover:bg-indigo-500 text-amber-300 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm border border-indigo-400">
+              ?
+            </button>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-indigo-200 mt-0.5">
             <span>קוד בית:</span>
             <span id="activeHouseCodeDisplay" class="bg-indigo-800 px-2 py-0.5 rounded font-mono font-bold text-amber-300"></span>
             <button onclick="switchHouseCode()" class="underline hover:text-white text-[11px]">(החלף)</button>
@@ -453,6 +517,14 @@
       populateMainCategorySelect();
     });
 
+    function openTutorialModal() {
+      document.getElementById('tutorialModal').classList.remove('hidden');
+    }
+
+    function closeTutorialModal() {
+      document.getElementById('tutorialModal').classList.add('hidden');
+    }
+
     function switchAuthTab(tab) {
       const isLogin = tab === 'login';
       document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
@@ -487,7 +559,7 @@
         return;
       }
 
-      loginToHouse(codeInput);
+      loginToHouse(codeInput, false);
     }
 
     async function handleHouseRegister(e) {
@@ -516,14 +588,19 @@
         savingsGoals: []
       });
 
-      loginToHouse(newCodeInput);
+      loginToHouse(newCodeInput, true);
     }
 
-    function loginToHouse(code) {
+    function loginToHouse(code, isNewUser = false) {
       activeHouseCode = code;
       localStorage.setItem('budget_house_code', activeHouseCode);
       document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
       document.getElementById('loginOverlay').classList.add('hidden');
+      
+      if (isNewUser) {
+        openTutorialModal();
+      }
+
       initRealtimeSync();
     }
 
@@ -541,7 +618,6 @@
       if (unsubscribeFirestore) unsubscribeFirestore();
       if (unsubscribeConfig) unsubscribeConfig();
 
-      // Listen to House Settings & Config
       const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
       unsubscribeConfig = window.onSnapshot(houseRef, (snap) => {
         if (snap.exists()) {
@@ -552,7 +628,6 @@
         }
       });
 
-      // Listen to Transactions
       const q = window.query(
         window.collection(window.db, "house_transactions"),
         window.where("houseCode", "==", activeHouseCode)
@@ -637,7 +712,6 @@
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
 
-      // Check Budget Cap Warning
       if (currentTransactionType === 'expense' && houseConfig.caps[mainCat]) {
         checkBudgetCapWarning(mainCat, amount);
       }
@@ -680,14 +754,13 @@
     }
 
     function getTransactionsForCurrentCycle() {
-      const selectedMonthKey = document.getElementById('selectedMonth').value; // e.g. "2026-10"
+      const selectedMonthKey = document.getElementById('selectedMonth').value;
       const cycleStartDay = houseConfig.cycleStartDay || 1;
 
       if (cycleStartDay === 1) {
         return transactions.filter(t => t.monthKey === selectedMonthKey);
       }
 
-      // Calculate Custom Date Range
       const [year, month] = selectedMonthKey.split('-').map(Number);
       const startDate = new Date(year, month - 1, cycleStartDay);
       const endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
@@ -728,7 +801,6 @@
       document.getElementById('totalExpensesDisplay').textContent = `₪${totalExpenses.toLocaleString()}`;
       document.getElementById('netBalanceDisplay').textContent = `₪${netBalance.toLocaleString()}`;
 
-      // Surplus Transfer Button
       const surplusBtn = document.getElementById('transferSurplusBtn');
       if (netBalance > 0 && houseConfig.savingsGoals.length > 0) {
         surplusBtn.classList.remove('hidden');
