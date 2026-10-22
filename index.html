@@ -61,6 +61,51 @@
     </div>
   </div>
 
+  <!-- Categories Manager Modal -->
+  <div id="categoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות ותת-קטגוריות</h3>
+        <button onclick="closeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+
+      <!-- Add Main Category -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-700">הוספת קטגוריה ראשית חדשה (להוצאות)</label>
+        <div class="flex gap-2">
+          <input type="text" id="newMainCategoryInput" placeholder="שם הקטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <button onclick="addCustomMainCategory()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+            הוסף ראשית
+          </button>
+        </div>
+      </div>
+
+      <!-- Add Sub Category -->
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה לקטגוריה קיימת</label>
+        <select id="targetMainCategorySelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 mb-2 focus:outline-none"></select>
+        <div class="flex gap-2">
+          <input type="text" id="newSubCategoryInput" placeholder="שם תת-הקטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <button onclick="addCustomSubCategory()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+            הוסף תת-קטגוריה
+          </button>
+        </div>
+      </div>
+
+      <!-- List of existing categories -->
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <label class="block text-xs font-bold text-slate-700">הקטגוריות הקיימות בבית שלך:</label>
+        <div id="categoriesListManager" class="space-y-2 max-h-48 overflow-y-auto">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <button onclick="closeCategoriesModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition text-xs">
+        סגור ושמור
+      </button>
+    </div>
+  </div>
+
   <!-- First-Time Onboarding / Tutorial Modal -->
   <div id="tutorialModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
@@ -386,16 +431,23 @@
             </select>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
-              <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-              </select>
+          <!-- Categories Fields with Manage Button -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <label class="block text-xs font-semibold text-slate-600">קטגוריות ותת-קטגוריות</label>
+              <button type="button" onclick="openCategoriesModal()" class="text-[11px] text-indigo-600 font-bold hover:underline">
+                ⚙️ ניהול קטגוריות
+              </button>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">תת-קטגוריה</label>
-              <select id="subCategory" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-              </select>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </select>
+              </div>
+              <div>
+                <select id="subCategory" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </select>
+              </div>
             </div>
           </div>
 
@@ -556,33 +608,41 @@
   </script>
 
   <script>
+    const APP_VERSION = "1.0.2";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
-    let houseConfig = { cycleStartDay: 1, caps: {}, savingsGoals: [], paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"] };
+    
+    const DEFAULT_CATEGORIES = {
+      "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
+      "ביטוחים ואחריות": ["רכב - חובה", "רכב - מקיף", "בריאות פרטי", "ביטוח דירה - נכס", "אחר"],
+      "בריאות": ["קופ\"ח - תשלום חודשי", "תרופות", "משקפיים / מדרסים", "אחר"],
+      "תחבורה": ["דלק", "חניה", "תחבורה ציבורית", "תיקונים", "אחר"],
+      "תקשורת": ["טלפון נייד", "אינטרנט", "שירותי טלוויזיה / סטרימינג", "אחר"],
+      "אוכל וקניות": ["סופרמרקט", "ירקן / מאפייה / קצב", "מסעדות ובתי קפה", "הזמנת אוכל", "אחר"],
+      "פנאי ושונות": ["אטרקציות ובילויים", "מתנות", "בגדים", "בעלי חיים", "אחר"]
+    };
+
+    const DEFAULT_INCOME_CATEGORIES = {
+      "הכנסות מעבודה": ["משכורת #1", "משכורת #2"],
+      "קצבאות ומענקים": ["קצבת ביטוח לאומי", "מענק חד פעמי"]
+    };
+
+    let houseConfig = { 
+      cycleStartDay: 1, 
+      caps: {}, 
+      savingsGoals: [], 
+      paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
+      categories: DEFAULT_CATEGORIES
+    };
+
     let transactions = [];
     let currentTransactionType = 'expense';
     let categoryChartInstance = null;
     let unsubscribeFirestore = null;
     let unsubscribeConfig = null;
 
-    const DEFAULT_CATEGORIES = {
-      expenses: {
-        "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
-        "ביטוחים ואחריות": ["רכב - חובה", "רכב - מקיף", "בריאות פרטי", "ביטוח דירה - נכס", "אחר"],
-        "בריאות": ["קופ\"ח - תשלום חודשי", "תרופות", "משקפיים / מדרסים", "אחר"],
-        "תחבורה": ["דלק", "חניה", "תחבורה ציבורית", "תיקונים", "אחר"],
-        "תקשורת": ["טלפון נייד", "אינטרנט", "שירותי טלוויזיה / סטרימינג", "אחר"],
-        "אוכל וקניות": ["סופרמרקט", "ירקן / מאפייה / קצב", "מסעדות ובתי קפה", "הזמנת אוכל", "אחר"],
-        "פנאי ושונות": ["אטרקציות ובילויים", "מתנות", "בגדים", "בעלי חיים", "אחר"]
-      },
-      income: {
-        "הכנסות מעבודה": ["משכורת #1", "משכורת #2"],
-        "קצבאות ומענקים": ["קצבת ביטוח לאומי", "מענק חד פעמי"]
-      }
-    };
-
-    let categories = DEFAULT_CATEGORIES;
-
     window.addEventListener('DOMContentLoaded', () => {
+      checkAppVersion();
+
       const today = new Date();
       document.getElementById('selectedMonth').value = today.toISOString().slice(0, 7);
       document.getElementById('transactionDate').valueAsDate = today;
@@ -594,6 +654,21 @@
       }
       populateMainCategorySelect();
     });
+
+    // Silent Version Check
+    async function checkAppVersion() {
+      try {
+        const savedVersion = localStorage.getItem('app_version');
+        if (savedVersion && savedVersion !== APP_VERSION) {
+          localStorage.setItem('app_version', APP_VERSION);
+          window.location.reload(true);
+        } else {
+          localStorage.setItem('app_version', APP_VERSION);
+        }
+      } catch (err) {
+        console.log("Version check skipped:", err);
+      }
+    }
 
     function switchMainTab(tab) {
       document.getElementById('tabContentOverview').classList.toggle('hidden', tab !== 'overview');
@@ -620,6 +695,16 @@
 
     function closePaymentMethodsModal() {
       document.getElementById('paymentMethodsModal').classList.add('hidden');
+    }
+
+    function openCategoriesModal() {
+      renderCategoriesManager();
+      document.getElementById('categoriesModal').classList.remove('hidden');
+    }
+
+    function closeCategoriesModal() {
+      document.getElementById('categoriesModal').classList.add('hidden');
+      populateMainCategorySelect();
     }
 
     function switchAuthTab(tab) {
@@ -683,7 +768,8 @@
         cycleStartDay: cycleStartDay,
         caps: {},
         savingsGoals: [],
-        paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"]
+        paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
+        categories: DEFAULT_CATEGORIES
       });
 
       loginToHouse(newCodeInput, true);
@@ -725,7 +811,11 @@
           if (!houseConfig.paymentMethods || houseConfig.paymentMethods.length === 0) {
             houseConfig.paymentMethods = ["אשראי", "מזומן / העברה", "הוראת קבע"];
           }
+          if (!houseConfig.categories || Object.keys(houseConfig.categories).length === 0) {
+            houseConfig.categories = DEFAULT_CATEGORIES;
+          }
           populatePaymentMethodSelect();
+          populateMainCategorySelect();
           loadCurrentMonthData();
         }
       });
@@ -800,6 +890,98 @@
       renderPaymentMethodsManager();
     }
 
+    // Categories Management Functions
+    function renderCategoriesManager() {
+      const listDiv = document.getElementById('categoriesListManager');
+      const targetSelect = document.getElementById('targetMainCategorySelect');
+      listDiv.innerHTML = '';
+      targetSelect.innerHTML = '';
+
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+
+      Object.keys(cats).forEach((mainCat, mIdx) => {
+        const subs = cats[mainCat] || [];
+        
+        // Populate target select for adding subcats
+        const opt = document.createElement('option');
+        opt.value = mainCat;
+        opt.textContent = mainCat;
+        targetSelect.appendChild(opt);
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2";
+        card.innerHTML = `
+          <div class="flex justify-between items-center font-bold text-indigo-900 border-b border-slate-200 pb-1">
+            <span>📁 ${mainCat}</span>
+            <button onclick="removeMainCategory('${mainCat}')" class="text-rose-500 hover:text-rose-700">מחק קטגוריה</button>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            ${subs.map((sub, sIdx) => `
+              <span class="bg-white border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px]">
+                ${sub}
+                <button onclick="removeSubCategory('${mainCat}', ${sIdx})" class="text-rose-400 hover:text-rose-600 font-bold">&times;</button>
+              </span>
+            `).join('')}
+          </div>
+        `;
+        listDiv.appendChild(card);
+      });
+    }
+
+    async function addCustomMainCategory() {
+      const input = document.getElementById('newMainCategoryInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (cats[val]) return;
+
+      cats[val] = ["אחר"];
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { categories: cats });
+
+      input.value = '';
+      renderCategoriesManager();
+    }
+
+    async function removeMainCategory(mainCat) {
+      if (confirm(`למחוק את הקטגוריה "${mainCat}" וכל תת-הקטגוריות שלה?`)) {
+        const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+        delete cats[mainCat];
+        const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+        await window.updateDoc(houseRef, { categories: cats });
+        renderCategoriesManager();
+      }
+    }
+
+    async function addCustomSubCategory() {
+      const mainCat = document.getElementById('targetMainCategorySelect').value;
+      const input = document.getElementById('newSubCategoryInput');
+      const val = input.value.trim();
+      if (!mainCat || !val) return;
+
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (!cats[mainCat]) cats[mainCat] = [];
+      if (cats[mainCat].includes(val)) return;
+
+      cats[mainCat].push(val);
+      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+      await window.updateDoc(houseRef, { categories: cats });
+
+      input.value = '';
+      renderCategoriesManager();
+    }
+
+    async function removeSubCategory(mainCat, sIdx) {
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (cats[mainCat]) {
+        cats[mainCat].splice(sIdx, 1);
+        const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
+        await window.updateDoc(houseRef, { categories: cats });
+        renderCategoriesManager();
+      }
+    }
+
     function toggleRecurringOptions() {
       const isChecked = document.getElementById('isRecurringInput').checked;
       document.getElementById('recurringDetails').classList.toggle('hidden', !isChecked);
@@ -816,7 +998,11 @@
     function populateMainCategorySelect() {
       const mainSelect = document.getElementById('mainCategory');
       mainSelect.innerHTML = '';
-      const group = currentTransactionType === 'expense' ? categories.expenses : categories.income;
+      
+      const group = currentTransactionType === 'expense' 
+        ? (houseConfig.categories || DEFAULT_CATEGORIES) 
+        : DEFAULT_INCOME_CATEGORIES;
+
       Object.keys(group).forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
@@ -830,7 +1016,11 @@
       const mainCat = document.getElementById('mainCategory').value;
       const subSelect = document.getElementById('subCategory');
       subSelect.innerHTML = '';
-      const group = currentTransactionType === 'expense' ? categories.expenses : categories.income;
+      
+      const group = currentTransactionType === 'expense' 
+        ? (houseConfig.categories || DEFAULT_CATEGORIES) 
+        : DEFAULT_INCOME_CATEGORIES;
+
       (group[mainCat] || []).forEach(sub => {
         const opt = document.createElement('option');
         opt.value = sub;
