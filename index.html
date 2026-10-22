@@ -30,6 +30,14 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col pb-12">
 
+  <!-- Update Banner (Hidden by default, shows if version changes) -->
+  <div id="updateBanner" class="bg-amber-500 text-slate-900 px-4 py-2.5 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
+    <span>🚀 יש גרסה חדשה ועדכנית לאפליקציה!</span>
+    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-amber-400 px-3 py-1 rounded-lg hover:bg-slate-800 transition shadow-sm">
+      עדכן עכשיו 🔄
+    </button>
+  </div>
+
   <!-- Payment Methods Manager Modal -->
   <div id="paymentMethodsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100">
@@ -608,7 +616,8 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.0.2";
+    // 🔔 כאן מעדכנים את מספר הגרסה בכל פעם שרוצים שיופיע באנר עדכון למשתמשים
+    const APP_VERSION = "1.0.3";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -641,7 +650,7 @@
     let unsubscribeConfig = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-      checkAppVersion();
+      checkAppVersionBanner();
 
       const today = new Date();
       document.getElementById('selectedMonth').value = today.toISOString().slice(0, 7);
@@ -655,19 +664,20 @@
       populateMainCategorySelect();
     });
 
-    // Silent Version Check
-    async function checkAppVersion() {
-      try {
-        const savedVersion = localStorage.getItem('app_version');
-        if (savedVersion && savedVersion !== APP_VERSION) {
-          localStorage.setItem('app_version', APP_VERSION);
-          window.location.reload(true);
-        } else {
-          localStorage.setItem('app_version', APP_VERSION);
-        }
-      } catch (err) {
-        console.log("Version check skipped:", err);
+    // Version Banner Check
+    function checkAppVersionBanner() {
+      const savedVersion = localStorage.getItem('app_user_version');
+      if (!savedVersion) {
+        localStorage.setItem('app_user_version', APP_VERSION);
+      } else if (savedVersion !== APP_VERSION) {
+        // Show update banner if versions don't match
+        document.getElementById('updateBanner').classList.remove('hidden');
       }
+    }
+
+    function triggerAppUpdate() {
+      localStorage.setItem('app_user_version', APP_VERSION);
+      window.location.reload(true);
     }
 
     function switchMainTab(tab) {
@@ -902,7 +912,6 @@
       Object.keys(cats).forEach((mainCat, mIdx) => {
         const subs = cats[mainCat] || [];
         
-        // Populate target select for adding subcats
         const opt = document.createElement('option');
         opt.value = mainCat;
         opt.textContent = mainCat;
