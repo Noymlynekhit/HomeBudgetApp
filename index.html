@@ -518,7 +518,7 @@
     <!-- TAB 3: REPORTS & HISTORY -->
     <div id="tabContentReports" class="hidden space-y-6">
       
-      <!-- Report Selector Tabs (Clean Selection so not everything shows at once) -->
+      <!-- Report Selector Tabs (Clean Selection) -->
       <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
         <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">
           📊 פילוח קטגוריות
@@ -550,15 +550,21 @@
         </div>
       </section>
 
-      <!-- REPORT VIEW 2: Trend Comparison Line Chart -->
+      <!-- REPORT VIEW 2: Trend Comparison Line Chart (With Quarterly / Yearly Selector) -->
       <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
-        <div class="flex justify-between items-center flex-wrap gap-2">
+        <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
           <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-chart-line text-indigo-600"></i>
-              השוואת הוצאות לאורך זמן (מגמה רב-חודשית)
+              השוואת מגמות לאורך זמן
             </h2>
-            <p class="text-xs text-slate-500">מעקב רציף אחרי ההוצאות וההכנסות בחודשים האחרונים</p>
+            <p class="text-xs text-slate-500">מעקב רציף אחרי ההוצאות וההכנסות בטווחים לבחירתך</p>
+          </div>
+          <!-- Range Picker inside Trend View -->
+          <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <button id="trendRangeMonthly" onclick="setTrendRange('monthly')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition">חודשי (6 אחרונים)</button>
+            <button id="trendRangeQuarterly" onclick="setTrendRange('quarterly')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">רבעוני</button>
+            <button id="trendRangeYearly" onclick="setTrendRange('yearly')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">שנתי</button>
           </div>
         </div>
         <div class="relative h-72 w-full flex items-center justify-center">
@@ -658,9 +664,10 @@
   </script>
 
   <script>
-    // 🔔 גרסה 1.0.5 הכוללת את תפריט הדוחות ובחירת הגרפים החכמים
-    const APP_VERSION = "1.0.5";
+    // 🔔 גרסה 1.0.6 - כוללת אפשרות בחירה מלאה לטווח זמן בגרף המגמות (חודשי / רבעוני / שנתי)
+    const APP_VERSION = "1.0.6";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
+    let currentTrendRange = 'monthly'; // 'monthly', 'quarterly', 'yearly'
     
     const DEFAULT_CATEGORIES = {
       "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
@@ -707,7 +714,6 @@
       populateMainCategorySelect();
     });
 
-    // Version Banner Check
     function checkAppVersionBanner() {
       const savedVersion = localStorage.getItem('app_user_version');
       if (!savedVersion) {
@@ -732,7 +738,6 @@
       document.getElementById('mainTabReports').className = tab === 'reports' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
     }
 
-    // Switch between Sub-reports
     function switchReportSubTab(subTab) {
       document.getElementById('reportViewCategory').classList.toggle('hidden', subTab !== 'category');
       document.getElementById('reportViewTrend').classList.toggle('hidden', subTab !== 'trend');
@@ -747,67 +752,43 @@
       }
     }
 
-    function openTutorialModal() {
-      document.getElementById('tutorialModal').classList.remove('hidden');
+    function setTrendRange(range) {
+      currentTrendRange = range;
+      document.getElementById('trendRangeMonthly').className = range === 'monthly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
+      document.getElementById('trendRangeQuarterly').className = range === 'quarterly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
+      document.getElementById('trendRangeYearly').className = range === 'yearly' ? 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition' : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition';
+      renderTrendChart();
     }
 
-    function closeTutorialModal() {
-      document.getElementById('tutorialModal').classList.add('hidden');
-    }
-
-    function openPaymentMethodsModal() {
-      renderPaymentMethodsManager();
-      document.getElementById('paymentMethodsModal').classList.remove('hidden');
-    }
-
-    function closePaymentMethodsModal() {
-      document.getElementById('paymentMethodsModal').classList.add('hidden');
-    }
-
-    function openCategoriesModal() {
-      renderCategoriesManager();
-      document.getElementById('categoriesModal').classList.remove('hidden');
-    }
-
-    function closeCategoriesModal() {
-      document.getElementById('categoriesModal').classList.add('hidden');
-      populateMainCategorySelect();
-    }
+    function openTutorialModal() { document.getElementById('tutorialModal').classList.remove('hidden'); }
+    function closeTutorialModal() { document.getElementById('tutorialModal').classList.add('hidden'); }
+    function openPaymentMethodsModal() { renderPaymentMethodsManager(); document.getElementById('paymentMethodsModal').classList.remove('hidden'); }
+    function closePaymentMethodsModal() { document.getElementById('paymentMethodsModal').classList.add('hidden'); }
+    function openCategoriesModal() { renderCategoriesManager(); document.getElementById('categoriesModal').classList.remove('hidden'); }
+    function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
 
     function switchAuthTab(tab) {
       const isLogin = tab === 'login';
       document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
       document.getElementById('registerForm').classList.toggle('hidden', isLogin);
-
       document.getElementById('tabLoginBtn').className = isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-600" : "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800";
       document.getElementById('tabRegisterBtn').className = !isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600" : "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800";
-      
       showAuthError("");
     }
 
     function showAuthError(msg) {
       const errDiv = document.getElementById('authErrorMsg');
-      if (msg) {
-        errDiv.textContent = msg;
-        errDiv.classList.remove('hidden');
-      } else {
-        errDiv.classList.add('hidden');
-      }
+      if (msg) { errDiv.textContent = msg; errDiv.classList.remove('hidden'); }
+      else { errDiv.classList.add('hidden'); }
     }
 
     async function handleHouseLogin(e) {
       e.preventDefault();
       const codeInput = document.getElementById('houseCodeInput').value.trim().toLowerCase();
       if (!codeInput) return;
-
       const houseRef = window.doc(window.db, "registered_houses", codeInput);
       const houseSnap = await window.getDoc(houseRef);
-
-      if (!houseSnap.exists()) {
-        showAuthError("שם הבית לא נמצא. צרו בית חדש בלשונית 'יצירת בית חדש'.");
-        return;
-      }
-
+      if (!houseSnap.exists()) { showAuthError("שם הבית לא נמצא. צרו בית חדש בלשונית 'יצירת בית חדש'."); return; }
       loginToHouse(codeInput, false);
     }
 
@@ -815,20 +796,10 @@
       e.preventDefault();
       const newCodeInput = document.getElementById('newHouseCodeInput').value.trim().toLowerCase();
       const cycleStartDay = parseInt(document.getElementById('cycleStartDayInput').value) || 1;
-
-      if (!newCodeInput || newCodeInput.length < 3) {
-        showAuthError("שם הבית חייב להכיל לפחות 3 תווים.");
-        return;
-      }
-
+      if (!newCodeInput || newCodeInput.length < 3) { showAuthError("שם הבית חייב להכיל לפחות 3 תווים."); return; }
       const houseRef = window.doc(window.db, "registered_houses", newCodeInput);
       const houseSnap = await window.getDoc(houseRef);
-
-      if (houseSnap.exists()) {
-        showAuthError("שם הבית הזה כבר תפוס! בחרו שם ייחודי אחר.");
-        return;
-      }
-
+      if (houseSnap.exists()) { showAuthError("שם הבית הזה כבר תפוס! בחרו שם ייחודי אחר."); return; }
       await window.setDoc(houseRef, {
         createdAt: new Date().toISOString(),
         houseCode: newCodeInput,
@@ -838,7 +809,6 @@
         paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
         categories: DEFAULT_CATEGORIES
       });
-
       loginToHouse(newCodeInput, true);
     }
 
@@ -847,25 +817,14 @@
       localStorage.setItem('budget_house_code', activeHouseCode);
       document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
       document.getElementById('loginOverlay').classList.add('hidden');
-      
-      if (isNewUser) {
-        openTutorialModal();
-      }
-
+      if (isNewUser) { openTutorialModal(); }
       initRealtimeSync();
     }
 
-    function switchHouseCode() {
-      localStorage.removeItem('budget_house_code');
-      location.reload();
-    }
+    function switchHouseCode() { localStorage.removeItem('budget_house_code'); location.reload(); }
 
     function initRealtimeSync() {
-      if (!window.db) {
-        setTimeout(initRealtimeSync, 300);
-        return;
-      }
-
+      if (!window.db) { setTimeout(initRealtimeSync, 300); return; }
       if (unsubscribeFirestore) unsubscribeFirestore();
       if (unsubscribeConfig) unsubscribeConfig();
 
@@ -887,16 +846,10 @@
         }
       });
 
-      const q = window.query(
-        window.collection(window.db, "house_transactions"),
-        window.where("houseCode", "==", activeHouseCode)
-      );
-
+      const q = window.query(window.collection(window.db, "house_transactions"), window.where("houseCode", "==", activeHouseCode));
       unsubscribeFirestore = window.onSnapshot(q, (snapshot) => {
         transactions = [];
-        snapshot.forEach((doc) => {
-          transactions.push({ id: doc.id, ...doc.data() });
-        });
+        snapshot.forEach((doc) => { transactions.push({ id: doc.id, ...doc.data() }); });
         loadCurrentMonthData();
       });
     }
@@ -904,152 +857,84 @@
     function populatePaymentMethodSelect() {
       const select = document.getElementById('paymentMethod');
       select.innerHTML = '';
-      const methods = houseConfig.paymentMethods || ["אשראי", "מזומן / העברה", "הוראת קבע"];
-      methods.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        select.appendChild(opt);
+      (houseConfig.paymentMethods || ["אשראי", "מזומן / העברה", "הוראת קבע"]).forEach(m => {
+        const opt = document.createElement('option'); opt.value = m; opt.textContent = m; select.appendChild(opt);
       });
     }
 
     function renderPaymentMethodsManager() {
-      const listDiv = document.getElementById('paymentMethodsList');
-      listDiv.innerHTML = '';
-      const methods = houseConfig.paymentMethods || [];
-
-      methods.forEach((m, idx) => {
+      const listDiv = document.getElementById('paymentMethodsList'); listDiv.innerHTML = '';
+      (houseConfig.paymentMethods || []).forEach((m, idx) => {
         const item = document.createElement('div');
         item.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs";
-        item.innerHTML = `
-          <span class="font-bold text-slate-700">${m}</span>
-          <button onclick="removePaymentMethod(${idx})" class="text-rose-500 hover:text-rose-700 font-bold px-1.5">
-            <i class="fa-regular fa-trash-can"></i>
-          </button>
-        `;
+        item.innerHTML = `<span class="font-bold text-slate-700">${m}</span><button onclick="removePaymentMethod(${idx})" class="text-rose-500 hover:text-rose-700 font-bold px-1.5"><i class="fa-regular fa-trash-can"></i></button>`;
         listDiv.appendChild(item);
       });
     }
 
     async function addCustomPaymentMethod() {
-      const input = document.getElementById('newPaymentMethodInput');
-      const val = input.value.trim();
-      if (!val) return;
-
-      const currentMethods = houseConfig.paymentMethods || [];
-      if (currentMethods.includes(val)) return;
-
+      const input = document.getElementById('newPaymentMethodInput'); const val = input.value.trim(); if (!val) return;
+      const currentMethods = houseConfig.paymentMethods || []; if (currentMethods.includes(val)) return;
       const updatedMethods = [...currentMethods, val];
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { paymentMethods: updatedMethods });
-
-      input.value = '';
-      renderPaymentMethodsManager();
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { paymentMethods: updatedMethods });
+      input.value = ''; renderPaymentMethodsManager();
     }
 
     async function removePaymentMethod(idx) {
-      const currentMethods = [...(houseConfig.paymentMethods || [])];
-      currentMethods.splice(idx, 1);
-
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { paymentMethods: currentMethods });
-
+      const currentMethods = [...(houseConfig.paymentMethods || [])]; currentMethods.splice(idx, 1);
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { paymentMethods: currentMethods });
       renderPaymentMethodsManager();
     }
 
     function renderCategoriesManager() {
-      const listDiv = document.getElementById('categoriesListManager');
-      const targetSelect = document.getElementById('targetMainCategorySelect');
-      listDiv.innerHTML = '';
-      targetSelect.innerHTML = '';
-
+      const listDiv = document.getElementById('categoriesListManager'); const targetSelect = document.getElementById('targetMainCategorySelect');
+      listDiv.innerHTML = ''; targetSelect.innerHTML = '';
       const cats = houseConfig.categories || DEFAULT_CATEGORIES;
-
       Object.keys(cats).forEach((mainCat) => {
         const subs = cats[mainCat] || [];
-        
-        const opt = document.createElement('option');
-        opt.value = mainCat;
-        opt.textContent = mainCat;
-        targetSelect.appendChild(opt);
-
+        const opt = document.createElement('option'); opt.value = mainCat; opt.textContent = mainCat; targetSelect.appendChild(opt);
         const card = document.createElement('div');
         card.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2";
-        card.innerHTML = `
-          <div class="flex justify-between items-center font-bold text-indigo-900 border-b border-slate-200 pb-1">
-            <span>📁 ${mainCat}</span>
-            <button onclick="removeMainCategory('${mainCat}')" class="text-rose-500 hover:text-rose-700">מחק קטגוריה</button>
-          </div>
-          <div class="flex flex-wrap gap-1">
-            ${subs.map((sub, sIdx) => `
-              <span class="bg-white border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px]">
-                ${sub}
-                <button onclick="removeSubCategory('${mainCat}', ${sIdx})" class="text-rose-400 hover:text-rose-600 font-bold">&times;</button>
-              </span>
-            `).join('')}
-          </div>
-        `;
+        card.innerHTML = `<div class="flex justify-between items-center font-bold text-indigo-900 border-b border-slate-200 pb-1"><span>📁 ${mainCat}</span><button onclick="removeMainCategory('${mainCat}')" class="text-rose-500 hover:text-rose-700">מחק קטגוריה</button></div><div class="flex flex-wrap gap-1">${subs.map((sub, sIdx) => `<span class="bg-white border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px]">${sub}<button onclick="removeSubCategory('${mainCat}', ${sIdx})" class="text-rose-400 hover:text-rose-600 font-bold">&times;</button></span>`).join('')}</div>`;
         listDiv.appendChild(card);
       });
     }
 
     async function addCustomMainCategory() {
-      const input = document.getElementById('newMainCategoryInput');
-      const val = input.value.trim();
-      if (!val) return;
-
-      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
-      if (cats[val]) return;
-
+      const input = document.getElementById('newMainCategoryInput'); const val = input.value.trim(); if (!val) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; if (cats[val]) return;
       cats[val] = ["אחר"];
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { categories: cats });
-
-      input.value = '';
-      renderCategoriesManager();
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      input.value = ''; renderCategoriesManager();
     }
 
     async function removeMainCategory(mainCat) {
       if (confirm(`למחוק את הקטגוריה "${mainCat}" וכל תת-הקטגוריות שלה?`)) {
-        const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
-        delete cats[mainCat];
-        const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-        await window.updateDoc(houseRef, { categories: cats });
+        const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; delete cats[mainCat];
+        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
         renderCategoriesManager();
       }
     }
 
     async function addCustomSubCategory() {
-      const mainCat = document.getElementById('targetMainCategorySelect').value;
-      const input = document.getElementById('newSubCategoryInput');
-      const val = input.value.trim();
-      if (!mainCat || !val) return;
-
-      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
-      if (!cats[mainCat]) cats[mainCat] = [];
-      if (cats[mainCat].includes(val)) return;
-
+      const mainCat = document.getElementById('targetMainCategorySelect').value; const input = document.getElementById('newSubCategoryInput'); const val = input.value.trim(); if (!mainCat || !val) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; if (!cats[mainCat]) cats[mainCat] = []; if (cats[mainCat].includes(val)) return;
       cats[mainCat].push(val);
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { categories: cats });
-
-      input.value = '';
-      renderCategoriesManager();
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      input.value = ''; renderCategoriesManager();
     }
 
     async function removeSubCategory(mainCat, sIdx) {
       const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
       if (cats[mainCat]) {
         cats[mainCat].splice(sIdx, 1);
-        const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-        await window.updateDoc(houseRef, { categories: cats });
+        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
         renderCategoriesManager();
       }
     }
 
     function toggleRecurringOptions() {
-      const isChecked = document.getElementById('isRecurringInput').checked;
-      document.getElementById('recurringDetails').classList.toggle('hidden', !isChecked);
+      document.getElementById('recurringDetails').classList.toggle('hidden', !document.getElementById('isRecurringInput').checked);
     }
 
     function setTransactionType(type) {
@@ -1061,153 +946,85 @@
     }
 
     function populateMainCategorySelect() {
-      const mainSelect = document.getElementById('mainCategory');
-      mainSelect.innerHTML = '';
-      
-      const group = currentTransactionType === 'expense' 
-        ? (houseConfig.categories || DEFAULT_CATEGORIES) 
-        : DEFAULT_INCOME_CATEGORIES;
-
+      const mainSelect = document.getElementById('mainCategory'); mainSelect.innerHTML = '';
+      const group = currentTransactionType === 'expense' ? (houseConfig.categories || DEFAULT_CATEGORIES) : DEFAULT_INCOME_CATEGORIES;
       Object.keys(group).forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        mainSelect.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; mainSelect.appendChild(opt);
       });
       handleMainCategoryChange();
     }
 
     function handleMainCategoryChange() {
-      const mainCat = document.getElementById('mainCategory').value;
-      const subSelect = document.getElementById('subCategory');
-      subSelect.innerHTML = '';
-      
-      const group = currentTransactionType === 'expense' 
-        ? (houseConfig.categories || DEFAULT_CATEGORIES) 
-        : DEFAULT_INCOME_CATEGORIES;
-
+      const mainCat = document.getElementById('mainCategory').value; const subSelect = document.getElementById('subCategory'); subSelect.innerHTML = '';
+      const group = currentTransactionType === 'expense' ? (houseConfig.categories || DEFAULT_CATEGORIES) : DEFAULT_INCOME_CATEGORIES;
       (group[mainCat] || []).forEach(sub => {
-        const opt = document.createElement('option');
-        opt.value = sub;
-        opt.textContent = sub;
-        subSelect.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = sub; opt.textContent = sub; subSelect.appendChild(opt);
       });
     }
 
     async function handleAddTransaction(e) {
       e.preventDefault();
-      const amount = parseFloat(document.getElementById('amount').value);
-      const date = document.getElementById('transactionDate').value;
-      const mainCat = document.getElementById('mainCategory').value;
-
+      const amount = parseFloat(document.getElementById('amount').value); const date = document.getElementById('transactionDate').value; const mainCat = document.getElementById('mainCategory').value;
       if (!amount || amount <= 0) return;
-
       const isRecurring = document.getElementById('isRecurringInput').checked;
-      const recurringEndDate = isRecurring ? document.getElementById('recurringEndDateInput').value : null;
-
       const newTx = {
-        houseCode: activeHouseCode,
-        type: currentTransactionType,
-        amount: amount,
-        paymentMethod: document.getElementById('paymentMethod').value,
-        mainCategory: mainCat,
-        subCategory: document.getElementById('subCategory').value,
-        date: date,
+        houseCode: activeHouseCode, type: currentTransactionType, amount: amount,
+        paymentMethod: document.getElementById('paymentMethod').value, mainCategory: mainCat,
+        subCategory: document.getElementById('subCategory').value, date: date,
         description: document.getElementById('description').value || '-',
-        isRecurring: isRecurring,
-        recurringEndDate: recurringEndDate,
+        isRecurring: isRecurring, recurringEndDate: isRecurring ? document.getElementById('recurringEndDateInput').value : null,
         monthKey: date.slice(0, 7)
       };
-
       if (currentTransactionType === 'expense') {
         newTx.budgetClassification = document.getElementById('budgetClassification').value;
         newTx.expenseType = document.getElementById('expenseType').value;
       }
-
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
-
-      if (currentTransactionType === 'expense' && houseConfig.caps[mainCat]) {
-        checkBudgetCapWarning(mainCat, amount);
-      }
-
-      document.getElementById('amount').value = '';
-      document.getElementById('description').value = '';
-      document.getElementById('isRecurringInput').checked = false;
-      toggleRecurringOptions();
-
+      if (currentTransactionType === 'expense' && houseConfig.caps[mainCat]) { checkBudgetCapWarning(mainCat, amount); }
+      document.getElementById('amount').value = ''; document.getElementById('description').value = '';
+      document.getElementById('isRecurringInput').checked = false; toggleRecurringOptions();
       switchMainTab('overview');
     }
 
     function checkBudgetCapWarning(category, newAmount) {
-      const monthTx = getTransactionsForCurrentCycle();
-      const cap = houseConfig.caps[category];
-      let currentTotal = monthTx
-        .filter(t => t.type === 'expense' && t.mainCategory === category)
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const updatedTotal = currentTotal + newAmount;
-      const percentage = (updatedTotal / cap) * 100;
-
-      if (percentage >= 100) {
-        showBudgetAlert("חריגה מתקציב הקטגוריה!", `חרגתם מתקרת התקציב בקטגוריית "${category}". ההוצאה הכוללת הגיעה ל-₪${updatedTotal.toLocaleString()} מתוך ₪${cap.toLocaleString()}.`);
-      } else if (percentage >= 90) {
-        showBudgetAlert("שימו לב! כמעט הכלתם את התקציב", `הגעתם ל-${percentage.toFixed(0)}% מתקרת התקציב בקטגוריית "${category}". נותר לבזבז: ₪${(cap - updatedTotal).toLocaleString()}.`);
-      }
+      const monthTx = getTransactionsForCurrentCycle(); const cap = houseConfig.caps[category];
+      let currentTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === category).reduce((sum, t) => sum + t.amount, 0);
+      const updatedTotal = currentTotal + newAmount; const percentage = (updatedTotal / cap) * 100;
+      if (percentage >= 100) { showBudgetAlert("חריגה מתקציב הקטגוריה!", `חרגתם מתקרת התקציב בקטגוריית "${category}". ההוצאה הכוללת הגיעה ל-₪${updatedTotal.toLocaleString()} מתוך ₪${cap.toLocaleString()}.`); }
+      else if (percentage >= 90) { showBudgetAlert("שימו לב! כמעט הכלתם את התקציב", `הגעתם ל-${percentage.toFixed(0)}% מתקרת התקציב בקטגוריית "${category}". נותר לבזבז: ₪${(cap - updatedTotal).toLocaleString()}.`); }
     }
 
     function showBudgetAlert(title, msg) {
-      document.getElementById('budgetAlertTitle').textContent = title;
-      document.getElementById('budgetAlertMessage').textContent = msg;
+      document.getElementById('budgetAlertTitle').textContent = title; document.getElementById('budgetAlertMessage').textContent = msg;
       document.getElementById('budgetAlertModal').classList.remove('hidden');
     }
-
-    function closeBudgetAlert() {
-      document.getElementById('budgetAlertModal').classList.add('hidden');
-    }
-
-    async function deleteTransaction(id) {
-      await window.deleteDoc(window.doc(window.db, "house_transactions", id));
-    }
+    function closeBudgetAlert() { document.getElementById('budgetAlertModal').classList.add('hidden'); }
+    async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
     function getTransactionsForCurrentCycle() {
-      const selectedMonthKey = document.getElementById('selectedMonth').value;
-      const cycleStartDay = houseConfig.cycleStartDay || 1;
-
-      if (cycleStartDay === 1) {
-        return transactions.filter(t => t.monthKey === selectedMonthKey);
-      }
-
+      const selectedMonthKey = document.getElementById('selectedMonth').value; const cycleStartDay = houseConfig.cycleStartDay || 1;
+      if (cycleStartDay === 1) { return transactions.filter(t => t.monthKey === selectedMonthKey); }
       const [year, month] = selectedMonthKey.split('-').map(Number);
-      const startDate = new Date(year, month - 1, cycleStartDay);
-      const endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
-
-      return transactions.filter(t => {
-        const txDate = new Date(t.date);
-        return txDate >= startDate && txDate <= endDate;
-      });
+      const startDate = new Date(year, month - 1, cycleStartDay); const endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
+      return transactions.filter(t => { const txDate = new Date(t.date); return txDate >= startDate && txDate <= endDate; });
     }
 
     function loadCurrentMonthData() {
       const monthTx = getTransactionsForCurrentCycle();
-
-      let totalIncome = 0, totalExpenses = 0;
-      let needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
+      let totalIncome = 0, totalExpenses = 0, needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
       let fixedTotal = 0, variableTotal = 0, unplannedTotal = 0;
       const catTotals = {};
 
       monthTx.forEach(t => {
-        if (t.type === 'income') {
-          totalIncome += t.amount;
-        } else {
+        if (t.type === 'income') { totalIncome += t.amount; }
+        else {
           totalExpenses += t.amount;
           if (t.budgetClassification === 'צרכים') needsTotal += t.amount;
           else if (t.budgetClassification === 'רצונות') wantsTotal += t.amount;
           else if (t.budgetClassification === 'חסכונות') savingsTotal += t.amount;
-
           if (t.expenseType === 'קבועות') fixedTotal += t.amount;
           else if (t.expenseType === 'משתנות') variableTotal += t.amount;
           else if (t.expenseType === 'בלתי מתוכננות') unplannedTotal += t.amount;
-
           catTotals[t.mainCategory] = (catTotals[t.mainCategory] || 0) + t.amount;
         }
       });
@@ -1216,320 +1033,167 @@
       document.getElementById('totalIncomeDisplay').textContent = `₪${totalIncome.toLocaleString()}`;
       document.getElementById('totalExpensesDisplay').textContent = `₪${totalExpenses.toLocaleString()}`;
       document.getElementById('netBalanceDisplay').textContent = `₪${netBalance.toLocaleString()}`;
-
-      const surplusBtn = document.getElementById('transferSurplusBtn');
-      if (netBalance > 0 && houseConfig.savingsGoals.length > 0) {
-        surplusBtn.classList.remove('hidden');
-      } else {
-        surplusBtn.classList.add('hidden');
-      }
+      document.getElementById('transferSurplusBtn').classList.toggle('hidden', !(netBalance > 0 && houseConfig.savingsGoals.length > 0));
 
       document.getElementById('needsAmount').textContent = `₪${needsTotal.toLocaleString()}`;
       document.getElementById('wantsAmount').textContent = `₪${wantsTotal.toLocaleString()}`;
       document.getElementById('savingsAmount').textContent = `₪${savingsTotal.toLocaleString()}`;
-
       document.getElementById('fixedExpensesTotal').textContent = `₪${fixedTotal.toLocaleString()}`;
       document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
       document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
-      renderBudgetCaps(catTotals);
-      renderSavingsGoals();
-      renderCategoryChart(catTotals);
-      renderCategorySummaryList(catTotals);
-      renderTransactionsTable(monthTx);
+      renderBudgetCaps(catTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
+      renderCategorySummaryList(catTotals); renderTransactionsTable(monthTx);
     }
 
     function renderBudgetCaps(catTotals) {
-      const container = document.getElementById('budgetCapsContainer');
-      container.innerHTML = '';
-
-      const caps = houseConfig.caps || {};
-      const categoriesWithCaps = Object.keys(caps);
-
+      const container = document.getElementById('budgetCapsContainer'); container.innerHTML = '';
+      const caps = houseConfig.caps || {}; const categoriesWithCaps = Object.keys(caps);
       if (categoriesWithCaps.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-2 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
-            טרם הגדרתם תקרות תקציב. לחצו על "+ הגדר תקרת קטגוריה" כדי להתחיל.
-          </div>
-        `;
+        container.innerHTML = `<div class="col-span-2 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">טרם הגדרתם תקרות תקציב. לחצו על "+ הגדר תקרת קטגוריה" כדי להתחיל.</div>`;
         return;
       }
-
       categoriesWithCaps.forEach(cat => {
-        const cap = caps[cat];
-        const spent = catTotals[cat] || 0;
-        const remaining = cap - spent;
-        const pct = Math.min(100, Math.round((spent / cap) * 100));
-
-        let barColor = "bg-emerald-500";
-        let statusBadge = `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">תקין</span>`;
-
-        if (pct >= 100) {
-          barColor = "bg-rose-500";
-          statusBadge = `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded">חריגה!</span>`;
-        } else if (pct >= 75) {
-          barColor = "bg-amber-500";
-          statusBadge = `<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded">אזהרה</span>`;
-        }
-
+        const cap = caps[cat]; const spent = catTotals[cat] || 0; const remaining = cap - spent; const pct = Math.min(100, Math.round((spent / cap) * 100));
+        let barColor = "bg-emerald-500"; let statusBadge = `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">תקין</span>`;
+        if (pct >= 100) { barColor = "bg-rose-500"; statusBadge = `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded">חריגה!</span>`; }
+        else if (pct >= 75) { barColor = "bg-amber-500"; statusBadge = `<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded">אזהרה</span>`; }
         const div = document.createElement('div');
         div.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2";
-        div.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-sm text-slate-800">${cat}</span>
-            ${statusBadge}
-          </div>
-          <div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
-            <div class="${barColor} h-full transition-all duration-500" style="width: ${pct}%"></div>
-          </div>
-          <div class="flex justify-between text-xs text-slate-500 pt-1">
-            <span>נוצלו: <b>₪${spent.toLocaleString()}</b> מתוך ₪${cap.toLocaleString()}</span>
-            <span class="font-bold ${remaining < 0 ? 'text-rose-600' : 'text-slate-700'}">
-              ${remaining < 0 ? 'חריגה:' : 'נותר:'} ₪${Math.abs(remaining).toLocaleString()}
-            </span>
-          </div>
-        `;
+        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm text-slate-800">${cat}</span>${statusBadge}</div><div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${barColor} h-full transition-all duration-500" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-500 pt-1"><span>נוצלו: <b>₪${spent.toLocaleString()}</b> מתוך ₪${cap.toLocaleString()}</span><span class="font-bold ${remaining < 0 ? 'text-rose-600' : 'text-slate-700'}">${remaining < 0 ? 'חריגה:' : 'נותר:'} ₪${Math.abs(remaining).toLocaleString()}</span></div>`;
         container.appendChild(div);
       });
     }
 
     async function promptSetBudgetCap() {
-      const cat = prompt("הקלידי את שם הקטגוריה הראשית עבורה תרצי להגדיר תקרה (למשל: אוכל וקניות):");
-      if (!cat) return;
-
-      const amountStr = prompt(`הקלידי את תקרת התקציב החודשית ב-₪ עבור "${cat}":`);
-      const amount = parseFloat(amountStr);
-      if (isNaN(amount) || amount <= 0) return;
-
-      const updatedCaps = { ...houseConfig.caps, [cat]: amount };
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { caps: updatedCaps });
+      const cat = prompt("הקלידי את שם הקטגוריה הראשית עבורה תרצי להגדיר תקרה (למשל: אוכל וקניות):"); if (!cat) return;
+      const amount = parseFloat(prompt(`הקלידי את תקרת התקציב החודשית ב-₪ עבור "${cat}":`)); if (isNaN(amount) || amount <= 0) return;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps: { ...houseConfig.caps, [cat]: amount } });
     }
 
     function renderSavingsGoals() {
-      const container = document.getElementById('savingsGoalsContainer');
-      container.innerHTML = '';
-
+      const container = document.getElementById('savingsGoalsContainer'); container.innerHTML = '';
       const goals = houseConfig.savingsGoals || [];
-
       if (goals.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-3 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
-            אין יעדי חיסכון פעילים. לחצו על "+ יעד חיסכון חדש" כדי להגדיר יעד משותף!
-          </div>
-        `;
+        container.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">אין יעדי חיסכון פעילים. לחצו על "+ יעד חיסכון חדש" כדי להגדיר יעד משותף!</div>`;
         return;
       }
-
       goals.forEach((goal, idx) => {
         const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
         const div = document.createElement('div');
         div.className = "p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-3";
-        div.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-sm text-slate-800">${goal.name}</span>
-            <span class="text-xs font-bold text-emerald-600">${pct}%</span>
-          </div>
-          <div class="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden">
-            <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${pct}%"></div>
-          </div>
-          <div class="flex justify-between text-xs text-slate-600 font-semibold">
-            <span>נצבר: ₪${goal.saved.toLocaleString()}</span>
-            <span>יעד: ₪${goal.target.toLocaleString()}</span>
-          </div>
-          <button onclick="promptDepositToGoal(${idx})" class="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg transition shadow-sm">
-            + הפקד לקופה
-          </button>
-        `;
+        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm text-slate-800">${goal.name}</span><span class="text-xs font-bold text-emerald-600">${pct}%</span></div><div class="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-600 font-semibold"><span>נצבר: ₪${goal.saved.toLocaleString()}</span><span>יעד: ₪${goal.target.toLocaleString()}</span></div><button onclick="promptDepositToGoal(${idx})" class="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg transition shadow-sm">+ הפקד לקופה</button>`;
         container.appendChild(div);
       });
     }
 
     async function promptCreateSavingsGoal() {
-      const name = prompt("שם קופת החיסכון (למשל: טיסה לחו\"ל, קרן חירום):");
-      if (!name) return;
-
-      const targetStr = prompt("סכום היעד בש\"ח:");
-      const target = parseFloat(targetStr);
-      if (isNaN(target) || target <= 0) return;
-
-      const newGoal = { name, target, saved: 0 };
-      const updatedGoals = [...(houseConfig.savingsGoals || []), newGoal];
-      
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
+      const name = prompt("שם קופת החיסכון (למשל: טיסה לחו\"ל, קרן חירום):"); if (!name) return;
+      const target = parseFloat(prompt("סכום היעד בש\"ח:")); if (isNaN(target) || target <= 0) return;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: [...(houseConfig.savingsGoals || []), { name, target, saved: 0 }] });
     }
 
     async function promptDepositToGoal(idx) {
-      const amountStr = prompt(`כמה תרצו להפקיד לקופת "${houseConfig.savingsGoals[idx].name}"?`);
-      const amount = parseFloat(amountStr);
-      if (isNaN(amount) || amount <= 0) return;
-
-      const updatedGoals = [...houseConfig.savingsGoals];
-      updatedGoals[idx].saved += amount;
-
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
+      const amount = parseFloat(prompt(`כמה תרצו להפקיד לקופת "${houseConfig.savingsGoals[idx].name}"?`)); if (isNaN(amount) || amount <= 0) return;
+      const updatedGoals = [...houseConfig.savingsGoals]; updatedGoals[idx].saved += amount;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: updatedGoals });
     }
 
     async function transferSurplusToSavings() {
       if (!houseConfig.savingsGoals || houseConfig.savingsGoals.length === 0) return;
-
       const goalNames = houseConfig.savingsGoals.map((g, i) => `${i + 1}. ${g.name}`).join("\n");
-      const choiceStr = prompt(`בחר את קופת החיסכון אליה תרצה להעביר את העודף החודשי:\n${goalNames}\n\nהקלידו את מספר הקופה (למשל 1):`);
-      const choice = parseInt(choiceStr) - 1;
-
+      const choice = parseInt(prompt(`בחר את קופת החיסכון אליה תרצה להעביר את העודף החודשי:\n${goalNames}\n\nהקלידו את מספר הקופה:`)) - 1;
       if (isNaN(choice) || choice < 0 || choice >= houseConfig.savingsGoals.length) return;
-
-      const monthTx = getTransactionsForCurrentCycle();
-      let totalInc = 0, totalExp = 0;
+      const monthTx = getTransactionsForCurrentCycle(); let totalInc = 0, totalExp = 0;
       monthTx.forEach(t => { t.type === 'income' ? totalInc += t.amount : totalExp += t.amount; });
-      const surplus = totalInc - totalExp;
-
-      if (surplus <= 0) return;
-
-      const updatedGoals = [...houseConfig.savingsGoals];
-      updatedGoals[choice].saved += surplus;
-
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      await window.updateDoc(houseRef, { savingsGoals: updatedGoals });
-
+      const surplus = totalInc - totalExp; if (surplus <= 0) return;
+      const updatedGoals = [...houseConfig.savingsGoals]; updatedGoals[choice].saved += surplus;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: updatedGoals });
       alert(`העודף החודשי בסך ₪${surplus.toLocaleString()} הועבר בהצלחה לקופת "${updatedGoals[choice].name}"!`);
     }
 
     function renderCategorySummaryList(catTotals) {
-      const listDiv = document.getElementById('categorySummaryList');
-      listDiv.innerHTML = '';
+      const listDiv = document.getElementById('categorySummaryList'); listDiv.innerHTML = '';
       const keys = Object.keys(catTotals);
-
-      if (keys.length === 0) {
-        listDiv.innerHTML = `<p class="text-slate-400 text-center py-4">אין הוצאות רשומות בחודש זה.</p>`;
-        return;
-      }
-
+      if (keys.length === 0) { listDiv.innerHTML = `<p class="text-slate-400 text-center py-4">אין הוצאות רשומות בחודש זה.</p>`; return; }
       keys.forEach(cat => {
-        const val = catTotals[cat];
         const row = document.createElement('div');
         row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100";
-        row.innerHTML = `
-          <span class="font-bold text-slate-700">${cat}</span>
-          <span class="font-extrabold text-slate-900">₪${val.toLocaleString()}</span>
-        `;
+        row.innerHTML = `<span class="font-bold text-slate-700">${cat}</span><span class="font-extrabold text-slate-900">₪${catTotals[cat].toLocaleString()}</span>`;
         listDiv.appendChild(row);
       });
     }
 
     function renderTransactionsTable(monthTx) {
-      const tbody = document.getElementById('transactionsTableBody');
-      tbody.innerHTML = '';
-
-      if (monthTx.length === 0) {
-        document.getElementById('emptyTableMessage').classList.remove('hidden');
-        return;
-      }
+      const tbody = document.getElementById('transactionsTableBody'); tbody.innerHTML = '';
+      if (monthTx.length === 0) { document.getElementById('emptyTableMessage').classList.remove('hidden'); return; }
       document.getElementById('emptyTableMessage').classList.add('hidden');
-
       monthTx.sort((a, b) => new Date(b.date) - new Date(a.date));
-
       monthTx.forEach(t => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
         const isExpense = t.type === 'expense';
-        const methodBadge = t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-';
-
-        tr.innerHTML = `
-          <td class="p-3 text-slate-600 font-mono">${t.date}</td>
-          <td class="p-3">${methodBadge}</td>
-          <td class="p-3 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
-          <td class="p-3 font-semibold">${t.mainCategory}</td>
-          <td class="p-3">${t.subCategory}</td>
-          <td class="p-3">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
-          <td class="p-3 text-slate-500">${t.description}</td>
-          <td class="p-3 font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
-          <td class="p-3 text-center">
-            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1">
-              <i class="fa-regular fa-trash-can"></i>
-            </button>
-          </td>
-        `;
+        tr.innerHTML = `<td class="p-3 text-slate-600 font-mono">${t.date}</td><td class="p-3">${t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-'}</td><td class="p-3 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td><td class="p-3 font-semibold">${t.mainCategory}</td><td class="p-3">${t.subCategory}</td><td class="p-3">${isExpense ? (t.budgetClassification || '-') : '-'}</td><td class="p-3 text-slate-500">${t.description}</td><td class="p-3 font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td><td class="p-3 text-center"><button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-regular fa-trash-can"></i></button></td>`;
         tbody.appendChild(tr);
       });
     }
 
     function renderCategoryChart(catTotals) {
       const ctx = document.getElementById('categoryChart').getContext('2d');
-      const labels = Object.keys(catTotals);
-      const data = Object.values(catTotals);
-
+      const labels = Object.keys(catTotals); const data = Object.values(catTotals);
       if (categoryChartInstance) categoryChartInstance.destroy();
       if (labels.length === 0) return;
-
       categoryChartInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: ['#6366f1', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#14b8a6']
-          }]
-        },
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#6366f1', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#14b8a6'] }] },
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
 
-    // Render Trend Line Chart (Multi-month comparison)
+    // Render Trend Line Chart with range selection (Monthly / Quarterly / Yearly)
     function renderTrendChart() {
       const ctx = document.getElementById('trendChart').getContext('2d');
-      
-      // Group last 6 months data
-      const monthMap = {};
+      const groupedData = {};
+
       transactions.forEach(t => {
         if (!t.monthKey) return;
-        if (!monthMap[t.monthKey]) {
-          monthMap[t.monthKey] = { income: 0, expense: 0 };
+        let key = t.monthKey; // Default monthly (YYYY-MM)
+
+        if (currentTrendRange === 'quarterly') {
+          const [yr, mn] = t.monthKey.split('-');
+          const q = Math.ceil(parseInt(mn) / 3);
+          key = `${yr} Q${q}`;
+        } else if (currentTrendRange === 'yearly') {
+          key = t.monthKey.split('-')[0];
         }
-        if (t.type === 'income') monthMap[t.monthKey].income += t.amount;
-        else monthMap[t.monthKey].expense += t.amount;
+
+        if (!groupedData[key]) groupedData[key] = { income: 0, expense: 0 };
+        if (t.type === 'income') groupedData[key].income += t.amount;
+        else groupedData[key].expense += t.amount;
       });
 
-      const sortedMonths = Object.keys(monthMap).sort().slice(-6); // Last 6 months
-      const incomeData = sortedMonths.map(m => monthMap[m].income);
-      const expenseData = sortedMonths.map(m => monthMap[m].expense);
+      const sortedKeys = Object.keys(groupedData).sort();
+      // Slice based on range choice
+      let sliceLimit = currentTrendRange === 'monthly' ? -6 : (currentTrendRange === 'quarterly' ? -8 : -5);
+      const labels = sortedKeys.slice(sliceLimit);
+      const incomeData = labels.map(k => groupedData[k].income);
+      const expenseData = labels.map(k => groupedData[k].expense);
 
       if (trendChartInstance) trendChartInstance.destroy();
 
       trendChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: sortedMonths,
+          labels: labels,
           datasets: [
-            {
-              label: 'הכנסות',
-              data: incomeData,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              tension: 0.3,
-              fill: true
-            },
-            {
-              label: 'הוצאות',
-              data: expenseData,
-              borderColor: '#f43f5e',
-              backgroundColor: 'rgba(244, 63, 94, 0.1)',
-              tension: 0.3,
-              fill: true
-            }
+            { label: 'הכנסות', data: incomeData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3, fill: true },
+            { label: 'הוצאות', data: expenseData, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', tension: 0.3, fill: true }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top', labels: { font: { family: 'Rubik', weight: 'bold' } } }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
+          plugins: { legend: { position: 'top', labels: { font: { family: 'Rubik', weight: 'bold' } } } },
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
