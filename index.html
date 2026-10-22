@@ -38,7 +38,7 @@
     </button>
   </div>
 
-  <!-- Budget Cap Modal (Fixed Main + Sub Category dependent selection) -->
+  <!-- Budget Cap Modal -->
   <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -268,10 +268,12 @@
         <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-white/15 text-white text-xs font-bold rounded-xl px-3 py-2 border border-white/25 focus:outline-none shadow-inner">
       </div>
 
-      <nav class="flex bg-black/20 p-1 rounded-2xl mt-3.5 border border-white/10 text-xs font-bold">
-        <button id="mainTabOverview" onclick="switchMainTab('overview')" class="flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5"><i class="fa-solid fa-chart-line"></i><span>מבט על ומאזן</span></button>
-        <button id="mainTabAdd" onclick="switchMainTab('add')" class="flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5"><i class="fa-solid fa-circle-plus"></i><span>הזנת תנועה</span></button>
-        <button id="mainTabReports" onclick="switchMainTab('reports')" class="flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5"><i class="fa-solid fa-list-check"></i><span>דוחות ופירוט</span></button>
+      <!-- Navigation Tabs -->
+      <nav class="flex bg-black/20 p-1 rounded-2xl mt-3.5 border border-white/10 text-xs font-bold gap-1 overflow-x-auto">
+        <button id="mainTabOverview" onclick="switchMainTab('overview')" class="flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-chart-line"></i><span>מבט על ומאזן</span></button>
+        <button id="mainTabAdd" onclick="switchMainTab('add')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-circle-plus"></i><span>הזנת תנועה</span></button>
+        <button id="mainTabDetails" onclick="switchMainTab('details')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-list-check"></i><span>פירוט תנועות</span></button>
+        <button id="mainTabReports" onclick="switchMainTab('reports')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-chart-pie"></i><span>דוחות וקטגוריות</span></button>
       </nav>
     </div>
   </header>
@@ -429,42 +431,8 @@
       </section>
     </div>
 
-    <!-- TAB 3: REPORTS -->
-    <div id="tabContentReports" class="hidden space-y-6">
-      <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
-        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">📊 פילוח קטגוריות</button>
-        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">📈 השוואת מגמות</button>
-        <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">💳 קבועות מול משתנות</button>
-      </section>
-
-      <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-donut text-indigo-600"></i> פילוח הוצאות לפי קטגוריות</h2>
-          <div class="relative h-60 w-full flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
-        </div>
-        <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center space-y-3">
-          <h3 class="text-xs font-bold text-slate-500 uppercase">סיכום קטגוריות החודש</h3>
-          <div id="categorySummaryList" class="space-y-2.5 max-h-56 overflow-y-auto text-sm"></div>
-        </div>
-      </section>
-
-      <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
-        <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
-          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-600"></i> השוואת מגמות לאורך זמן</h2>
-        </div>
-        <div class="relative h-72 w-full flex items-center justify-center"><canvas id="trendChart"></canvas></div>
-      </section>
-
-      <section id="reportViewTypes" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
-        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-wallet text-indigo-600"></i> פירוט סוגי הוצאות</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">קבועות</span><span id="fixedExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">משתנות</span><span id="variableExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
-          <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center"><span class="text-xs font-bold text-amber-800">בלת"מ</span><span id="unplannedExpensesTotal" class="font-extrabold text-amber-700 text-base">₪0</span></div>
-        </div>
-      </section>
-
-      <!-- Transactions Table -->
+    <!-- TAB 3: DETAILS (Transactions Table with Smooth Horizontal Scroll) -->
+    <div id="tabContentDetails" class="hidden space-y-6">
       <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-3">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-indigo-600"></i> פירוט תנועות החודש</h2>
@@ -487,8 +455,9 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-right text-sm whitespace-nowrap">
+        <!-- Scrollable Table Container -->
+        <div class="w-full overflow-x-auto pb-2 border border-slate-100 rounded-2xl shadow-inner">
+          <table class="w-full text-right text-sm whitespace-nowrap min-w-[750px]">
             <thead>
               <tr class="bg-slate-50 text-slate-600 border-b-2 border-slate-200">
                 <th class="p-4 font-bold">תאריך</th>
@@ -507,6 +476,42 @@
           <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden text-sm font-medium">
             <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i>אין תנועות רשומות התואמות את הסינון בחודש זה
           </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 4: REPORTS & CATEGORIES SUMMARY -->
+    <div id="tabContentReports" class="hidden space-y-6">
+      <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
+        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">📊 פילוח קטגוריות</button>
+        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">📈 השוואת מגמות</button>
+        <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">💳 קבועות מול משתנות</button>
+      </section>
+
+      <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-donut text-indigo-600"></i> פילוח הוצאות לפי קטגוריות</h2>
+          <div class="relative h-60 w-full flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center space-y-3">
+          <h3 class="text-xs font-bold text-slate-500 uppercase">סיכום סך הכל מקטגוריה לחודש זה</h3>
+          <div id="categorySummaryList" class="space-y-2.5 max-h-56 overflow-y-auto text-sm"></div>
+        </div>
+      </section>
+
+      <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
+        <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-600"></i> השוואת מגמות לאורך זמן</h2>
+        </div>
+        <div class="relative h-72 w-full flex items-center justify-center"><canvas id="trendChart"></canvas></div>
+      </section>
+
+      <section id="reportViewTypes" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
+        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-wallet text-indigo-600"></i> פירוט סוגי הוצאות</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">קבועות</span><span id="fixedExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">משתנות</span><span id="variableExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
+          <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center"><span class="text-xs font-bold text-amber-800">בלת"מ</span><span id="unplannedExpensesTotal" class="font-extrabold text-amber-700 text-base">₪0</span></div>
         </div>
       </section>
     </div>
@@ -543,7 +548,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.4";
+    const APP_VERSION = "1.1.6";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const DEFAULT_CATEGORIES = {
@@ -605,11 +610,13 @@
     function switchMainTab(tab) {
       document.getElementById('tabContentOverview').classList.toggle('hidden', tab !== 'overview');
       document.getElementById('tabContentAdd').classList.toggle('hidden', tab !== 'add');
+      document.getElementById('tabContentDetails').classList.toggle('hidden', tab !== 'details');
       document.getElementById('tabContentReports').classList.toggle('hidden', tab !== 'reports');
 
-      document.getElementById('mainTabOverview').className = tab === 'overview' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
-      document.getElementById('mainTabAdd').className = tab === 'add' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
-      document.getElementById('mainTabReports').className = tab === 'reports' ? 'flex-1 py-2.5 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 font-bold' : 'flex-1 py-2.5 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 font-bold';
+      document.getElementById('mainTabOverview').className = tab === 'overview' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
+      document.getElementById('mainTabAdd').className = tab === 'add' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
+      document.getElementById('mainTabDetails').className = tab === 'details' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
+      document.getElementById('mainTabReports').className = tab === 'reports' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
     }
 
     function switchReportSubTab(subTab) {
@@ -628,7 +635,7 @@
     function openIncomeCategoriesModal() { renderIncomeCategoriesManager(); document.getElementById('incomeCategoriesModal').classList.remove('hidden'); }
     function closeIncomeCategoriesModal() { document.getElementById('incomeCategoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
 
-    // --- Budget Cap Modal Functions (Main + Sub dependent dropdowns) ---
+    // --- Budget Cap Modal Functions ---
     function openBudgetCapModal() {
       const mainSelect = document.getElementById('budgetCapMainCatSelect');
       mainSelect.innerHTML = '';
@@ -671,9 +678,7 @@
         return;
       }
 
-      // Key format: "MainCategory > SubCategory"
       const capKey = `${mainCat} > ${subCat}`;
-
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
         caps: { ...houseConfig.caps, [capKey]: amount }
       });
