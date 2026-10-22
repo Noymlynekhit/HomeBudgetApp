@@ -518,7 +518,7 @@
     <!-- TAB 3: REPORTS & HISTORY -->
     <div id="tabContentReports" class="hidden space-y-6">
       
-      <!-- Report Selector Tabs (Clean Selection) -->
+      <!-- Report Selector Tabs -->
       <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
         <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">
           📊 פילוח קטגוריות
@@ -550,7 +550,7 @@
         </div>
       </section>
 
-      <!-- REPORT VIEW 2: Trend Comparison Line Chart (With Ordered Range Selector) -->
+      <!-- REPORT VIEW 2: Trend Comparison Line Chart -->
       <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
           <div>
@@ -560,7 +560,7 @@
             </h2>
             <p class="text-xs text-slate-500">מעקב רציף אחרי ההוצאות וההכנסות בטווחים לבחירתך</p>
           </div>
-          <!-- Ordered Range Picker inside Trend View: Monthly, Quarterly, Half-Yearly, Yearly -->
+          <!-- Range Picker -->
           <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold flex-wrap gap-1">
             <button id="trendRangeMonthly" onclick="setTrendRange('monthly')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition">חודשי</button>
             <button id="trendRangeQuarterly" onclick="setTrendRange('quarterly')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-800 transition">רבעוני</button>
@@ -595,36 +595,52 @@
         </div>
       </section>
 
-      <!-- History Table -->
-      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-4">
+      <!-- History Table with Excel-like Filters -->
+      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex justify-between items-center flex-wrap gap-3">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-list-check text-indigo-600"></i>
             פירוט תנועות החודש
           </h2>
+
+          <!-- Excel-like Filter Bar -->
+          <div class="flex items-center gap-2 text-xs flex-wrap">
+            <div class="flex items-center gap-1">
+              <span class="text-slate-500 font-semibold">סינון קטגוריה:</span>
+              <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-none">
+                <option value="ALL">הכל (ללא סינון)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-slate-500 font-semibold">אמצעי תשלום:</span>
+              <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-none">
+                <option value="ALL">הכל</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-right text-xs md:text-sm">
+          <table class="w-full text-right text-xs md:text-sm whitespace-nowrap">
             <thead>
-              <tr class="bg-slate-50 text-slate-500 border-b border-slate-100">
-                <th class="p-3 font-semibold">תאריך</th>
-                <th class="p-3 font-semibold">אמצעי תשלום</th>
-                <th class="p-3 font-semibold">סוג</th>
-                <th class="p-3 font-semibold">קטגוריה</th>
-                <th class="p-3 font-semibold">תת-קטגוריה</th>
-                <th class="p-3 font-semibold">סיווג</th>
-                <th class="p-3 font-semibold">הערה</th>
-                <th class="p-3 font-semibold">סכום</th>
-                <th class="p-3 font-semibold text-center">פעולה</th>
+              <tr class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                <th class="p-3.5 font-semibold">תאריך</th>
+                <th class="p-3.5 font-semibold">אמצעי תשלום</th>
+                <th class="p-3.5 font-semibold">סוג</th>
+                <th class="p-3.5 font-semibold">קטגוריה</th>
+                <th class="p-3.5 font-semibold">תת-קטגוריה</th>
+                <th class="p-3.5 font-semibold">סיווג</th>
+                <th class="p-3.5 font-semibold">הערה / פירוט</th>
+                <th class="p-3.5 font-semibold">סכום</th>
+                <th class="p-3.5 font-semibold text-center">פעולה</th>
               </tr>
             </thead>
             <tbody id="transactionsTableBody" class="divide-y divide-slate-100">
             </tbody>
           </table>
-          <div id="emptyTableMessage" class="py-8 text-center text-slate-400 hidden">
+          <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden">
             <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i>
-            אין תנועות רשומות בחודש זה
+            אין תנועות רשומות התואמות את הסינון בחודש זה
           </div>
         </div>
       </section>
@@ -665,10 +681,10 @@
   </script>
 
   <script>
-    // 🔔 גרסה 1.0.7 - סידור כפתורי הטווחים: חודשי, רבעוני, חציוני, שנתי
-    const APP_VERSION = "1.0.7";
+    // 🔔 גרסה 1.0.8 - הוספת סינון דמוי אקסל בטבלת התנועות והבלטת עמודת ההערות
+    const APP_VERSION = "1.0.8";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
-    let currentTrendRange = 'monthly'; // 'monthly', 'quarterly', 'halfYear', 'yearly'
+    let currentTrendRange = 'monthly';
     
     const DEFAULT_CATEGORIES = {
       "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
@@ -844,6 +860,7 @@
           }
           populatePaymentMethodSelect();
           populateMainCategorySelect();
+          updateFilterDropdowns();
           loadCurrentMonthData();
         }
       });
@@ -852,6 +869,7 @@
       unsubscribeFirestore = window.onSnapshot(q, (snapshot) => {
         transactions = [];
         snapshot.forEach((doc) => { transactions.push({ id: doc.id, ...doc.data() }); });
+        updateFilterDropdowns();
         loadCurrentMonthData();
       });
     }
@@ -862,6 +880,28 @@
       (houseConfig.paymentMethods || ["אשראי", "מזומן / העברה", "הוראת קבע"]).forEach(m => {
         const opt = document.createElement('option'); opt.value = m; opt.textContent = m; select.appendChild(opt);
       });
+    }
+
+    function updateFilterDropdowns() {
+      const catSelect = document.getElementById('filterCategory');
+      const currentCatVal = catSelect.value;
+      catSelect.innerHTML = '<option value="ALL">הכל (ללא סינון)</option>';
+      const allCats = Object.keys(houseConfig.categories || DEFAULT_CATEGORIES);
+      allCats.forEach(c => {
+        const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+        catSelect.appendChild(opt);
+      });
+      catSelect.value = currentCatVal;
+
+      const pmSelect = document.getElementById('filterPaymentMethod');
+      const currentPmVal = pmSelect.value;
+      pmSelect.innerHTML = '<option value="ALL">הכל</option>';
+      const allPms = houseConfig.paymentMethods || ["אשראי", "מזומן / העברה", "הוראת קבע"];
+      allPms.forEach(pm => {
+        const opt = document.createElement('option'); opt.value = pm; opt.textContent = pm;
+        pmSelect.appendChild(opt);
+      });
+      pmSelect.value = currentPmVal;
     }
 
     function renderPaymentMethodsManager() {
@@ -1128,13 +1168,43 @@
 
     function renderTransactionsTable(monthTx) {
       const tbody = document.getElementById('transactionsTableBody'); tbody.innerHTML = '';
-      if (monthTx.length === 0) { document.getElementById('emptyTableMessage').classList.remove('hidden'); return; }
+      
+      // Get filter values
+      const filterCat = document.getElementById('filterCategory').value;
+      const filterPm = document.getElementById('filterPaymentMethod').value;
+
+      let filteredTx = monthTx.filter(t => {
+        if (filterCat !== 'ALL' && t.mainCategory !== filterCat) return false;
+        if (filterPm !== 'ALL' && t.paymentMethod !== filterPm) return false;
+        return true;
+      });
+
+      if (filteredTx.length === 0) {
+        document.getElementById('emptyTableMessage').classList.remove('hidden');
+        return;
+      }
       document.getElementById('emptyTableMessage').classList.add('hidden');
-      monthTx.sort((a, b) => new Date(b.date) - new Date(a.date));
-      monthTx.forEach(t => {
-        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+      
+      filteredTx.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      filteredTx.forEach(t => {
+        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 transition border-b border-slate-200";
         const isExpense = t.type === 'expense';
-        tr.innerHTML = `<td class="p-3 text-slate-600 font-mono">${t.date}</td><td class="p-3">${t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-'}</td><td class="p-3 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td><td class="p-3 font-semibold">${t.mainCategory}</td><td class="p-3">${t.subCategory}</td><td class="p-3">${isExpense ? (t.budgetClassification || '-') : '-'}</td><td class="p-3 text-slate-500">${t.description}</td><td class="p-3 font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td><td class="p-3 text-center"><button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-regular fa-trash-can"></i></button></td>`;
+        tr.innerHTML = `
+          <td class="p-3.5 text-slate-600 font-mono">${t.date}</td>
+          <td class="p-3.5">${t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-'}</td>
+          <td class="p-3.5 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
+          <td class="p-3.5 font-semibold text-indigo-900">${t.mainCategory}</td>
+          <td class="p-3.5 text-slate-600">${t.subCategory}</td>
+          <td class="p-3.5 text-slate-600">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
+          <td class="p-3.5 font-medium text-slate-800 max-w-xs truncate" title="${t.description}">${t.description}</td>
+          <td class="p-3.5 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
+          <td class="p-3.5 text-center">
+            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 transition">
+              <i class="fa-regular fa-trash-can text-sm"></i>
+            </button>
+          </td>
+        `;
         tbody.appendChild(tr);
       });
     }
@@ -1151,14 +1221,13 @@
       });
     }
 
-    // Render Trend Line Chart with ordered ranges: Monthly, Quarterly, Half-Yearly, Yearly
     function renderTrendChart() {
       const ctx = document.getElementById('trendChart').getContext('2d');
       const groupedData = {};
 
       transactions.forEach(t => {
         if (!t.monthKey) return;
-        let key = t.monthKey; // Default monthly (YYYY-MM)
+        let key = t.monthKey;
 
         if (currentTrendRange === 'quarterly') {
           const [yr, mn] = t.monthKey.split('-');
