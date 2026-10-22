@@ -24,7 +24,7 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col pb-12">
 
-  <!-- Screen 1: Home Code Login Screen -->
+  <!-- Screen 1: Home Code Login & Registration Screen -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
     <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center border border-slate-100">
       <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
@@ -32,20 +32,41 @@
       </div>
       <div>
         <h2 class="text-2xl font-extrabold text-slate-800">כניסה למאזן הבית</h2>
-        <p class="text-xs text-slate-500 mt-1">הכניסי את קוד הבית הפרטי שלכם לסנכרון בזמן אמת</p>
+        <p class="text-xs text-slate-500 mt-1">התחברו לבית קיים או צרו בית חדש לניהול משותף</p>
       </div>
 
-      <form onsubmit="handleHouseLogin(event)" class="space-y-4 text-right">
+      <!-- Tabs: Login vs Register -->
+      <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+        <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-600">התחברות</button>
+        <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800">יצירת בית חדש</button>
+      </div>
+
+      <!-- Form 1: Login -->
+      <form id="loginForm" onsubmit="handleHouseLogin(event)" class="space-y-4 text-right">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">קוד בית (למשל: noy123)</label>
-          <input type="text" id="houseCodeInput" required placeholder="הקלידי קוד בית ייחודי..." class="w-full text-center font-bold text-lg bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase tracking-wider">
+          <label class="block text-xs font-bold text-slate-700 mb-1">שם/קוד הבית</label>
+          <input type="text" id="houseCodeInput" required placeholder="הקלידי את שם הבית..." class="w-full text-center font-bold text-lg bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase tracking-wider">
         </div>
         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
           <i class="fa-solid fa-key"></i>
           <span>התחבר למאזן</span>
         </button>
       </form>
-      <p class="text-[11px] text-slate-400">כל זוג שמשתמש בקוד בית שונה מקבל מאזן נפרד לחלוטין.</p>
+
+      <!-- Form 2: Register -->
+      <form id="registerForm" onsubmit="handleHouseRegister(event)" class="space-y-4 text-right hidden">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">בחרו שם/קוד לבית החדש</label>
+          <input type="text" id="newHouseCodeInput" required placeholder="לדוגמה: MLYNEK2026" class="w-full text-center font-bold text-lg bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase tracking-wider">
+          <p class="text-[11px] text-slate-400 mt-1">זה הקוד שתעבירו לבן הזוג כדי להתחבר יחד.</p>
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-house-medical"></i>
+          <span>צור בית חדש</span>
+        </button>
+      </form>
+
+      <div id="authErrorMsg" class="text-xs font-bold text-rose-500 hidden"></div>
     </div>
   </div>
 
@@ -68,10 +89,6 @@
       
       <!-- Month Selector & Actions -->
       <div class="flex items-center gap-2">
-        <button onclick="manageCategoriesModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-sm px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm border border-indigo-400/30">
-          <i class="fa-solid fa-sliders"></i>
-          <span>ניהול קטגוריות</span>
-        </button>
         <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-indigo-800 text-white text-sm font-semibold rounded-lg px-3 py-1.5 border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-amber-300">
       </div>
     </div>
@@ -140,17 +157,14 @@
         <div class="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
           <span class="font-bold text-blue-700 block">🔷 צרכים (יעד: ~50%)</span>
           <span id="needsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
-          <span id="needsPercent" class="text-blue-600 font-semibold">0% מההכנסות</span>
         </div>
         <div class="p-2.5 bg-pink-50 rounded-xl border border-pink-100">
           <span class="font-bold text-pink-700 block">💖 רצונות (יעד: ~30%)</span>
           <span id="wantsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
-          <span id="wantsPercent" class="text-pink-600 font-semibold">0% מההכנסות</span>
         </div>
         <div class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
           <span class="font-bold text-emerald-700 block">🌱 חסכונות (יעד: ~20%)</span>
           <span id="savingsAmount" class="font-extrabold text-slate-800 text-sm block my-0.5">₪0</span>
-          <span id="savingsPercent" class="text-emerald-600 font-semibold">0% מההכנסות</span>
         </div>
       </div>
     </section>
@@ -223,7 +237,7 @@
               <input type="date" id="transactionDate" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">הערה / פירוט (רשות)</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">הערה / פירוט</label>
               <input type="text" id="description" placeholder="לדוגמה: קניות לשבת" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
           </div>
@@ -273,17 +287,6 @@
             <i class="fa-solid fa-list-check text-indigo-600"></i>
             פירוט תנועות החודש
           </h2>
-          <p class="text-xs text-slate-500" id="transactionCountText">0 תנועות רשומות</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <select id="tableFilterType" onchange="renderTransactionsTable()" class="text-xs bg-slate-100 border border-slate-200 rounded-lg p-2 focus:outline-none">
-            <option value="all">כל התנועות</option>
-            <option value="expense">הוצאות בלבד</option>
-            <option value="income">הכנסות בלבד</option>
-            <option value="צרכים">צרכים בלבד</option>
-            <option value="רצונות">רצונות בלבד</option>
-          </select>
         </div>
       </div>
 
@@ -295,7 +298,7 @@
               <th class="p-3 font-semibold">סוג</th>
               <th class="p-3 font-semibold">קטגוריה</th>
               <th class="p-3 font-semibold">תת-קטגוריה</th>
-              <th class="p-3 font-semibold">סיווג / אופי</th>
+              <th class="p-3 font-semibold">סיווג</th>
               <th class="p-3 font-semibold">הערה</th>
               <th class="p-3 font-semibold">סכום</th>
               <th class="p-3 font-semibold text-center">פעולה</th>
@@ -316,9 +319,8 @@
   <!-- Firebase Integration -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 🟢 המפתחות האמיתיים שלך מ-Firebase 🟢
     const firebaseConfig = {
       apiKey: "AIzaSyDepkiZnVn0Qk_6Nk_BeYOVbQwBKh3inN0",
       authDomain: "homebudgetapp-654f4.firebaseapp.com",
@@ -337,6 +339,8 @@
     window.addDoc = addDoc;
     window.deleteDoc = deleteDoc;
     window.doc = doc;
+    window.getDoc = getDoc;
+    window.setDoc = setDoc;
     window.onSnapshot = onSnapshot;
     window.query = query;
     window.where = where;
@@ -357,12 +361,11 @@
         "תחבורה": ["דלק", "חניה", "תחבורה ציבורית", "תיקונים", "אחר"],
         "תקשורת": ["טלפון נייד", "אינטרנט", "שירותי טלוויזיה / סטרימינג", "אחר"],
         "אוכל וקניות": ["סופרמרקט", "ירקן / מאפייה / קצב", "מסעדות ובתי קפה", "הזמנת אוכל", "אחר"],
-        "פנאי ושונות": ["אטרקציות ובילויים", "מתנות", "בגדים", "בעלי חיים", "לא ברור לאן הלך", "אחר"],
-        "השקעות וחסכונות": ["קופות גמל להשקעה", "חיסכון לכל ילד", "אחר"]
+        "פנאי ושונות": ["אטרקציות ובילויים", "מתנות", "בגדים", "בעלי חיים", "אחר"]
       },
       income: {
-        "הכנסות מעבודה": ["משכורת ובונוסים #1", "משכורת ובונוסים #2"],
-        "קצבאות ומענקים": ["קצבת ביטוח לאומי", "מענק מילואים / חד פעמי"]
+        "הכנסות מעבודה": ["משכורת #1", "משכורת #2"],
+        "קצבאות ומענקים": ["קצבת ביטוח לאומי", "מענק חד פעמי"]
       }
     };
 
@@ -381,16 +384,77 @@
       populateMainCategorySelect();
     });
 
-    function handleHouseLogin(e) {
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+      document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+
+      document.getElementById('tabLoginBtn').className = isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-600" : "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800";
+      document.getElementById('tabRegisterBtn').className = !isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600" : "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-800";
+      
+      showAuthError("");
+    }
+
+    function showAuthError(msg) {
+      const errDiv = document.getElementById('authErrorMsg');
+      if (msg) {
+        errDiv.textContent = msg;
+        errDiv.classList.remove('hidden');
+      } else {
+        errDiv.classList.add('hidden');
+      }
+    }
+
+    async function handleHouseLogin(e) {
       e.preventDefault();
       const codeInput = document.getElementById('houseCodeInput').value.trim().toLowerCase();
       if (!codeInput) return;
 
-      activeHouseCode = codeInput;
+      // בדיקה אם הבית קיים ב-Firebase
+      const houseRef = window.doc(window.db, "registered_houses", codeInput);
+      const houseSnap = await window.getDoc(houseRef);
+
+      if (!houseSnap.exists()) {
+        showAuthError("שם הבית לא נמצא. צרו בית חדש בלשונית 'יצירת בית חדש'.");
+        return;
+      }
+
+      loginToHouse(codeInput);
+    }
+
+    async function handleHouseRegister(e) {
+      e.preventDefault();
+      const newCodeInput = document.getElementById('newHouseCodeInput').value.trim().toLowerCase();
+      if (!newCodeInput) return;
+
+      if (newCodeInput.length < 3) {
+        showAuthError("שם הבית חייב להכיל לפחות 3 תווים.");
+        return;
+      }
+
+      // בדיקה אם השם תפוס
+      const houseRef = window.doc(window.db, "registered_houses", newCodeInput);
+      const houseSnap = await window.getDoc(houseRef);
+
+      if (houseSnap.exists()) {
+        showAuthError("שם הבית הזה כבר תפוס! בחרו שם ייחודי אחר.");
+        return;
+      }
+
+      // רישום הבית החדש בענן
+      await window.setDoc(houseRef, {
+        createdAt: new Date().toISOString(),
+        houseCode: newCodeInput
+      });
+
+      loginToHouse(newCodeInput);
+    }
+
+    function loginToHouse(code) {
+      activeHouseCode = code;
       localStorage.setItem('budget_house_code', activeHouseCode);
       document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
       document.getElementById('loginOverlay').classList.add('hidden');
-
       initRealtimeSync();
     }
 
@@ -533,12 +597,7 @@
 
     function renderTransactionsTable() {
       const selectedMonth = document.getElementById('selectedMonth').value;
-      const filterType = document.getElementById('tableFilterType').value;
       let list = transactions.filter(t => t.monthKey === selectedMonth);
-
-      if (filterType === 'expense') list = list.filter(t => t.type === 'expense');
-      else if (filterType === 'income') list = list.filter(t => t.type === 'income');
-      else if (filterType === 'צרכים' || filterType === 'רצונות') list = list.filter(t => t.budgetClassification === filterType);
 
       const tbody = document.getElementById('transactionsTableBody');
       tbody.innerHTML = '';
