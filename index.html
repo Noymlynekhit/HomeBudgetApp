@@ -531,7 +531,7 @@
         </button>
       </section>
 
-      <!-- REPORT VIEW 1: Category Breakdown (Default) -->
+      <!-- REPORT VIEW 1: Category Breakdown (Default) - Enlarged text -->
       <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
           <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
@@ -544,8 +544,8 @@
         </div>
         <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center space-y-3">
           <h3 class="text-xs font-bold text-slate-500 uppercase">סיכום קטגוריות החודש</h3>
-          <div id="categorySummaryList" class="space-y-2 max-h-52 overflow-y-auto text-xs">
-            <!-- Populated dynamically -->
+          <div id="categorySummaryList" class="space-y-2.5 max-h-56 overflow-y-auto text-sm">
+            <!-- Populated dynamically with larger fonts -->
           </div>
         </div>
       </section>
@@ -595,7 +595,7 @@
         </div>
       </section>
 
-      <!-- History Table with Excel-like Filters -->
+      <!-- History Table with Excel-like Filters, Export button & Enlarged text -->
       <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-3">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -603,42 +603,47 @@
             פירוט תנועות החודש
           </h2>
 
-          <!-- Excel-like Filter Bar -->
-          <div class="flex items-center gap-2 text-xs flex-wrap">
-            <div class="flex items-center gap-1">
+          <!-- Filters & Excel Export Button -->
+          <div class="flex items-center gap-3 text-xs flex-wrap">
+            <div class="flex items-center gap-1.5">
               <span class="text-slate-500 font-semibold">סינון קטגוריה:</span>
-              <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-none">
+              <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
                 <option value="ALL">הכל (ללא סינון)</option>
               </select>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1.5">
               <span class="text-slate-500 font-semibold">אמצעי תשלום:</span>
-              <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 focus:outline-none">
+              <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
                 <option value="ALL">הכל</option>
               </select>
             </div>
+            <!-- Export to Excel Button -->
+            <button onclick="exportTableToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 text-xs">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>ייצא לאקסל</span>
+            </button>
           </div>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-right text-xs md:text-sm whitespace-nowrap">
+          <table class="w-full text-right text-sm whitespace-nowrap">
             <thead>
-              <tr class="bg-slate-50 text-slate-500 border-b border-slate-200">
-                <th class="p-3.5 font-semibold">תאריך</th>
-                <th class="p-3.5 font-semibold">אמצעי תשלום</th>
-                <th class="p-3.5 font-semibold">סוג</th>
-                <th class="p-3.5 font-semibold">קטגוריה</th>
-                <th class="p-3.5 font-semibold">תת-קטגוריה</th>
-                <th class="p-3.5 font-semibold">סיווג</th>
-                <th class="p-3.5 font-semibold">הערה / פירוט</th>
-                <th class="p-3.5 font-semibold">סכום</th>
-                <th class="p-3.5 font-semibold text-center">פעולה</th>
+              <tr class="bg-slate-50 text-slate-600 border-b-2 border-slate-200">
+                <th class="p-4 font-bold">תאריך</th>
+                <th class="p-4 font-bold">אמצעי תשלום</th>
+                <th class="p-4 font-bold">סוג</th>
+                <th class="p-4 font-bold">קטגוריה</th>
+                <th class="p-4 font-bold">תת-קטגוריה</th>
+                <th class="p-4 font-bold">סיווג</th>
+                <th class="p-4 font-bold">הערה / פירוט</th>
+                <th class="p-4 font-bold">סכום</th>
+                <th class="p-4 font-bold text-center">פעולה</th>
               </tr>
             </thead>
             <tbody id="transactionsTableBody" class="divide-y divide-slate-100">
             </tbody>
           </table>
-          <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden">
+          <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden text-sm font-medium">
             <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i>
             אין תנועות רשומות התואמות את הסינון בחודש זה
           </div>
@@ -681,8 +686,8 @@
   </script>
 
   <script>
-    // 🔔 גרסה 1.0.8 - הוספת סינון דמוי אקסל בטבלת התנועות והבלטת עמודת ההערות
-    const APP_VERSION = "1.0.8";
+    // 🔔 גרסה 1.0.9 - הגדלת טקסטים בטבלה ובסיכוח קטגוריות + הוספת כפתור ייצוא לאקסל
+    const APP_VERSION = "1.0.9";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     let currentTrendRange = 'monthly';
     
@@ -1157,27 +1162,29 @@
     function renderCategorySummaryList(catTotals) {
       const listDiv = document.getElementById('categorySummaryList'); listDiv.innerHTML = '';
       const keys = Object.keys(catTotals);
-      if (keys.length === 0) { listDiv.innerHTML = `<p class="text-slate-400 text-center py-4">אין הוצאות רשומות בחודש זה.</p>`; return; }
+      if (keys.length === 0) { listDiv.innerHTML = `<p class="text-slate-400 text-center py-4 text-sm">אין הוצאות רשומות בחודש זה.</p>`; return; }
       keys.forEach(cat => {
         const row = document.createElement('div');
-        row.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100";
-        row.innerHTML = `<span class="font-bold text-slate-700">${cat}</span><span class="font-extrabold text-slate-900">₪${catTotals[cat].toLocaleString()}</span>`;
+        row.className = "flex justify-between items-center bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-sm";
+        row.innerHTML = `<span class="font-bold text-slate-700">${cat}</span><span class="font-extrabold text-slate-900 text-base">₪${catTotals[cat].toLocaleString()}</span>`;
         listDiv.appendChild(row);
+      });
+    }
+
+    function getFilteredTransactions(monthTx) {
+      const filterCat = document.getElementById('filterCategory').value;
+      const filterPm = document.getElementById('filterPaymentMethod').value;
+
+      return monthTx.filter(t => {
+        if (filterCat !== 'ALL' && t.mainCategory !== filterCat) return false;
+        if (filterPm !== 'ALL' && t.paymentMethod !== filterPm) return false;
+        return true;
       });
     }
 
     function renderTransactionsTable(monthTx) {
       const tbody = document.getElementById('transactionsTableBody'); tbody.innerHTML = '';
-      
-      // Get filter values
-      const filterCat = document.getElementById('filterCategory').value;
-      const filterPm = document.getElementById('filterPaymentMethod').value;
-
-      let filteredTx = monthTx.filter(t => {
-        if (filterCat !== 'ALL' && t.mainCategory !== filterCat) return false;
-        if (filterPm !== 'ALL' && t.paymentMethod !== filterPm) return false;
-        return true;
-      });
+      const filteredTx = getFilteredTransactions(monthTx);
 
       if (filteredTx.length === 0) {
         document.getElementById('emptyTableMessage').classList.remove('hidden');
@@ -1191,22 +1198,59 @@
         const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 transition border-b border-slate-200";
         const isExpense = t.type === 'expense';
         tr.innerHTML = `
-          <td class="p-3.5 text-slate-600 font-mono">${t.date}</td>
-          <td class="p-3.5">${t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium text-[11px]">${t.paymentMethod}</span>` : '-'}</td>
-          <td class="p-3.5 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
-          <td class="p-3.5 font-semibold text-indigo-900">${t.mainCategory}</td>
-          <td class="p-3.5 text-slate-600">${t.subCategory}</td>
-          <td class="p-3.5 text-slate-600">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
-          <td class="p-3.5 font-medium text-slate-800 max-w-xs truncate" title="${t.description}">${t.description}</td>
-          <td class="p-3.5 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
-          <td class="p-3.5 text-center">
-            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 transition">
-              <i class="fa-regular fa-trash-can text-sm"></i>
+          <td class="p-4 text-slate-700 font-mono text-sm">${t.date}</td>
+          <td class="p-4">${t.paymentMethod ? `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-medium text-xs">${t.paymentMethod}</span>` : '-'}</td>
+          <td class="p-4 font-semibold text-sm">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
+          <td class="p-4 font-bold text-indigo-900 text-sm">${t.mainCategory}</td>
+          <td class="p-4 text-slate-700 text-sm">${t.subCategory}</td>
+          <td class="p-4 text-slate-700 text-sm">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
+          <td class="p-4 font-medium text-slate-900 text-sm max-w-xs truncate" title="${t.description}">${t.description}</td>
+          <td class="p-4 font-extrabold text-base ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
+          <td class="p-4 text-center">
+            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-2 transition">
+              <i class="fa-regular fa-trash-can text-base"></i>
             </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // Export current filtered table view to CSV / Excel
+    function exportTableToCSV() {
+      const monthTx = getTransactionsForCurrentCycle();
+      const filteredTx = getFilteredTransactions(monthTx);
+
+      if (filteredTx.length === 0) {
+        alert("אין תנועות לייצוא בסינון הנוכחי.");
+        return;
+      }
+
+      let csvContent = "\uFEFF"; // BOM for Hebrew support in Excel
+      csvContent += "תאריך,אמצעי תשלום,סוג,קטגוריה,תת-קטגוריה,סיווג,הערה,סכום\n";
+
+      filteredTx.forEach(t => {
+        const row = [
+          t.date,
+          `"${t.paymentMethod || ''}"`,
+          t.type === 'expense' ? 'הוצאה' : 'הכנסה',
+          `"${t.mainCategory || ''}"`,
+          `"${t.subCategory || ''}"`,
+          `"${t.budgetClassification || ''}"`,
+          `"${(t.description || '').replace(/"/g, '""')}"`,
+          t.amount
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `budget_report_${document.getElementById('selectedMonth').value}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function renderCategoryChart(catTotals) {
