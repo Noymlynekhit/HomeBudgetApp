@@ -221,7 +221,7 @@
         <button onclick="closeTutorialModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
       <div class="space-y-3 text-xs text-slate-600">
-        <p><b>מסך הבית:</b> מרכז את סיכום ההכנסות, ההוצאות, המאזן החודשי והתנועות האחרונות.</p>
+        <p><b>מסך הבית:</b> מרכז את סיכום ההכנסות, ההוצאות, המאזן החודשי, תקרות התקציב, קופות החיסכון והתנועות האחרונות.</p>
         <p><b>תפריט ניהול (3 פסים):</b> גישה מהירה לדוחות, פירוט תנועות מלא והגדרות האזור האישי.</p>
       </div>
       <button onclick="closeTutorialModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">הבנתי, תודה!</button>
@@ -281,7 +281,6 @@
           <i class="fa-solid fa-bars"></i>
         </button>
         <div>
-          <!-- תוקן: שלום + שם הבית במקום מיכל -->
           <h1 id="greetingTitle" class="text-base md:text-lg font-extrabold">שלום...</h1>
           <p class="text-[11px] text-slate-600 font-medium">סיכום הפעילות שלך עד כה החודש</p>
         </div>
@@ -317,11 +316,30 @@
         <div class="p-3.5 bg-[#CFECF3]/40 text-slate-700 rounded-2xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
       </section>
 
+      <!-- כפתור מהיר להזנת תנועה -->
       <button onclick="switchMainTab('add')" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition">
         <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
       </button>
 
-      <!-- תנועות אחרונות -->
+      <!-- 1. תקרות תקציב (מתחת להוספת תנועה) -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-bullseye text-[#8fb3bf]"></i> תקרות תקציב חודשיות</h2>
+          <button onclick="openBudgetCapModal()" class="text-xs bg-[#CFECF3]/50 hover:bg-[#CFECF3] text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">+ הגדר תקרה</button>
+        </div>
+        <div id="budgetCapsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <!-- 2. קופות חיסכון (מתחת לתקרות) -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-600"></i> קופות ויעדי חיסכון</h2>
+          <button onclick="promptCreateSavingsGoal()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition">+ יעד חדש</button>
+        </div>
+        <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <!-- 3. תנועות אחרונות -->
       <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-[#8fb3bf]"></i> תנועות אחרונות</h2>
@@ -414,7 +432,7 @@
       </section>
     </div>
 
-    <!-- TAB 4: REPORTS (RESTORED ALL TABS & CLEANED HEADERS) -->
+    <!-- TAB 4: REPORTS -->
     <div id="tabContentReports" class="hidden space-y-6">
       <section class="bg-white rounded-3xl p-2 shadow-sm border flex gap-2 text-xs font-bold overflow-x-auto">
         <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center whitespace-nowrap">פילוח קטגוריות</button>
@@ -480,7 +498,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.1";
+    const APP_VERSION = "1.2.2";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -601,25 +619,64 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    function openEditModal(id, amount, date, description) {
-      document.getElementById('editTxId').value = id;
-      document.getElementById('editAmount').value = amount;
-      document.getElementById('editDate').value = date;
-      document.getElementById('editDescription').value = description;
-      document.getElementById('editTransactionModal').classList.remove('hidden');
-    }
-    function closeEditModal() { document.getElementById('editTransactionModal').classList.add('hidden'); }
-
-    async function saveEditedTransaction() {
-      const id = document.getElementById('editTxId').value;
-      const amount = parseFloat(document.getElementById('editAmount').value);
-      const date = document.getElementById('editDate').value;
-      const description = document.getElementById('editDescription').value;
-      if (!amount || amount <= 0 || !date) { alert("נא להזין סכום ותאריך תקינים."); return; }
-      await window.updateDoc(window.doc(window.db, "house_transactions", id), {
-        amount, date, description: description || '-', monthKey: date.slice(0, 7)
+    // --- Budget Cap Functions ---
+    function openBudgetCapModal() {
+      const mainSelect = document.getElementById('budgetCapMainCatSelect');
+      mainSelect.innerHTML = '';
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+      Object.keys(cats).forEach(cat => {
+        const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; mainSelect.appendChild(opt);
       });
-      closeEditModal();
+      populateCapSubCategorySelect();
+      document.getElementById('budgetCapAmountInput').value = '';
+      document.getElementById('budgetCapModal').classList.remove('hidden');
+    }
+
+    function populateCapSubCategorySelect() {
+      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
+      const subSelect = document.getElementById('budgetCapSubCatSelect');
+      subSelect.innerHTML = '';
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+      (cats[mainCat] || []).forEach(sub => {
+        const opt = document.createElement('option'); opt.value = sub; opt.textContent = sub; subSelect.appendChild(opt);
+      });
+    }
+
+    function closeBudgetCapModal() { document.getElementById('budgetCapModal').classList.add('hidden'); }
+
+    async function saveBudgetCap() {
+      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
+      const subCat = document.getElementById('budgetCapSubCatSelect').value;
+      const amount = parseFloat(document.getElementById('budgetCapAmountInput').value);
+      if (!mainCat || !subCat || isNaN(amount) || amount <= 0) { alert("נא להזין סכום תקין."); return; }
+      const capKey = `${mainCat} > ${subCat}`;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
+        caps: { ...houseConfig.caps, [capKey]: amount }
+      });
+      closeBudgetCapModal();
+    }
+
+    async function removeBudgetCap(key) {
+      if (confirm("להסיר את תקרת התקציב הזו?")) {
+        const caps = { ...(houseConfig.caps || {}) };
+        delete caps[key];
+        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps });
+      }
+    }
+
+    // --- Savings Goal Functions ---
+    async function promptCreateSavingsGoal() {
+      const name = prompt("שם קופת החיסכון:"); if (!name) return;
+      const target = parseFloat(prompt("סכום היעד בש\"ח:")); if (isNaN(target)) return;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
+        savingsGoals: [...(houseConfig.savingsGoals || []), { name, target, saved: 0 }]
+      });
+    }
+
+    async function promptDepositToGoal(idx) {
+      const amount = parseFloat(prompt("כמה להפקיד?")); if (isNaN(amount) || amount <= 0) return;
+      const updatedGoals = [...houseConfig.savingsGoals]; updatedGoals[idx].saved += amount;
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: updatedGoals });
     }
 
     function switchAuthTab(tab) {
@@ -816,6 +873,7 @@
       const monthTx = getTransactionsForCurrentCycle();
       let totalIncome = 0, totalExpenses = 0, fixedTotal = 0, variableTotal = 0, unplannedTotal = 0;
       const catTotals = {};
+      const subCatTotals = {};
 
       monthTx.forEach(t => {
         if (t.type === 'income') { totalIncome += t.amount; }
@@ -825,6 +883,8 @@
           else if (t.expenseType === 'משתנות') variableTotal += t.amount;
           else if (t.expenseType === 'בלתי מתוכננות') unplannedTotal += t.amount;
           catTotals[t.mainCategory] = (catTotals[t.mainCategory] || 0) + t.amount;
+          const subKey = `${t.mainCategory} > ${t.subCategory}`;
+          subCatTotals[subKey] = (subCatTotals[subKey] || 0) + t.amount;
         }
       });
 
@@ -837,10 +897,71 @@
       document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
       document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
+      renderBudgetCaps(subCatTotals);
+      renderSavingsGoals();
       renderRecentTransactions(monthTx);
       renderCategoryChart(catTotals);
       renderCategorySummaryList(catTotals);
       renderTransactionsTable(monthTx);
+    }
+
+    function renderBudgetCaps(subCatTotals) {
+      const container = document.getElementById('budgetCapsContainer'); container.innerHTML = '';
+      const caps = houseConfig.caps || {}; const capKeys = Object.keys(caps);
+      if (capKeys.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-400 text-xs border border-dashed rounded-xl">טרם הוגדרו תקרות תקציב.</div>`;
+        return;
+      }
+      capKeys.forEach(key => {
+        const cap = caps[key];
+        const spent = subCatTotals[key] || 0;
+        const parts = key.split(' > ');
+        const pct = Math.min(100, Math.round((spent / cap) * 100));
+        let barColor = "bg-emerald-500"; 
+        if (pct >= 100) barColor = "bg-rose-500"; else if (pct >= 75) barColor = "bg-amber-500";
+
+        const div = document.createElement('div');
+        div.className = "p-3.5 bg-slate-50 rounded-2xl border space-y-1.5 text-xs";
+        div.innerHTML = `
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>${parts[1]} <span class="text-[11px] text-slate-400 font-normal">(${parts[0]})</span></span>
+            <button onclick="removeBudgetCap('${key}')" class="text-rose-400 hover:text-rose-600"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
+          <div class="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+            <div class="${barColor} h-full transition-all" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-500">
+            <span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span>
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    function renderSavingsGoals() {
+      const container = document.getElementById('savingsGoalsContainer'); container.innerHTML = '';
+      const goals = houseConfig.savingsGoals || [];
+      if (goals.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-400 text-xs border border-dashed rounded-xl">טרם הוגדרו קופות חיסכון.</div>`;
+        return;
+      }
+      goals.forEach((goal, idx) => {
+        const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+        const div = document.createElement('div');
+        div.className = "p-3.5 bg-emerald-50/40 rounded-2xl border border-emerald-100 space-y-2 text-xs";
+        div.innerHTML = `
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>🌱 ${goal.name}</span>
+            <span class="text-emerald-700">${pct}%</span>
+          </div>
+          <div class="h-2 w-full bg-emerald-100 rounded-full overflow-hidden">
+            <div class="bg-emerald-500 h-full" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-600 font-semibold">
+            <span>נצבר: ₪${goal.saved.toLocaleString()} / ₪${goal.target.toLocaleString()}</span>
+            <button onclick="promptDepositToGoal(${idx})" class="text-emerald-600 underline font-bold">+ הפקד</button>
+          </div>`;
+        container.appendChild(div);
+      });
     }
 
     function renderRecentTransactions(monthTx) {
