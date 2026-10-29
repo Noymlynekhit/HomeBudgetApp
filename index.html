@@ -21,13 +21,8 @@
       font-family: 'Rubik', sans-serif;
       background-color: #f7f9fa;
     }
-    /* פלטת הצבעים הפסטלית והחדשה שביקשת */
     .pastel-header {
       background: linear-gradient(135deg, #CFECF3 0%, #F9B2D7 100%);
-    }
-    .pastel-card {
-      background: #ffffff;
-      border: 1px solid #CFECF3;
     }
   </style>
 </head>
@@ -36,9 +31,7 @@
   <!-- Update Banner -->
   <div id="updateBanner" class="bg-[#F9B2D7] text-slate-900 px-4 py-2 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
     <span>🚀 יש גרסה חדשה ועדכנית לאפליקציה!</span>
-    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">
-      עדכן עכשיו 🔄
-    </button>
+    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">עדכן עכשיו 🔄</button>
   </div>
 
   <!-- Email Prompt Modal for Existing Users -->
@@ -69,10 +62,10 @@
       </div>
 
       <nav class="space-y-2 text-xs font-bold">
-        <button onclick="switchMainTab('overview'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-house text-[#8fb3bf]"></i><span>מסך הבית (נחיתה)</span></button>
+        <button onclick="switchMainTab('overview'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-house text-[#8fb3bf]"></i><span>מסך הבית</span></button>
         <button onclick="switchMainTab('reports'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-chart-pie text-[#F9B2D7]"></i><span>דוחות ופילוח קטגוריות</span></button>
-        <button onclick="switchMainTab('details'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-list-check text-[#DAF9DE]"></i><span>פירוט תנועות מלא</span></button>
-        <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500"></i><span>אזור אישי (מייל ומחזור)</span></button>
+        <button onclick="switchMainTab('details'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-list-check text-[#DAF9DE]"></i><span>פירוט תנועות</span></button>
+        <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500"></i><span>אזור אישי</span></button>
         <button onclick="openTutorialModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-circle-question text-amber-500"></i><span>מדריך למשתמש</span></button>
       </nav>
     </div>
@@ -83,23 +76,21 @@
     </div>
   </aside>
 
-  <!-- Settings / House Profile Modal -->
+  <!-- Settings Modal -->
   <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">הגדרות אזור אישי</h3>
         <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
-
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-600 mb-1">כתובת מייל לעדכונים ותזכורות</label>
-          <input type="email" id="settingsEmailInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:outline-none">
+          <input type="email" id="settingsEmailInput" class="w-full bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
         </div>
-
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">תאריך מחזור חודשי (יום תחילת חודש פיננסי)</label>
-          <select id="settingsCycleDayInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none font-bold">
+          <label class="block font-semibold text-slate-600 mb-1">תאריך מחזור חודשי</label>
+          <select id="settingsCycleDayInput" class="w-full bg-slate-50 border rounded-xl p-2.5 focus:outline-none font-bold">
             <option value="1">1 בחודש</option>
             <option value="10">10 בחודש</option>
             <option value="15">15 בחודש</option>
@@ -107,202 +98,148 @@
           </select>
         </div>
       </div>
-
       <div class="flex gap-2 pt-2">
-        <button onclick="saveHouseSettings()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור הגדרות</button>
-        <button onclick="closeSettingsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">סגור</button>
+        <button onclick="saveHouseSettings()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור הגדרות</button>
+        <button onclick="closeSettingsModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">סגור</button>
       </div>
     </div>
   </div>
 
   <!-- Budget Cap Modal -->
   <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">הגדרת תקרת תקציב</h3>
-        <button onclick="closeBudgetCapModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        <button onclick="closeBudgetCapModal()" class="text-slate-400 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
-          <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+          <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full bg-slate-50 border rounded-xl p-2.5"></select>
         </div>
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">תת-קטגוריה ספציפית</label>
-          <select id="budgetCapSubCatSelect" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+          <label class="block font-semibold text-slate-600 mb-1">תת-קטגוריה</label>
+          <select id="budgetCapSubCatSelect" class="w-full bg-slate-50 border rounded-xl p-2.5"></select>
         </div>
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">תקרת תקציב חודשית (בש"ח)</label>
-          <input type="number" step="0.01" inputmode="decimal" id="budgetCapAmountInput" placeholder="לדוגמה: 2500" class="w-full text-base font-bold bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+          <label class="block font-semibold text-slate-600 mb-1">תקרה חודשית (בש"ח)</label>
+          <input type="number" step="0.01" inputmode="decimal" id="budgetCapAmountInput" placeholder="2500" class="w-full font-bold bg-slate-50 border rounded-xl p-2.5">
         </div>
       </div>
       <div class="flex gap-2 pt-2">
-        <button onclick="saveBudgetCap()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור תקרה</button>
-        <button onclick="closeBudgetCapModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">ביטול</button>
+        <button onclick="saveBudgetCap()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">שמור תקרה</button>
+        <button onclick="closeBudgetCapModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs">ביטול</button>
       </div>
     </div>
   </div>
 
   <!-- Edit Transaction Modal -->
   <div id="editTransactionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">עריכת תנועה</h3>
-        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        <button onclick="closeEditModal()" class="text-slate-400 font-bold text-lg">&times;</button>
       </div>
       <input type="hidden" id="editTxId">
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
-          <input type="number" step="0.01" inputmode="decimal" id="editAmount" class="w-full text-base font-bold bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+          <input type="number" step="0.01" inputmode="decimal" id="editAmount" class="w-full font-bold bg-slate-50 border rounded-xl p-2.5">
         </div>
         <div>
           <label class="block font-semibold text-slate-600 mb-1">תאריך</label>
-          <input type="date" id="editDate" class="w-full bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+          <input type="date" id="editDate" class="w-full bg-slate-50 border rounded-xl p-2.5">
         </div>
         <div>
           <label class="block font-semibold text-slate-600 mb-1">הערה / פירוט</label>
-          <input type="text" id="editDescription" class="w-full bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+          <input type="text" id="editDescription" class="w-full bg-slate-50 border rounded-xl p-2.5">
         </div>
       </div>
       <div class="flex gap-2 pt-2">
-        <button onclick="saveEditedTransaction()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור שינויים</button>
-        <button onclick="closeEditModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">ביטול</button>
+        <button onclick="saveEditedTransaction()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">שמור שינויים</button>
+        <button onclick="closeEditModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs">ביטול</button>
       </div>
     </div>
   </div>
 
   <!-- Payment Methods Manager Modal -->
   <div id="paymentMethodsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800">ניהול אמצעי תשלום וכרטיסים</h3>
-        <button onclick="closePaymentMethodsModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        <h3 class="text-lg font-bold text-slate-800">ניהול אמצעי תשלום</h3>
+        <button onclick="closePaymentMethodsModal()" class="text-slate-400 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-3">
-        <label class="block text-xs font-bold text-slate-700">הוספת כרטיס / אמצעי תשלום חדש</label>
+        <label class="block text-xs font-bold text-slate-700">הוספת אמצעי תשלום חדש</label>
         <div class="flex gap-2">
-          <input type="text" id="newPaymentMethodInput" placeholder="לדוגמה: כרטיס שופרסל..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
+          <input type="text" id="newPaymentMethodInput" placeholder="לדוגמה: כרטיס שופרסל..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2">
           <button onclick="addCustomPaymentMethod()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף</button>
         </div>
       </div>
       <div class="space-y-2 pt-2">
-        <label class="block text-xs font-bold text-slate-700">כרטיסים ואמצעים קיימים:</label>
+        <label class="block text-xs font-bold text-slate-700">אמצעים קיימים:</label>
         <div id="paymentMethodsList" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
       </div>
       <button onclick="closePaymentMethodsModal()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-xs">סגור</button>
     </div>
   </div>
 
-  <!-- Categories Manager Modal (Expenses) -->
+  <!-- Categories Manager Modal -->
   <div id="categoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הוצאה</h3>
-        <button onclick="closeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות</h3>
+        <button onclick="closeCategoriesModal()" class="text-slate-400 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-2">
-        <label class="block text-xs font-bold text-slate-700">הוספת קטגוריה ראשית חדשה</label>
+        <label class="block text-xs font-bold text-slate-700">הוספת קטגוריה ראשית</label>
         <div class="flex gap-2">
-          <input type="text" id="newMainCategoryInput" placeholder="שם הקטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomMainCategory()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
+          <input type="text" id="newMainCategoryInput" placeholder="שם הקטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2">
+          <button onclick="addCustomMainCategory()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף</button>
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
         <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה</label>
-        <select id="targetMainCategorySelect" class="w-full text-xs bg-slate-50 border rounded-xl p-2 mb-2 focus:outline-none"></select>
+        <select id="targetMainCategorySelect" class="w-full text-xs bg-slate-50 border rounded-xl p-2 mb-2"></select>
         <div class="flex gap-2">
-          <input type="text" id="newSubCategoryInput" placeholder="שם תת-הקטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomSubCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף תת-קטגוריה</button>
+          <input type="text" id="newSubCategoryInput" placeholder="שם תת-קטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2">
+          <button onclick="addCustomSubCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף</button>
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
-        <label class="block text-xs font-bold text-slate-700">הקטגוריות הקיימות:</label>
         <div id="categoriesListManager" class="space-y-2 max-h-48 overflow-y-auto"></div>
       </div>
       <button onclick="closeCategoriesModal()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-xs">סגור ושמור</button>
     </div>
   </div>
 
-  <!-- Income Categories Manager Modal -->
-  <div id="incomeCategoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הכנסה</h3>
-        <button onclick="closeIncomeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
-      </div>
-      <div class="space-y-2">
-        <label class="block text-xs font-bold text-slate-700">הוספת קטגוריית הכנסה ראשית</label>
-        <div class="flex gap-2">
-          <input type="text" id="newIncomeMainCategoryInput" placeholder="לדוגמה: הכנסות מעבודה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomIncomeMainCategory()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
-        </div>
-      </div>
-      <div class="space-y-2 pt-2 border-t">
-        <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה</label>
-        <select id="targetIncomeMainCategorySelect" class="w-full text-xs bg-slate-50 border rounded-xl p-2 mb-2 focus:outline-none"></select>
-        <div class="flex gap-2">
-          <input type="text" id="newIncomeSubCategoryInput" placeholder="שם תת-קטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomIncomeSubCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף תת-קטגוריה</button>
-        </div>
-      </div>
-      <div class="space-y-2 pt-2 border-t">
-        <label class="block text-xs font-bold text-slate-700">קטגוריות ההכנסה הקיימות:</label>
-        <div id="incomeCategoriesListManager" class="space-y-2 max-h-48 overflow-y-auto"></div>
-      </div>
-      <button onclick="closeIncomeCategoriesModal()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-xs">סגור ושמור</button>
-    </div>
-  </div>
-
-  <!-- Tutorial / User Guide Modal -->
+  <!-- Tutorial Modal -->
   <div id="tutorialModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[85vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-9 h-9 bg-[#CFECF3] text-slate-700 rounded-xl flex items-center justify-center text-lg">🏡</div>
-          <h2 class="text-lg font-extrabold text-slate-800">מדריך השימוש במאזן הבית</h2>
-        </div>
-        <button onclick="closeTutorialModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+        <h2 class="text-lg font-extrabold text-slate-800">מדריך השימוש במאזן הבית</h2>
+        <button onclick="closeTutorialModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
-      <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
-        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-[#8fb3bf]"></i> 1. מסך הבית (נחיתה)</h3>
-          <p>מסך נקי ומעוצב המציג את סיכום ההכנסות מול ההוצאות, את מאזן החודש הנוכחי, ואת התנועות האחרונות עם אייקונים חמודים. מכיל כפתור מהיר להזנת תנועה וכפתור תפריט (3 פסים) בצד ימין.</p>
-        </div>
-        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-circle-plus text-[#8fb3bf]"></i> 2. הזנת תנועה מהירה</h3>
-          <p>הוספת הכנסות או הוצאות בקלות עם מקלדת מספרים מהירה, בחירת קטגוריה עם אייקון תואם, ואמצעי תשלום.</p>
-        </div>
-        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-[#F9B2D7]"></i> 3. דוחות וקטגוריות</h3>
-          <p>פילוח הוצאות לפי קטגוריות עם אייקונים ויזואליים חמודים, גרף עוגה, תקרות תקציב מודל 50/30/20 וקופות חיסכון.</p>
-        </div>
+      <div class="space-y-3 text-xs text-slate-600">
+        <p><b>מסך הבית:</b> מרכז את סיכום ההכנסות, ההוצאות, המאזן החודשי והתנועות האחרונות.</p>
+        <p><b>תפריט ניהול (3 פסים):</b> גישה מהירה לדוחות, פירוט תנועות מלא והגדרות האזור האישי.</p>
       </div>
-      <button onclick="closeTutorialModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">הבנתי, בואו נתחיל! 💪</button>
+      <button onclick="closeTutorialModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">הבנתי, תודה!</button>
     </div>
   </div>
 
   <!-- Alert Modal -->
   <div id="budgetAlertModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 border border-rose-100">
-      <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-3xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <div>
-        <h3 class="text-xl font-extrabold text-slate-800" id="budgetAlertTitle">התראת תקציב!</h3>
-        <p class="text-sm text-slate-600 mt-2" id="budgetAlertMessage"></p>
-      </div>
-      <button onclick="closeBudgetAlert()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl">הבנתי, תודה</button>
+      <h3 class="text-xl font-extrabold text-slate-800" id="budgetAlertTitle">התראה!</h3>
+      <p class="text-sm text-slate-600 mt-2" id="budgetAlertMessage"></p>
+      <button onclick="closeBudgetAlert()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl">הבנתי</button>
     </div>
-  </div>
-
-  <!-- Inactive Reminder Banner -->
-  <div id="inactiveReminderBanner" class="bg-rose-500 text-white px-4 py-2.5 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
-    <span>⚠️ שים לב: עבר יותר משבוע ללא הזנת נתונים למאזן! מומלץ לשלוח מייל תזכורת.</span>
-    <button onclick="document.getElementById('inactiveReminderBanner').classList.add('hidden')" class="bg-white text-rose-600 px-3 py-1 rounded-lg">סגור</button>
   </div>
 
   <!-- Login Overlay -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
-    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center border border-slate-100">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center border">
       <div class="w-16 h-16 bg-[#CFECF3] text-slate-700 rounded-2xl flex items-center justify-center mx-auto shadow-inner"><i class="fa-solid fa-house-chimney text-3xl"></i></div>
       <div>
         <h2 class="text-2xl font-extrabold text-slate-800">כניסה למאזן הבית</h2>
@@ -340,13 +277,13 @@
   <header class="pastel-header text-slate-800 shadow-sm sticky top-0 z-30 pb-4">
     <div class="max-w-4xl mx-auto px-4 py-3.5 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <!-- 3 פסים תפריט צד (המבורגר) -->
         <button onclick="toggleSidebar()" class="w-10 h-10 bg-white/80 hover:bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-700 text-lg transition">
           <i class="fa-solid fa-bars"></i>
         </button>
         <div>
-          <h1 id="greetingTitle" class="text-base md:text-lg font-extrabold">שלום מיכל,</h1>
-          <p id="currentDateDisplay" class="text-[11px] text-slate-600 font-medium">סיכום הפעילות שלך עד כה החודש</p>
+          <!-- תוקן: שלום + שם הבית במקום מיכל -->
+          <h1 id="greetingTitle" class="text-base md:text-lg font-extrabold">שלום...</h1>
+          <p class="text-[11px] text-slate-600 font-medium">סיכום הפעילות שלך עד כה החודש</p>
         </div>
       </div>
       <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-white/70 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 border border-white focus:outline-none shadow-sm">
@@ -355,12 +292,10 @@
 
   <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow space-y-6">
 
-    <!-- TAB 1: OVERVIEW (LANDING PAGE AS REQUESTED) -->
+    <!-- TAB 1: OVERVIEW -->
     <div id="tabContentOverview" class="space-y-6">
-      
-      <!-- קוביית הכנסות מול הוצאות כמו בתמונה -->
-      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 grid grid-cols-2 gap-4 text-center">
-        <div class="border-l border-slate-100 pl-2">
+      <section class="bg-white rounded-3xl p-5 shadow-sm border grid grid-cols-2 gap-4 text-center">
+        <div class="border-l pl-2">
           <span class="text-xs font-bold text-rose-500 flex items-center justify-center gap-1 mb-1">
             <i class="fa-solid fa-arrow-up-right-from-square"></i> הוצאות
           </span>
@@ -374,38 +309,20 @@
         </div>
       </section>
 
-      <!-- קוביית מאזן החודש (שורה תחתונה) -->
-      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+      <section class="bg-white rounded-3xl p-5 shadow-sm border flex items-center justify-between">
         <div>
           <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">תזרים נטו (מאזן לחודש)</span>
           <div id="netBalanceDisplay" class="text-2xl font-extrabold text-slate-800">₪0</div>
-          <button id="transferSurplusBtn" onclick="transferSurplusToSavings()" class="text-xs font-bold text-indigo-600 underline mt-1 hidden">העבר עודף חודשי לקופת חיסכון ➔</button>
         </div>
         <div class="p-3.5 bg-[#CFECF3]/40 text-slate-700 rounded-2xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
       </section>
 
-      <!-- כפתור מהיר להזנת תנועה בולט ונגיש -->
       <button onclick="switchMainTab('add')" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition">
         <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
       </button>
 
-      <!-- 50/30/20 Rule -->
-      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-[#8fb3bf]"></i> חלוקה תקציבית (מודל 50 / 30 / 20)</h2>
-        <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex mb-3 shadow-inner">
-          <div id="barNeeds" class="bg-blue-400 h-full transition-all" style="width: 0%"></div>
-          <div id="barWants" class="bg-pink-400 h-full transition-all" style="width: 0%"></div>
-          <div id="barSavings" class="bg-emerald-400 h-full transition-all" style="width: 0%"></div>
-        </div>
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="p-2 bg-blue-50 rounded-xl"><span class="font-bold text-blue-700 block">🔷 צרכים</span><span id="needsAmount" class="font-extrabold text-slate-800">₪0</span></div>
-          <div class="p-2 bg-pink-50 rounded-xl"><span class="font-bold text-pink-700 block">💖 רצונות</span><span id="wantsAmount" class="font-extrabold text-slate-800">₪0</span></div>
-          <div class="p-2 bg-emerald-50 rounded-xl"><span class="font-bold text-emerald-700 block">🌱 חסכונות</span><span id="savingsAmount" class="font-extrabold text-slate-800">₪0</span></div>
-        </div>
-      </section>
-
-      <!-- תנועות אחרונות למטה בדף הנחיתה -->
-      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+      <!-- תנועות אחרונות -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-[#8fb3bf]"></i> תנועות אחרונות</h2>
           <button onclick="switchMainTab('details')" class="text-xs text-[#8fb3bf] font-bold hover:underline">לכל הפירוט &larr;</button>
@@ -416,103 +333,66 @@
 
     <!-- TAB 2: ADD TRANSACTION -->
     <div id="tabContentAdd" class="hidden max-w-xl mx-auto">
-      <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+      <section class="bg-white rounded-3xl p-6 shadow-sm border">
         <h2 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2 border-b pb-3">
           <i class="fa-solid fa-circle-plus text-[#8fb3bf]"></i> הזנת תנועה חדשה למאזן
         </h2>
-
         <form id="transactionForm" onsubmit="handleAddTransaction(event)" class="space-y-4">
           <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl text-xs font-bold">
             <button type="button" id="typeExpenseBtn" onclick="setTransactionType('expense')" class="py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center">הוצאה</button>
             <button type="button" id="typeIncomeBtn" onclick="setTransactionType('income')" class="py-2.5 rounded-xl transition text-slate-500 text-center">הכנסה</button>
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
             <div class="relative">
-              <!-- מקלדת מספרים מהירה במובייל -->
               <input type="number" step="0.01" inputmode="decimal" id="amount" required placeholder="0.00" class="w-full text-xl font-bold bg-slate-50 border rounded-2xl px-3 py-3 pl-8 focus:outline-none">
               <span class="absolute left-3 top-3.5 text-slate-400 font-bold">₪</span>
             </div>
           </div>
-
           <div id="paymentMethodFieldWrapper">
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-xs font-semibold text-slate-600">אמצעי תשלום / כרטיס</label>
+              <label class="block text-xs font-semibold text-slate-600">אמצעי תשלום</label>
               <button type="button" onclick="openPaymentMethodsModal()" class="text-[11px] text-[#8fb3bf] font-bold hover:underline">⚙️ ניהול כרטיסים</button>
             </div>
-            <select id="paymentMethod" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+            <select id="paymentMethod" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5"></select>
           </div>
-
           <div class="space-y-3">
             <div class="flex justify-between items-center">
-              <label class="block text-xs font-semibold text-slate-600">קטגוריות ותת-קטגוריות</label>
-              <button type="button" id="manageCategoriesBtn" onclick="openCategoriesModal()" class="text-[11px] text-[#8fb3bf] font-bold hover:underline">⚙️ ניהול קטגוריות</button>
+              <label class="block text-xs font-semibold text-slate-600">קטגוריות</label>
+              <button type="button" onclick="openCategoriesModal()" class="text-[11px] text-[#8fb3bf] font-bold hover:underline">⚙️ ניהול קטגוריות</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
-              <select id="subCategory" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+              <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5"></select>
+              <select id="subCategory" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5"></select>
             </div>
           </div>
-
-          <div id="expenseFields" class="space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">סיווג תקציבי</label>
-                <select id="budgetClassification" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
-                  <option value="צרכים">צרכים (Needs)</option>
-                  <option value="רצונות">רצונות (Wants)</option>
-                  <option value="חסכונות">חסכונות (Savings)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">סוג הוצאה</label>
-                <select id="expenseType" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
-                  <option value="קבועות">קבועה</option>
-                  <option value="משתנות">משתנה</option>
-                  <option value="בלתי מתוכננות">בלתי מתוכננת (בלת"מ)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך</label>
-              <input type="date" id="transactionDate" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+              <input type="date" id="transactionDate" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">הערה / פירוט</label>
-              <input type="text" id="description" placeholder="לדוגמה: קניות לשבת" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">הערה</label>
+              <input type="text" id="description" placeholder="פירוט..." class="w-full text-sm bg-slate-50 border rounded-xl p-2.5">
             </div>
           </div>
-
-          <div class="flex gap-2 pt-2">
-            <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm py-3.5 rounded-xl transition shadow-lg">הוסף תנועה למאזן</button>
-            <button type="button" onclick="switchMainTab('overview')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3.5 rounded-xl transition text-xs">ביטול</button>
-          </div>
+          <button type="submit" class="w-full bg-slate-800 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg">הוסף תנועה למאזן</button>
         </form>
       </section>
     </div>
 
     <!-- TAB 3: DETAILS -->
     <div id="tabContentDetails" class="hidden space-y-6">
-      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-3">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-[#8fb3bf]"></i> פירוט תנועות החודש</h2>
           <div class="flex items-center gap-3 text-xs flex-wrap">
-            <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
+            <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 text-xs">
               <option value="ALL">כל הקטגוריות</option>
             </select>
-            <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
-              <option value="ALL">כל אמצעי התשלום</option>
-            </select>
-            <button onclick="exportTableToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-xs">
-              <i class="fa-solid fa-file-excel"></i><span>ייצא לאקסל</span>
-            </button>
+            <button onclick="exportTableToCSV()" class="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i><span>ייצא לאקסל</span></button>
           </div>
         </div>
-
         <div class="w-full overflow-x-auto pb-2 border rounded-2xl">
           <table class="w-full text-right text-sm whitespace-nowrap min-w-[750px]">
             <thead>
@@ -522,7 +402,7 @@
                 <th class="p-4 font-bold">סוג</th>
                 <th class="p-4 font-bold">קטגוריה</th>
                 <th class="p-4 font-bold">תת-קטגוריה</th>
-                <th class="p-4 font-bold">הערה / פירוט</th>
+                <th class="p-4 font-bold">הערה</th>
                 <th class="p-4 font-bold">סכום</th>
                 <th class="p-4 font-bold text-center">פעולות</th>
               </tr>
@@ -534,11 +414,12 @@
       </section>
     </div>
 
-    <!-- TAB 4: REPORTS (WITH CUTE ICONS) -->
+    <!-- TAB 4: REPORTS (RESTORED ALL TABS & CLEANED HEADERS) -->
     <div id="tabContentReports" class="hidden space-y-6">
-      <section class="bg-white rounded-3xl p-2 shadow-sm border flex gap-2 text-xs font-bold">
-        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center">📊 פילוח קטגוריות</button>
-        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center">📈 השוואת מגמות</button>
+      <section class="bg-white rounded-3xl p-2 shadow-sm border flex gap-2 text-xs font-bold overflow-x-auto">
+        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center whitespace-nowrap">פילוח קטגוריות</button>
+        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap">השוואת מגמות</button>
+        <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap">קבועות מול משתנות</button>
       </section>
 
       <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -547,7 +428,7 @@
           <div class="relative h-64 w-full flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
         </div>
         <div class="lg:col-span-6 bg-white rounded-3xl p-5 shadow-sm border flex flex-col justify-center space-y-3">
-          <h3 class="text-xs font-bold text-slate-400 uppercase">סיכום סך הכל מקטגוריה (עם ציורים חמודים)</h3>
+          <h3 class="text-xs font-bold text-slate-400 uppercase">סיכום סך הכל מקטגוריה</h3>
           <div id="categorySummaryList" class="space-y-2.5 max-h-72 overflow-y-auto text-sm"></div>
         </div>
       </section>
@@ -555,6 +436,15 @@
       <section id="reportViewTrend" class="bg-white rounded-3xl p-5 shadow-sm border hidden space-y-4">
         <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-line text-[#8fb3bf]"></i> השוואת מגמות לאורך זמן</h2>
         <div class="relative h-72 w-full flex items-center justify-center"><canvas id="trendChart"></canvas></div>
+      </section>
+
+      <section id="reportViewTypes" class="bg-white rounded-3xl p-5 shadow-sm border hidden space-y-4">
+        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-wallet text-[#8fb3bf]"></i> פירוט סוגי הוצאות</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-50 p-4 rounded-2xl border flex justify-between items-center"><span class="text-xs font-bold text-slate-600">קבועות</span><span id="fixedExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
+          <div class="bg-slate-50 p-4 rounded-2xl border flex justify-between items-center"><span class="text-xs font-bold text-slate-600">משתנות</span><span id="variableExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
+          <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center"><span class="text-xs font-bold text-amber-800">בלת"מ</span><span id="unplannedExpensesTotal" class="font-extrabold text-amber-700 text-base">₪0</span></div>
+        </div>
       </section>
     </div>
   </main>
@@ -590,10 +480,9 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.0";
+    const APP_VERSION = "1.2.1";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
-    // קטגוריות עם אייקונים חמודים וויזואליים כפי שביקשת
     const CATEGORY_ICONS = {
       "הוצאות בית": "🏡",
       "ביטוחים ואחריות": "🛡️",
@@ -622,13 +511,9 @@
     };
 
     let houseConfig = { 
-      cycleStartDay: 1, 
-      email: "",
-      caps: {}, 
-      savingsGoals: [], 
+      cycleStartDay: 1, email: "", caps: {}, savingsGoals: [], 
       paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
-      categories: DEFAULT_CATEGORIES,
-      incomeCategories: DEFAULT_INCOME_CATEGORIES
+      categories: DEFAULT_CATEGORIES, incomeCategories: DEFAULT_INCOME_CATEGORIES
     };
 
     let transactions = [];
@@ -647,6 +532,7 @@
       if (activeHouseCode) {
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('sidebarHouseDisplay').textContent = activeHouseCode;
+        document.getElementById('greetingTitle').textContent = `שלום ${activeHouseCode.toUpperCase()}`;
         initRealtimeSync();
       }
       populateMainCategorySelect();
@@ -681,6 +567,7 @@
     function switchReportSubTab(subTab) {
       document.getElementById('reportViewCategory').classList.toggle('hidden', subTab !== 'category');
       document.getElementById('reportViewTrend').classList.toggle('hidden', subTab !== 'trend');
+      document.getElementById('reportViewTypes').classList.toggle('hidden', subTab !== 'types');
       if (subTab === 'trend') renderTrendChart();
     }
 
@@ -714,7 +601,6 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    // --- Edit Transaction Functions ---
     function openEditModal(id, amount, date, description) {
       document.getElementById('editTxId').value = id;
       document.getElementById('editAmount').value = amount;
@@ -775,6 +661,7 @@
       activeHouseCode = code;
       localStorage.setItem('budget_house_code', activeHouseCode);
       document.getElementById('sidebarHouseDisplay').textContent = activeHouseCode;
+      document.getElementById('greetingTitle').textContent = `שלום ${activeHouseCode.toUpperCase()}`;
       document.getElementById('loginOverlay').classList.add('hidden');
       if (isNewUser) openTutorialModal();
       initRealtimeSync();
@@ -808,18 +695,9 @@
       unsubscribeFirestore = window.onSnapshot(window.query(window.collection(window.db, "house_transactions"), window.where("houseCode", "==", activeHouseCode)), (snapshot) => {
         transactions = [];
         snapshot.forEach((doc) => { transactions.push({ id: doc.id, ...doc.data() }); });
-        checkInactiveReminder();
         updateFilterDropdowns();
         loadCurrentMonthData();
       });
-    }
-
-    function checkInactiveReminder() {
-      if (transactions.length === 0) return;
-      const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-      if ((new Date() - new Date(sorted[0].date)) / (1000 * 60 * 60 * 24) >= 7) {
-        document.getElementById('inactiveReminderBanner').classList.remove('hidden');
-      }
     }
 
     function populatePaymentMethodSelect() {
@@ -871,7 +749,7 @@
         const opt = document.createElement('option'); opt.value = mainCat; opt.textContent = mainCat; targetSelect.appendChild(opt);
         const card = document.createElement('div');
         card.className = "bg-slate-50 p-3 rounded-xl border text-xs space-y-2";
-        card.innerHTML = `<div class="flex justify-between items-center font-bold text-slate-800 border-b pb-1"><span>${CATEGORY_ICONS[mainCat] || '📁'} ${mainCat}</span></div><div class="flex flex-wrap gap-1">${subs.map((sub, sIdx) => `<span class="bg-white border px-2 py-0.5 rounded-md text-[11px]">${sub}</span>`).join('')}</div>`;
+        card.innerHTML = `<div class="flex justify-between items-center font-bold text-slate-800 border-b pb-1"><span>${CATEGORY_ICONS[mainCat] || '📁'} ${mainCat}</span></div><div class="flex flex-wrap gap-1">${subs.map((sub) => `<span class="bg-white border px-2 py-0.5 rounded-md text-[11px]">${sub}</span>`).join('')}</div>`;
         listDiv.appendChild(card);
       });
     }
@@ -881,7 +759,6 @@
       document.getElementById('typeExpenseBtn').className = type === 'expense' ? 'py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center font-bold' : 'py-2.5 rounded-xl transition text-slate-500 text-center';
       document.getElementById('typeIncomeBtn').className = type === 'income' ? 'py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center font-bold' : 'py-2.5 rounded-xl transition text-slate-500 text-center';
       document.getElementById('paymentMethodFieldWrapper').classList.toggle('hidden', type === 'income');
-      document.getElementById('expenseFields').classList.toggle('hidden', type !== 'expense');
       populateMainCategorySelect();
     }
 
@@ -916,8 +793,8 @@
       };
 
       if (currentTransactionType === 'expense') {
-        newTx.budgetClassification = document.getElementById('budgetClassification').value;
-        newTx.expenseType = document.getElementById('expenseType').value;
+        newTx.budgetClassification = "צרכים";
+        newTx.expenseType = "משתנות";
       }
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
@@ -937,16 +814,16 @@
 
     function loadCurrentMonthData() {
       const monthTx = getTransactionsForCurrentCycle();
-      let totalIncome = 0, totalExpenses = 0, needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
+      let totalIncome = 0, totalExpenses = 0, fixedTotal = 0, variableTotal = 0, unplannedTotal = 0;
       const catTotals = {};
 
       monthTx.forEach(t => {
         if (t.type === 'income') { totalIncome += t.amount; }
         else {
           totalExpenses += t.amount;
-          if (t.budgetClassification === 'צרכים') needsTotal += t.amount;
-          else if (t.budgetClassification === 'רצונות') wantsTotal += t.amount;
-          else if (t.budgetClassification === 'חסכונות') savingsTotal += t.amount;
+          if (t.expenseType === 'קבועות') fixedTotal += t.amount;
+          else if (t.expenseType === 'משתנות') variableTotal += t.amount;
+          else if (t.expenseType === 'בלתי מתוכננות') unplannedTotal += t.amount;
           catTotals[t.mainCategory] = (catTotals[t.mainCategory] || 0) + t.amount;
         }
       });
@@ -956,9 +833,9 @@
       document.getElementById('totalExpensesDisplay').textContent = `₪-${totalExpenses.toLocaleString()}`;
       document.getElementById('netBalanceDisplay').textContent = `₪${netBalance.toLocaleString()}`;
 
-      document.getElementById('needsAmount').textContent = `₪${needsTotal.toLocaleString()}`;
-      document.getElementById('wantsAmount').textContent = `₪${wantsTotal.toLocaleString()}`;
-      document.getElementById('savingsAmount').textContent = `₪${savingsTotal.toLocaleString()}`;
+      document.getElementById('fixedExpensesTotal').textContent = `₪${fixedTotal.toLocaleString()}`;
+      document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
+      document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
       renderRecentTransactions(monthTx);
       renderCategoryChart(catTotals);
