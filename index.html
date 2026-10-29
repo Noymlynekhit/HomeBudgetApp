@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Prevent Cache for Automatic Silent Updates -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -20,117 +19,74 @@
     @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
     body {
       font-family: 'Rubik', sans-serif;
-      background-color: #f1f5f9;
+      background-color: #f7f9fa;
     }
-    .glass-header {
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(99, 102, 241, 0.9));
-      backdrop-filter: blur(12px);
+    /* פלטת הצבעים הפסטלית והחדשה שביקשת */
+    .pastel-header {
+      background: linear-gradient(135deg, #CFECF3 0%, #F9B2D7 100%);
+    }
+    .pastel-card {
+      background: #ffffff;
+      border: 1px solid #CFECF3;
     }
   </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col pb-12">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col pb-16">
 
   <!-- Update Banner -->
-  <div id="updateBanner" class="bg-amber-500 text-slate-900 px-4 py-2.5 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
+  <div id="updateBanner" class="bg-[#F9B2D7] text-slate-900 px-4 py-2 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
     <span>🚀 יש גרסה חדשה ועדכנית לאפליקציה!</span>
-    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-amber-400 px-3 py-1 rounded-lg hover:bg-slate-800 transition shadow-sm">
+    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">
       עדכן עכשיו 🔄
     </button>
   </div>
 
   <!-- Email Prompt Modal for Existing Users -->
-  <div id="emailPromptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/85 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-indigo-100">
-      <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-envelope"></i></div>
+  <div id="emailPromptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-[#CFECF3]">
+      <div class="w-12 h-12 bg-[#CFECF3] text-slate-700 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-envelope"></i></div>
       <div class="text-center">
         <h3 class="text-lg font-bold text-slate-800">השלמת כתובת מייל</h3>
         <p class="text-xs text-slate-500 mt-1">חובה להזין מייל לקבלת עדכונים חשובים ותזכורות למאזן הבית.</p>
       </div>
       <div class="space-y-3 text-xs">
         <input type="email" id="missingEmailInput" placeholder="name@example.com" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-3 text-center font-bold focus:outline-none">
-        <button onclick="saveMissingEmail()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md">שמור מייל והמשך</button>
+        <button onclick="saveMissingEmail()" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-3 rounded-xl transition shadow-md">שמור מייל והמשך</button>
       </div>
     </div>
   </div>
 
-  <!-- Budget Cap Modal -->
-  <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="text-lg font-bold text-slate-800">הגדרת תקרת תקציב</h3>
-        <button onclick="closeBudgetCapModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+  <!-- Sidebar Menu (Hamburger Drawer) -->
+  <div id="sidebarOverlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden" onclick="toggleSidebar()"></div>
+  <aside id="sidebarDrawer" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300">
+    <div class="space-y-6">
+      <div class="flex justify-between items-center border-b pb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 bg-[#CFECF3] text-slate-700 rounded-xl flex items-center justify-center font-bold">🏡</div>
+          <h2 class="text-base font-extrabold text-slate-800">תפריט ניהול</h2>
+        </div>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
-          <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">תת-קטגוריה ספציפית</label>
-          <select id="budgetCapSubCatSelect" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">תקרת תקציב חודשית (בש"ח)</label>
-          <input type="number" step="0.01" inputmode="decimal" id="budgetCapAmountInput" placeholder="לדוגמה: 2500" class="w-full text-base font-bold bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2">
-        <button onclick="saveBudgetCap()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
-          שמור תקרה
-        </button>
-        <button onclick="closeBudgetCapModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">
-          ביטול
-        </button>
-      </div>
+      <nav class="space-y-2 text-xs font-bold">
+        <button onclick="switchMainTab('overview'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-house text-[#8fb3bf]"></i><span>מסך הבית (נחיתה)</span></button>
+        <button onclick="switchMainTab('reports'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-chart-pie text-[#F9B2D7]"></i><span>דוחות ופילוח קטגוריות</span></button>
+        <button onclick="switchMainTab('details'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-list-check text-[#DAF9DE]"></i><span>פירוט תנועות מלא</span></button>
+        <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500"></i><span>אזור אישי (מייל ומחזור)</span></button>
+        <button onclick="openTutorialModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-circle-question text-amber-500"></i><span>מדריך למשתמש</span></button>
+      </nav>
     </div>
-  </div>
 
-  <!-- Edit Transaction Modal -->
-  <div id="editTransactionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="text-lg font-bold text-slate-800">עריכת תנועה</h3>
-        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
-      </div>
-
-      <input type="hidden" id="editTxId">
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
-          <input type="number" step="0.01" inputmode="decimal" id="editAmount" class="w-full text-base font-bold bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">תאריך</label>
-          <input type="date" id="editDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">הערה / פירוט</label>
-          <input type="text" id="editDescription" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2">
-        <button onclick="saveEditedTransaction()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
-          שמור שינויים
-        </button>
-        <button onclick="closeEditModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">
-          ביטול
-        </button>
-      </div>
+    <div class="pt-4 border-t text-center">
+      <span class="text-[11px] text-slate-400 font-mono">בית פעיל: <b id="sidebarHouseDisplay" class="text-slate-600"></b></span>
+      <button onclick="switchHouseCode()" class="block w-full mt-2 text-rose-500 text-xs font-bold hover:underline">החלף בית / התנתק</button>
     </div>
-  </div>
+  </aside>
 
   <!-- Settings / House Profile Modal -->
   <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">הגדרות אזור אישי</h3>
         <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
@@ -153,12 +109,65 @@
       </div>
 
       <div class="flex gap-2 pt-2">
-        <button onclick="saveHouseSettings()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
-          שמור הגדרות
-        </button>
-        <button onclick="closeSettingsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">
-          סגור
-        </button>
+        <button onclick="saveHouseSettings()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור הגדרות</button>
+        <button onclick="closeSettingsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">סגור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Cap Modal -->
+  <div id="budgetCapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800">הגדרת תקרת תקציב</h3>
+        <button onclick="closeBudgetCapModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">קטגוריה ראשית</label>
+          <select id="budgetCapMainCatSelect" onchange="populateCapSubCategorySelect()" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">תת-קטגוריה ספציפית</label>
+          <select id="budgetCapSubCatSelect" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">תקרת תקציב חודשית (בש"ח)</label>
+          <input type="number" step="0.01" inputmode="decimal" id="budgetCapAmountInput" placeholder="לדוגמה: 2500" class="w-full text-base font-bold bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveBudgetCap()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור תקרה</button>
+        <button onclick="closeBudgetCapModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Transaction Modal -->
+  <div id="editTransactionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800">עריכת תנועה</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+      <input type="hidden" id="editTxId">
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
+          <input type="number" step="0.01" inputmode="decimal" id="editAmount" class="w-full text-base font-bold bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">תאריך</label>
+          <input type="date" id="editDate" class="w-full bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">הערה / פירוט</label>
+          <input type="text" id="editDescription" class="w-full bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveEditedTransaction()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור שינויים</button>
+        <button onclick="closeEditModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl transition text-xs">ביטול</button>
       </div>
     </div>
   </div>
@@ -166,15 +175,15 @@
   <!-- Payment Methods Manager Modal -->
   <div id="paymentMethodsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">ניהול אמצעי תשלום וכרטיסים</h3>
         <button onclick="closePaymentMethodsModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-3">
         <label class="block text-xs font-bold text-slate-700">הוספת כרטיס / אמצעי תשלום חדש</label>
         <div class="flex gap-2">
-          <input type="text" id="newPaymentMethodInput" placeholder="לדוגמה: כרטיס שופרסל..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomPaymentMethod()" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף</button>
+          <input type="text" id="newPaymentMethodInput" placeholder="לדוגמה: כרטיס שופרסל..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
+          <button onclick="addCustomPaymentMethod()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף</button>
         </div>
       </div>
       <div class="space-y-2 pt-2">
@@ -188,22 +197,22 @@
   <!-- Categories Manager Modal (Expenses) -->
   <div id="categoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הוצאה</h3>
         <button onclick="closeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-700">הוספת קטגוריה ראשית חדשה</label>
         <div class="flex gap-2">
-          <input type="text" id="newMainCategoryInput" placeholder="שם הקטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomMainCategory()" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
+          <input type="text" id="newMainCategoryInput" placeholder="שם הקטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
+          <button onclick="addCustomMainCategory()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
         <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה</label>
-        <select id="targetMainCategorySelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 mb-2 focus:outline-none"></select>
+        <select id="targetMainCategorySelect" class="w-full text-xs bg-slate-50 border rounded-xl p-2 mb-2 focus:outline-none"></select>
         <div class="flex gap-2">
-          <input type="text" id="newSubCategoryInput" placeholder="שם תת-הקטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
+          <input type="text" id="newSubCategoryInput" placeholder="שם תת-הקטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
           <button onclick="addCustomSubCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף תת-קטגוריה</button>
         </div>
       </div>
@@ -218,22 +227,22 @@
   <!-- Income Categories Manager Modal -->
   <div id="incomeCategoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-center border-b pb-3">
         <h3 class="text-lg font-bold text-slate-800">ניהול קטגוריות הכנסה</h3>
         <button onclick="closeIncomeCategoriesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-700">הוספת קטגוריית הכנסה ראשית</label>
         <div class="flex gap-2">
-          <input type="text" id="newIncomeMainCategoryInput" placeholder="לדוגמה: הכנסות מעבודה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
-          <button onclick="addCustomIncomeMainCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
+          <input type="text" id="newIncomeMainCategoryInput" placeholder="לדוגמה: הכנסות מעבודה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
+          <button onclick="addCustomIncomeMainCategory()" class="bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף ראשית</button>
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
         <label class="block text-xs font-bold text-slate-700">הוספת תת-קטגוריה</label>
-        <select id="targetIncomeMainCategorySelect" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 mb-2 focus:outline-none"></select>
+        <select id="targetIncomeMainCategorySelect" class="w-full text-xs bg-slate-50 border rounded-xl p-2 mb-2 focus:outline-none"></select>
         <div class="flex gap-2">
-          <input type="text" id="newIncomeSubCategoryInput" placeholder="שם תת-קטגוריה..." class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none">
+          <input type="text" id="newIncomeSubCategoryInput" placeholder="שם תת-קטגוריה..." class="flex-1 text-sm bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none">
           <button onclick="addCustomIncomeSubCategory()" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">הוסף תת-קטגוריה</button>
         </div>
       </div>
@@ -248,39 +257,28 @@
   <!-- Tutorial / User Guide Modal -->
   <div id="tutorialModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border border-slate-100 max-h-[85vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-center border-b pb-3">
         <div class="flex items-center gap-2">
-          <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-lg shadow-inner">🏡</div>
+          <div class="w-9 h-9 bg-[#CFECF3] text-slate-700 rounded-xl flex items-center justify-center text-lg">🏡</div>
           <h2 class="text-lg font-extrabold text-slate-800">מדריך השימוש במאזן הבית</h2>
         </div>
         <button onclick="closeTutorialModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
       </div>
-
       <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
         <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-indigo-600"></i> 1. מבט על ומאזן</h3>
-          <p>כאן רואים את סיכום ההכנסות, ההוצאות והתזרים נטו לחודש. בלחיצה על כפתור העודף ניתן להעביר חיסכון ישירות לקופות. בנוסף תמצאו כאן את מודל 50/30/20, תקרות התקציב וקופות החיסכון.</p>
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-[#8fb3bf]"></i> 1. מסך הבית (נחיתה)</h3>
+          <p>מסך נקי ומעוצב המציג את סיכום ההכנסות מול ההוצאות, את מאזן החודש הנוכחי, ואת התנועות האחרונות עם אייקונים חמודים. מכיל כפתור מהיר להזנת תנועה וכפתור תפריט (3 פסים) בצד ימין.</p>
         </div>
-
         <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-circle-plus text-indigo-600"></i> 2. הזנת תנועה</h3>
-          <p>הוספת הכנסות או הוצאות בקלות עם מקלדת מספרים מהירה. בחירת אמצעי תשלום, קטגוריה ראשית ותת-קטגוריה ספציפית, סיווג תקציבי (צרכים/רצונות/חסכונות), וסימון הוראות קבע מחזוריות.</p>
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-circle-plus text-[#8fb3bf]"></i> 2. הזנת תנועה מהירה</h3>
+          <p>הוספת הכנסות או הוצאות בקלות עם מקלדת מספרים מהירה, בחירת קטגוריה עם אייקון תואם, ואמצעי תשלום.</p>
         </div>
-
         <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-list-check text-indigo-600"></i> 3. פירוט תנועות</h3>
-          <p>טבלה מרווחת ונוחה עם גלילה אופקית המציגה את כל פרטי התנועות לחודש, אפשרויות סינון מתקדמות לפי קטגוריה ואמצעי תשלום, עריכה/מחיקה מהירה, וייצוא קל לאקסל (CSV).</p>
-        </div>
-
-        <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-1.5">
-          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-indigo-600"></i> 4. דוחות וקטגוריות</h3>
-          <p>סיכום חודשי מדויק של סך הכל ההוצאות לכל קטגוריה, מלווה בגרף עוגה (Doughnut), השוואת מגמות לאורך חודשים, וניתוח הוצאות קבועות מול משתנות.</p>
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-[#F9B2D7]"></i> 3. דוחות וקטגוריות</h3>
+          <p>פילוח הוצאות לפי קטגוריות עם אייקונים ויזואליים חמודים, גרף עוגה, תקרות תקציב מודל 50/30/20 וקופות חיסכון.</p>
         </div>
       </div>
-
-      <button onclick="closeTutorialModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
-        הבנתי, בואו נתחיל! 💪
-      </button>
+      <button onclick="closeTutorialModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">הבנתי, בואו נתחיל! 💪</button>
     </div>
   </div>
 
@@ -296,29 +294,27 @@
     </div>
   </div>
 
-  <!-- Inactive Reminder Simulated Notification Banner -->
-  <div id="inactiveReminderBanner" class="bg-rose-600 text-white px-4 py-2.5 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
+  <!-- Inactive Reminder Banner -->
+  <div id="inactiveReminderBanner" class="bg-rose-500 text-white px-4 py-2.5 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
     <span>⚠️ שים לב: עבר יותר משבוע ללא הזנת נתונים למאזן! מומלץ לשלוח מייל תזכורת.</span>
-    <button onclick="document.getElementById('inactiveReminderBanner').classList.add('hidden')" class="bg-white text-rose-600 px-3 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm">
-      סגור
-    </button>
+    <button onclick="document.getElementById('inactiveReminderBanner').classList.add('hidden')" class="bg-white text-rose-600 px-3 py-1 rounded-lg">סגור</button>
   </div>
 
   <!-- Login Overlay -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
     <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center border border-slate-100">
-      <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner"><i class="fa-solid fa-house-lock text-3xl"></i></div>
+      <div class="w-16 h-16 bg-[#CFECF3] text-slate-700 rounded-2xl flex items-center justify-center mx-auto shadow-inner"><i class="fa-solid fa-house-chimney text-3xl"></i></div>
       <div>
         <h2 class="text-2xl font-extrabold text-slate-800">כניסה למאזן הבית</h2>
         <p class="text-xs text-slate-500 mt-1">התחברו לבית קיים או צרו בית חדש</p>
       </div>
       <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-        <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-600">התחברות</button>
+        <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-800">התחברות</button>
         <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-slate-500">יצירת בית חדש</button>
       </div>
       <form id="loginForm" onsubmit="handleHouseLogin(event)" class="space-y-4 text-right">
         <input type="text" id="houseCodeInput" required placeholder="הקלידי את שם הבית..." class="w-full text-center font-bold text-lg bg-slate-50 border rounded-xl py-3 px-4 focus:outline-none uppercase">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg">התחבר למאזן</button>
+        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-lg">התחבר למאזן</button>
       </form>
       <form id="registerForm" onsubmit="handleHouseRegister(event)" class="space-y-4 text-right hidden">
         <input type="text" id="newHouseCodeInput" required placeholder="לדוגמה: MLYNEK2026" class="w-full text-center font-bold text-lg bg-slate-50 border rounded-xl py-3 px-4 focus:outline-none uppercase">
@@ -335,112 +331,94 @@
             <option value="25">25 בחודש</option>
           </select>
         </div>
-        <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg">צור בית חדש והגדר</button>
+        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-lg">צור בית חדש והגדר</button>
       </form>
-      <div id="authErrorMsg" class="text-xs font-bold text-rose-500 hidden"></div>
     </div>
   </div>
 
-  <!-- Header -->
-  <header class="glass-header text-white shadow-xl sticky top-0 z-30">
-    <div class="max-w-6xl mx-auto px-4 py-3.5">
-      <div class="flex flex-wrap justify-between items-center gap-3">
-        <div class="flex items-center gap-3">
-          <div class="p-2.5 bg-white/10 rounded-2xl border border-white/20 shadow-inner"><i class="fa-solid fa-house-chimney-window text-2xl text-amber-300"></i></div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-lg md:text-xl font-extrabold tracking-tight">מאזן הבית שלנו</h1>
-              <button onclick="openTutorialModal()" class="bg-amber-400 text-indigo-900 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md hover:bg-amber-300 transition" title="מדריך למשתמש">?</button>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px] text-indigo-100 mt-0.5">
-              <span>בית:</span>
-              <span id="activeHouseCodeDisplay" class="bg-white/20 px-2 py-0.5 rounded-md font-mono font-bold border border-white/20"></span>
-              <button onclick="switchHouseCode()" class="text-indigo-200 underline text-[10px]">(החלף)</button>
-              <button onclick="openSettingsModal()" class="text-amber-300 font-bold ml-2 underline text-[11px]"><i class="fa-solid fa-gear"></i> אזור אישי</button>
-            </div>
-          </div>
+  <!-- HEADER / LANDING TOP -->
+  <header class="pastel-header text-slate-800 shadow-sm sticky top-0 z-30 pb-4">
+    <div class="max-w-4xl mx-auto px-4 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <!-- 3 פסים תפריט צד (המבורגר) -->
+        <button onclick="toggleSidebar()" class="w-10 h-10 bg-white/80 hover:bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-700 text-lg transition">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <h1 id="greetingTitle" class="text-base md:text-lg font-extrabold">שלום מיכל,</h1>
+          <p id="currentDateDisplay" class="text-[11px] text-slate-600 font-medium">סיכום הפעילות שלך עד כה החודש</p>
         </div>
-        <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-white/15 text-white text-xs font-bold rounded-xl px-3 py-2 border border-white/25 focus:outline-none shadow-inner">
       </div>
-
-      <!-- Navigation Tabs -->
-      <nav class="flex bg-black/20 p-1 rounded-2xl mt-3.5 border border-white/10 text-xs font-bold gap-1 overflow-x-auto">
-        <button id="mainTabOverview" onclick="switchMainTab('overview')" class="flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-chart-line"></i><span>מבט על ומאזן</span></button>
-        <button id="mainTabAdd" onclick="switchMainTab('add')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-circle-plus"></i><span>הזנת תנועה</span></button>
-        <button id="mainTabDetails" onclick="switchMainTab('details')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-list-check"></i><span>פירוט תנועות</span></button>
-        <button id="mainTabReports" onclick="switchMainTab('reports')" class="flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-chart-pie"></i><span>דוחות וקטגוריות</span></button>
-      </nav>
+      <input type="month" id="selectedMonth" onchange="loadCurrentMonthData()" class="bg-white/70 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 border border-white focus:outline-none shadow-sm">
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow">
+  <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow space-y-6">
 
-    <!-- TAB 1: OVERVIEW -->
+    <!-- TAB 1: OVERVIEW (LANDING PAGE AS REQUESTED) -->
     <div id="tabContentOverview" class="space-y-6">
-      <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100 flex items-center justify-between">
-          <div>
-            <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider block mb-1">סה"כ הכנסות</span>
-            <div id="totalIncomeDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-          </div>
-          <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl"><i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-inside text-2xl"></i></div>
+      
+      <!-- קוביית הכנסות מול הוצאות כמו בתמונה -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 grid grid-cols-2 gap-4 text-center">
+        <div class="border-l border-slate-100 pl-2">
+          <span class="text-xs font-bold text-rose-500 flex items-center justify-center gap-1 mb-1">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> הוצאות
+          </span>
+          <div id="totalExpensesDisplay" class="text-xl md:text-2xl font-extrabold text-rose-600">₪-0</div>
         </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-rose-100 flex items-center justify-between">
-          <div>
-            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block mb-1">סה"כ הוצאות</span>
-            <div id="totalExpensesDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-          </div>
-          <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl"><i class="fa-solid fa-credit-card text-2xl"></i></div>
-        </div>
-        <div id="balanceCard" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex items-center justify-between">
-          <div>
-            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">תזרים נטו (מאזן)</span>
-            <div id="netBalanceDisplay" class="text-2xl md:text-3xl font-extrabold text-slate-800">₪0</div>
-            <button id="transferSurplusBtn" onclick="transferSurplusToSavings()" class="text-xs font-bold text-indigo-600 underline mt-1 hidden">העבר עודף חודשי לקופת חיסכון ➔</button>
-          </div>
-          <div class="p-3.5 bg-slate-100 text-slate-600 rounded-2xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
+        <div>
+          <span class="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1 mb-1">
+            <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-inside"></i> הכנסות
+          </span>
+          <div id="totalIncomeDisplay" class="text-xl md:text-2xl font-extrabold text-emerald-600">₪0</div>
         </div>
       </section>
+
+      <!-- קוביית מאזן החודש (שורה תחתונה) -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">תזרים נטו (מאזן לחודש)</span>
+          <div id="netBalanceDisplay" class="text-2xl font-extrabold text-slate-800">₪0</div>
+          <button id="transferSurplusBtn" onclick="transferSurplusToSavings()" class="text-xs font-bold text-indigo-600 underline mt-1 hidden">העבר עודף חודשי לקופת חיסכון ➔</button>
+        </div>
+        <div class="p-3.5 bg-[#CFECF3]/40 text-slate-700 rounded-2xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
+      </section>
+
+      <!-- כפתור מהיר להזנת תנועה בולט ונגיש -->
+      <button onclick="switchMainTab('add')" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition">
+        <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
+      </button>
 
       <!-- 50/30/20 Rule -->
-      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-indigo-600"></i> חלוקה תקציבית (מודל 50 / 30 / 20)</h2>
-        <div class="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden flex mb-3 shadow-inner">
-          <div id="barNeeds" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
-          <div id="barWants" class="bg-pink-500 h-full transition-all duration-500" style="width: 0%"></div>
-          <div id="barSavings" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-[#8fb3bf]"></i> חלוקה תקציבית (מודל 50 / 30 / 20)</h2>
+        <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex mb-3 shadow-inner">
+          <div id="barNeeds" class="bg-blue-400 h-full transition-all" style="width: 0%"></div>
+          <div id="barWants" class="bg-pink-400 h-full transition-all" style="width: 0%"></div>
+          <div id="barSavings" class="bg-emerald-400 h-full transition-all" style="width: 0%"></div>
         </div>
         <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="p-2 bg-blue-50 rounded-xl border border-blue-100"><span class="font-bold text-blue-700 block">🔷 צרכים</span><span id="needsAmount" class="font-extrabold text-slate-800">₪0</span></div>
-          <div class="p-2 bg-pink-50 rounded-xl border border-pink-100"><span class="font-bold text-pink-700 block">💖 רצונות</span><span id="wantsAmount" class="font-extrabold text-slate-800">₪0</span></div>
-          <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-100"><span class="font-bold text-emerald-700 block">🌱 חסכונות</span><span id="savingsAmount" class="font-extrabold text-slate-800">₪0</span></div>
+          <div class="p-2 bg-blue-50 rounded-xl"><span class="font-bold text-blue-700 block">🔷 צרכים</span><span id="needsAmount" class="font-extrabold text-slate-800">₪0</span></div>
+          <div class="p-2 bg-pink-50 rounded-xl"><span class="font-bold text-pink-700 block">💖 רצונות</span><span id="wantsAmount" class="font-extrabold text-slate-800">₪0</span></div>
+          <div class="p-2 bg-emerald-50 rounded-xl"><span class="font-bold text-emerald-700 block">🌱 חסכונות</span><span id="savingsAmount" class="font-extrabold text-slate-800">₪0</span></div>
         </div>
       </section>
 
-      <!-- Budget Caps -->
-      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-bullseye text-indigo-600"></i> תקרות תקציב וקאונטר</h2>
-          <button onclick="openBudgetCapModal()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg border border-indigo-200 transition">+ הגדר תקרת קטגוריה</button>
+      <!-- תנועות אחרונות למטה בדף הנחיתה -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-[#8fb3bf]"></i> תנועות אחרונות</h2>
+          <button onclick="switchMainTab('details')" class="text-xs text-[#8fb3bf] font-bold hover:underline">לכל הפירוט &larr;</button>
         </div>
-        <div id="budgetCapsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </section>
-
-      <!-- Savings Goals -->
-      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-600"></i> קופות ויעדי חיסכון</h2>
-          <button onclick="promptCreateSavingsGoal()" class="text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 transition">+ יעד חיסכון חדש</button>
-        </div>
-        <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <div id="recentTransactionsContainer" class="space-y-3"></div>
       </section>
     </div>
 
     <!-- TAB 2: ADD TRANSACTION -->
     <div id="tabContentAdd" class="hidden max-w-xl mx-auto">
-      <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-        <h2 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <i class="fa-solid fa-circle-plus text-indigo-600"></i> הזנת תנועה חדשה למאזן
+      <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <h2 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2 border-b pb-3">
+          <i class="fa-solid fa-circle-plus text-[#8fb3bf]"></i> הזנת תנועה חדשה למאזן
         </h2>
 
         <form id="transactionForm" onsubmit="handleAddTransaction(event)" class="space-y-4">
@@ -452,8 +430,8 @@
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
             <div class="relative">
-              <!-- Numeric Keyboard Optimization -->
-              <input type="number" step="0.01" inputmode="decimal" id="amount" required placeholder="0.00" class="w-full text-xl font-bold bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3 pl-8 focus:outline-none">
+              <!-- מקלדת מספרים מהירה במובייל -->
+              <input type="number" step="0.01" inputmode="decimal" id="amount" required placeholder="0.00" class="w-full text-xl font-bold bg-slate-50 border rounded-2xl px-3 py-3 pl-8 focus:outline-none">
               <span class="absolute left-3 top-3.5 text-slate-400 font-bold">₪</span>
             </div>
           </div>
@@ -461,19 +439,19 @@
           <div id="paymentMethodFieldWrapper">
             <div class="flex justify-between items-center mb-1">
               <label class="block text-xs font-semibold text-slate-600">אמצעי תשלום / כרטיס</label>
-              <button type="button" onclick="openPaymentMethodsModal()" class="text-[11px] text-indigo-600 font-bold hover:underline">⚙️ ניהול כרטיסים</button>
+              <button type="button" onclick="openPaymentMethodsModal()" class="text-[11px] text-[#8fb3bf] font-bold hover:underline">⚙️ ניהול כרטיסים</button>
             </div>
-            <select id="paymentMethod" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
+            <select id="paymentMethod" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
           </div>
 
           <div class="space-y-3">
             <div class="flex justify-between items-center">
               <label class="block text-xs font-semibold text-slate-600">קטגוריות ותת-קטגוריות</label>
-              <button type="button" id="manageCategoriesBtn" onclick="openCategoriesModal()" class="text-[11px] text-indigo-600 font-bold hover:underline">⚙️ ניהול קטגוריות הוצאה</button>
+              <button type="button" id="manageCategoriesBtn" onclick="openCategoriesModal()" class="text-[11px] text-[#8fb3bf] font-bold hover:underline">⚙️ ניהול קטגוריות</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
-              <select id="subCategory" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none"></select>
+              <select id="mainCategory" onchange="handleMainCategoryChange()" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
+              <select id="subCategory" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none"></select>
             </div>
           </div>
 
@@ -481,7 +459,7 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">סיווג תקציבי</label>
-                <select id="budgetClassification" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+                <select id="budgetClassification" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
                   <option value="צרכים">צרכים (Needs)</option>
                   <option value="רצונות">רצונות (Wants)</option>
                   <option value="חסכונות">חסכונות (Savings)</option>
@@ -489,7 +467,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">סוג הוצאה</label>
-                <select id="expenseType" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+                <select id="expenseType" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
                   <option value="קבועות">קבועה</option>
                   <option value="משתנות">משתנה</option>
                   <option value="בלתי מתוכננות">בלתי מתוכננת (בלת"מ)</option>
@@ -498,116 +476,85 @@
             </div>
           </div>
 
-          <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100 space-y-2">
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-indigo-900">
-              <input type="checkbox" id="isRecurringInput" onchange="toggleRecurringOptions()" class="w-4 h-4 rounded text-indigo-600">
-              <span>הוראת קבע / תנועה מחזורית חודשית</span>
-            </label>
-            <div id="recurringDetails" class="hidden space-y-2 pt-2 border-t border-indigo-100 text-xs">
-              <label class="block font-semibold text-slate-700 mb-1">תאריך סיום (אופציונלי):</label>
-              <input type="month" id="recurringEndDateInput" class="w-full bg-white border border-slate-200 rounded-lg p-2 focus:outline-none">
-            </div>
-          </div>
-
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך</label>
-              <input type="date" id="transactionDate" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+              <input type="date" id="transactionDate" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">הערה / פירוט</label>
-              <input type="text" id="description" placeholder="לדוגמה: קניות לשבת" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none">
+              <input type="text" id="description" placeholder="לדוגמה: קניות לשבת" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 focus:outline-none">
             </div>
           </div>
 
-          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-3.5 rounded-xl transition shadow-lg shadow-indigo-200">
-            הוסף תנועה למאזן הבית
-          </button>
+          <div class="flex gap-2 pt-2">
+            <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm py-3.5 rounded-xl transition shadow-lg">הוסף תנועה למאזן</button>
+            <button type="button" onclick="switchMainTab('overview')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3.5 rounded-xl transition text-xs">ביטול</button>
+          </div>
         </form>
       </section>
     </div>
 
     <!-- TAB 3: DETAILS -->
     <div id="tabContentDetails" class="hidden space-y-6">
-      <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+      <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
         <div class="flex justify-between items-center flex-wrap gap-3">
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-indigo-600"></i> פירוט תנועות החודש</h2>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-[#8fb3bf]"></i> פירוט תנועות החודש</h2>
           <div class="flex items-center gap-3 text-xs flex-wrap">
-            <div class="flex items-center gap-1.5">
-              <span class="text-slate-500 font-semibold">סינון קטגוריה:</span>
-              <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
-                <option value="ALL">הכל (ללא סינון)</option>
-              </select>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-slate-500 font-semibold">אמצעי תשלום:</span>
-              <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
-                <option value="ALL">הכל</option>
-              </select>
-            </div>
-            <button onclick="exportTableToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 text-xs">
+            <select id="filterCategory" onchange="loadCurrentMonthData()" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
+              <option value="ALL">כל הקטגוריות</option>
+            </select>
+            <select id="filterPaymentMethod" onchange="loadCurrentMonthData()" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 focus:outline-none text-xs">
+              <option value="ALL">כל אמצעי התשלום</option>
+            </select>
+            <button onclick="exportTableToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-xs">
               <i class="fa-solid fa-file-excel"></i><span>ייצא לאקסל</span>
             </button>
           </div>
         </div>
 
-        <div class="w-full overflow-x-auto pb-2 border border-slate-100 rounded-2xl shadow-inner">
+        <div class="w-full overflow-x-auto pb-2 border rounded-2xl">
           <table class="w-full text-right text-sm whitespace-nowrap min-w-[750px]">
             <thead>
-              <tr class="bg-slate-50 text-slate-600 border-b-2 border-slate-200">
+              <tr class="bg-slate-50 text-slate-600 border-b-2">
                 <th class="p-4 font-bold">תאריך</th>
                 <th class="p-4 font-bold">אמצעי תשלום</th>
                 <th class="p-4 font-bold">סוג</th>
                 <th class="p-4 font-bold">קטגוריה</th>
                 <th class="p-4 font-bold">תת-קטגוריה</th>
-                <th class="p-4 font-bold">סיווג</th>
                 <th class="p-4 font-bold">הערה / פירוט</th>
                 <th class="p-4 font-bold">סכום</th>
                 <th class="p-4 font-bold text-center">פעולות</th>
               </tr>
             </thead>
-            <tbody id="transactionsTableBody" class="divide-y divide-slate-100"></tbody>
+            <tbody id="transactionsTableBody" class="divide-y"></tbody>
           </table>
-          <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden text-sm font-medium">
-            <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i>אין תנועות רשומות התואמות את הסינון בחודש זה
-          </div>
+          <div id="emptyTableMessage" class="py-12 text-center text-slate-400 hidden text-sm font-medium">אין תנועות רשומות בחודש זה</div>
         </div>
       </section>
     </div>
 
-    <!-- TAB 4: REPORTS -->
+    <!-- TAB 4: REPORTS (WITH CUTE ICONS) -->
     <div id="tabContentReports" class="hidden space-y-6">
-      <section class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex gap-2 overflow-x-auto text-xs font-bold">
-        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 text-white shadow-sm transition whitespace-nowrap text-center">📊 פילוח קטגוריות</button>
-        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">📈 השוואת מגמות</button>
-        <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 px-4 rounded-xl text-slate-600 hover:bg-slate-100 transition whitespace-nowrap text-center">💳 קבועות מול משתנות</button>
+      <section class="bg-white rounded-3xl p-2 shadow-sm border flex gap-2 text-xs font-bold">
+        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center">📊 פילוח קטגוריות</button>
+        <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center">📈 השוואת מגמות</button>
       </section>
 
       <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-donut text-indigo-600"></i> פילוח הוצאות לפי קטגוריות</h2>
-          <div class="relative h-60 w-full flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
+        <div class="lg:col-span-6 bg-white rounded-3xl p-5 shadow-sm border">
+          <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-[#8fb3bf]"></i> פילוח הוצאות לפי קטגוריות</h2>
+          <div class="relative h-64 w-full flex items-center justify-center"><canvas id="categoryChart"></canvas></div>
         </div>
-        <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center space-y-3">
-          <h3 class="text-xs font-bold text-slate-500 uppercase">סיכום סך הכל מקטגוריה לחודש זה</h3>
-          <div id="categorySummaryList" class="space-y-2.5 max-h-56 overflow-y-auto text-sm"></div>
+        <div class="lg:col-span-6 bg-white rounded-3xl p-5 shadow-sm border flex flex-col justify-center space-y-3">
+          <h3 class="text-xs font-bold text-slate-400 uppercase">סיכום סך הכל מקטגוריה (עם ציורים חמודים)</h3>
+          <div id="categorySummaryList" class="space-y-2.5 max-h-72 overflow-y-auto text-sm"></div>
         </div>
       </section>
 
-      <section id="reportViewTrend" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
-        <div class="flex justify-between items-center flex-wrap gap-2 border-b border-slate-100 pb-3">
-          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-600"></i> השוואת מגמות לאורך זמן</h2>
-        </div>
+      <section id="reportViewTrend" class="bg-white rounded-3xl p-5 shadow-sm border hidden space-y-4">
+        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-line text-[#8fb3bf]"></i> השוואת מגמות לאורך זמן</h2>
         <div class="relative h-72 w-full flex items-center justify-center"><canvas id="trendChart"></canvas></div>
-      </section>
-
-      <section id="reportViewTypes" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hidden space-y-4">
-        <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-wallet text-indigo-600"></i> פירוט סוגי הוצאות</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">קבועות</span><span id="fixedExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
-          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center"><span class="text-xs font-bold text-slate-600">משתנות</span><span id="variableExpensesTotal" class="font-extrabold text-slate-800 text-base">₪0</span></div>
-          <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex justify-between items-center"><span class="text-xs font-bold text-amber-800">בלת"מ</span><span id="unplannedExpensesTotal" class="font-extrabold text-amber-700 text-base">₪0</span></div>
-        </div>
       </section>
     </div>
   </main>
@@ -643,9 +590,22 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.1.8";
+    const APP_VERSION = "1.2.0";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
+    // קטגוריות עם אייקונים חמודים וויזואליים כפי שביקשת
+    const CATEGORY_ICONS = {
+      "הוצאות בית": "🏡",
+      "ביטוחים ואחריות": "🛡️",
+      "בריאות": "💊",
+      "תחבורה": "🚗",
+      "תקשורת": "📱",
+      "אוכל וקניות": "🛒",
+      "פנאי ושונות": "🎉",
+      "הכנסות מעבודה": "💰",
+      "קצבאות ומענקים": "🎁"
+    };
+
     const DEFAULT_CATEGORIES = {
       "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
       "ביטוחים ואחריות": ["רכב - חובה", "רכב - מקיף", "בריאות פרטי", "ביטוח דירה - נכס", "אחר"],
@@ -686,7 +646,7 @@
 
       if (activeHouseCode) {
         document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
+        document.getElementById('sidebarHouseDisplay').textContent = activeHouseCode;
         initRealtimeSync();
       }
       populateMainCategorySelect();
@@ -703,22 +663,24 @@
       window.location.reload(true);
     }
 
+    function toggleSidebar() {
+      const drawer = document.getElementById('sidebarDrawer');
+      const overlay = document.getElementById('sidebarOverlay');
+      const isOpen = !drawer.classList.contains('translate-x-full');
+      drawer.classList.toggle('translate-x-full', isOpen);
+      overlay.classList.toggle('hidden', isOpen);
+    }
+
     function switchMainTab(tab) {
       document.getElementById('tabContentOverview').classList.toggle('hidden', tab !== 'overview');
       document.getElementById('tabContentAdd').classList.toggle('hidden', tab !== 'add');
       document.getElementById('tabContentDetails').classList.toggle('hidden', tab !== 'details');
       document.getElementById('tabContentReports').classList.toggle('hidden', tab !== 'reports');
-
-      document.getElementById('mainTabOverview').className = tab === 'overview' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
-      document.getElementById('mainTabAdd').className = tab === 'add' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
-      document.getElementById('mainTabDetails').className = tab === 'details' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
-      document.getElementById('mainTabReports').className = tab === 'reports' ? 'flex-1 py-2.5 px-3 rounded-xl transition bg-white text-indigo-700 shadow-md text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold' : 'flex-1 py-2.5 px-3 rounded-xl transition text-white/80 hover:text-white text-center flex items-center justify-center gap-1.5 whitespace-nowrap font-bold';
     }
 
     function switchReportSubTab(subTab) {
       document.getElementById('reportViewCategory').classList.toggle('hidden', subTab !== 'category');
       document.getElementById('reportViewTrend').classList.toggle('hidden', subTab !== 'trend');
-      document.getElementById('reportViewTypes').classList.toggle('hidden', subTab !== 'types');
       if (subTab === 'trend') renderTrendChart();
     }
 
@@ -728,9 +690,7 @@
     function closePaymentMethodsModal() { document.getElementById('paymentMethodsModal').classList.add('hidden'); }
     function openCategoriesModal() { renderCategoriesManager(); document.getElementById('categoriesModal').classList.remove('hidden'); }
     function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
-    function openIncomeCategoriesModal() { renderIncomeCategoriesManager(); document.getElementById('incomeCategoriesModal').classList.remove('hidden'); }
-    function closeIncomeCategoriesModal() { document.getElementById('incomeCategoriesModal').classList.add('hidden'); populateMainCategorySelect(); }
-
+    
     function openSettingsModal() {
       document.getElementById('settingsEmailInput').value = houseConfig.email || "";
       document.getElementById('settingsCycleDayInput').value = houseConfig.cycleStartDay || 1;
@@ -742,11 +702,7 @@
       const email = document.getElementById('settingsEmailInput').value.trim();
       const cycleStartDay = parseInt(document.getElementById('settingsCycleDayInput').value) || 1;
       if (!email) { alert("נא להזין כתובת מייל תקינה."); return; }
-
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
-        email: email,
-        cycleStartDay: cycleStartDay
-      });
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email, cycleStartDay });
       closeSettingsModal();
       alert("ההגדרות עודכנו בהצלחה!");
     }
@@ -754,58 +710,8 @@
     async function saveMissingEmail() {
       const email = document.getElementById('missingEmailInput').value.trim();
       if (!email || !email.includes('@')) { alert("נא להזין כתובת מייל תקינה."); return; }
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email: email });
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email });
       document.getElementById('emailPromptModal').classList.add('hidden');
-    }
-
-    // --- Budget Cap Modal Functions ---
-    function openBudgetCapModal() {
-      const mainSelect = document.getElementById('budgetCapMainCatSelect');
-      mainSelect.innerHTML = '';
-      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
-      Object.keys(cats).forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        mainSelect.appendChild(opt);
-      });
-      populateCapSubCategorySelect();
-      document.getElementById('budgetCapAmountInput').value = '';
-      document.getElementById('budgetCapModal').classList.remove('hidden');
-    }
-
-    function populateCapSubCategorySelect() {
-      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
-      const subSelect = document.getElementById('budgetCapSubCatSelect');
-      subSelect.innerHTML = '';
-      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
-      (cats[mainCat] || []).forEach(sub => {
-        const opt = document.createElement('option');
-        opt.value = sub;
-        opt.textContent = sub;
-        subSelect.appendChild(opt);
-      });
-    }
-
-    function closeBudgetCapModal() {
-      document.getElementById('budgetCapModal').classList.add('hidden');
-    }
-
-    async function saveBudgetCap() {
-      const mainCat = document.getElementById('budgetCapMainCatSelect').value;
-      const subCat = document.getElementById('budgetCapSubCatSelect').value;
-      const amount = parseFloat(document.getElementById('budgetCapAmountInput').value);
-
-      if (!mainCat || !subCat || isNaN(amount) || amount <= 0) {
-        alert("נא למלא את כל השדות ולהזין סכום תקרה תקין.");
-        return;
-      }
-
-      const capKey = `${mainCat} > ${subCat}`;
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), {
-        caps: { ...houseConfig.caps, [capKey]: amount }
-      });
-      closeBudgetCapModal();
     }
 
     // --- Edit Transaction Functions ---
@@ -816,30 +722,17 @@
       document.getElementById('editDescription').value = description;
       document.getElementById('editTransactionModal').classList.remove('hidden');
     }
-
-    function closeEditModal() {
-      document.getElementById('editTransactionModal').classList.add('hidden');
-    }
+    function closeEditModal() { document.getElementById('editTransactionModal').classList.add('hidden'); }
 
     async function saveEditedTransaction() {
       const id = document.getElementById('editTxId').value;
       const amount = parseFloat(document.getElementById('editAmount').value);
       const date = document.getElementById('editDate').value;
       const description = document.getElementById('editDescription').value;
-
-      if (!amount || amount <= 0 || !date) {
-        alert("נא להזין סכום ותאריך תקינים.");
-        return;
-      }
-
-      const txRef = window.doc(window.db, "house_transactions", id);
-      await window.updateDoc(txRef, {
-        amount: amount,
-        date: date,
-        description: description || '-',
-        monthKey: date.slice(0, 7)
+      if (!amount || amount <= 0 || !date) { alert("נא להזין סכום ותאריך תקינים."); return; }
+      await window.updateDoc(window.doc(window.db, "house_transactions", id), {
+        amount, date, description: description || '-', monthKey: date.slice(0, 7)
       });
-
       closeEditModal();
     }
 
@@ -847,16 +740,15 @@
       const isLogin = tab === 'login';
       document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
       document.getElementById('registerForm').classList.toggle('hidden', isLogin);
-      document.getElementById('tabLoginBtn').className = isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-600" : "flex-1 py-2 rounded-lg text-slate-500";
-      document.getElementById('tabRegisterBtn').className = !isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600" : "flex-1 py-2 rounded-lg text-slate-500";
+      document.getElementById('tabLoginBtn').className = isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-800" : "flex-1 py-2 rounded-lg text-slate-500";
+      document.getElementById('tabRegisterBtn').className = !isLogin ? "flex-1 py-2 rounded-lg bg-white shadow-sm text-slate-800" : "flex-1 py-2 rounded-lg text-slate-500";
     }
 
     async function handleHouseLogin(e) {
       e.preventDefault();
       const codeInput = document.getElementById('houseCodeInput').value.trim().toLowerCase();
       if (!codeInput) return;
-      const houseRef = window.doc(window.db, "registered_houses", codeInput);
-      const houseSnap = await window.getDoc(houseRef);
+      const houseSnap = await window.getDoc(window.doc(window.db, "registered_houses", codeInput));
       if (!houseSnap.exists()) { alert("שם הבית לא נמצא."); return; }
       loginToHouse(codeInput, false);
     }
@@ -866,24 +758,15 @@
       const newCodeInput = document.getElementById('newHouseCodeInput').value.trim().toLowerCase();
       const emailInput = document.getElementById('newHouseEmailInput').value.trim();
       const cycleStartDay = parseInt(document.getElementById('cycleStartDayInput').value) || 1;
-      
       if (!newCodeInput || newCodeInput.length < 3) { alert("שם הבית חייב להכיל לפחות 3 תווים."); return; }
       if (!emailInput || !emailInput.includes('@')) { alert("נא להזין כתובת מייל תקינה."); return; }
-
       const houseRef = window.doc(window.db, "registered_houses", newCodeInput);
-      const houseSnap = await window.getDoc(houseRef);
-      if (houseSnap.exists()) { alert("שם הבית תפוס."); return; }
+      if ((await window.getDoc(houseRef)).exists()) { alert("שם הבית תפוס."); return; }
       
       await window.setDoc(houseRef, {
-        createdAt: new Date().toISOString(),
-        houseCode: newCodeInput,
-        email: emailInput,
-        cycleStartDay: cycleStartDay,
-        caps: {},
-        savingsGoals: [],
-        paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
-        categories: DEFAULT_CATEGORIES,
-        incomeCategories: DEFAULT_INCOME_CATEGORIES
+        createdAt: new Date().toISOString(), houseCode: newCodeInput, email: emailInput,
+        cycleStartDay, caps: {}, savingsGoals: [], paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
+        categories: DEFAULT_CATEGORIES, incomeCategories: DEFAULT_INCOME_CATEGORIES
       });
       loginToHouse(newCodeInput, true);
     }
@@ -891,13 +774,9 @@
     function loginToHouse(code, isNewUser = false) {
       activeHouseCode = code;
       localStorage.setItem('budget_house_code', activeHouseCode);
-      document.getElementById('activeHouseCodeDisplay').textContent = activeHouseCode;
+      document.getElementById('sidebarHouseDisplay').textContent = activeHouseCode;
       document.getElementById('loginOverlay').classList.add('hidden');
-      
-      if (isNewUser) {
-        openTutorialModal();
-      }
-
+      if (isNewUser) openTutorialModal();
       initRealtimeSync();
     }
 
@@ -908,8 +787,7 @@
       if (unsubscribeFirestore) unsubscribeFirestore();
       if (unsubscribeConfig) unsubscribeConfig();
 
-      const houseRef = window.doc(window.db, "registered_houses", activeHouseCode);
-      unsubscribeConfig = window.onSnapshot(houseRef, (snap) => {
+      unsubscribeConfig = window.onSnapshot(window.doc(window.db, "registered_houses", activeHouseCode), (snap) => {
         if (snap.exists()) {
           houseConfig = snap.data();
           if (!houseConfig.caps) houseConfig.caps = {};
@@ -918,10 +796,7 @@
           if (!houseConfig.categories) houseConfig.categories = DEFAULT_CATEGORIES;
           if (!houseConfig.incomeCategories) houseConfig.incomeCategories = DEFAULT_INCOME_CATEGORIES;
           
-          // Check if existing user has no email registered, popup modal
-          if (!houseConfig.email) {
-            document.getElementById('emailPromptModal').classList.remove('hidden');
-          }
+          if (!houseConfig.email) document.getElementById('emailPromptModal').classList.remove('hidden');
 
           populatePaymentMethodSelect();
           populateMainCategorySelect();
@@ -930,14 +805,10 @@
         }
       });
 
-      const q = window.query(window.collection(window.db, "house_transactions"), window.where("houseCode", "==", activeHouseCode));
-      unsubscribeFirestore = window.onSnapshot(q, (snapshot) => {
+      unsubscribeFirestore = window.onSnapshot(window.query(window.collection(window.db, "house_transactions"), window.where("houseCode", "==", activeHouseCode)), (snapshot) => {
         transactions = [];
         snapshot.forEach((doc) => { transactions.push({ id: doc.id, ...doc.data() }); });
-        
-        // Check inactive 7 days reminder logic
         checkInactiveReminder();
-
         updateFilterDropdowns();
         loadCurrentMonthData();
       });
@@ -946,10 +817,7 @@
     function checkInactiveReminder() {
       if (transactions.length === 0) return;
       const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-      const lastTxDate = new Date(sorted[0].date);
-      const now = new Date();
-      const diffDays = (now - lastTxDate) / (1000 * 60 * 60 * 24);
-      if (diffDays >= 7) {
+      if ((new Date() - new Date(sorted[0].date)) / (1000 * 60 * 60 * 24) >= 7) {
         document.getElementById('inactiveReminderBanner').classList.remove('hidden');
       }
     }
@@ -965,26 +833,18 @@
     function updateFilterDropdowns() {
       const catSelect = document.getElementById('filterCategory');
       const currentCatVal = catSelect.value;
-      catSelect.innerHTML = '<option value="ALL">הכל (ללא סינון)</option>';
+      catSelect.innerHTML = '<option value="ALL">כל הקטגוריות</option>';
       Object.keys(houseConfig.categories || DEFAULT_CATEGORIES).forEach(c => {
-        const opt = document.createElement('option'); opt.value = c; opt.textContent = c; catSelect.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = c; opt.textContent = `${CATEGORY_ICONS[c] || '📁'} ${c}`; catSelect.appendChild(opt);
       });
       catSelect.value = currentCatVal;
-
-      const pmSelect = document.getElementById('filterPaymentMethod');
-      const currentPmVal = pmSelect.value;
-      pmSelect.innerHTML = '<option value="ALL">הכל</option>';
-      (houseConfig.paymentMethods || []).forEach(pm => {
-        const opt = document.createElement('option'); opt.value = pm; opt.textContent = pm; pmSelect.appendChild(opt);
-      });
-      pmSelect.value = currentPmVal;
     }
 
     function renderPaymentMethodsManager() {
       const listDiv = document.getElementById('paymentMethodsList'); listDiv.innerHTML = '';
       (houseConfig.paymentMethods || []).forEach((m, idx) => {
         const item = document.createElement('div');
-        item.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs";
+        item.className = "flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border text-xs";
         item.innerHTML = `<span class="font-bold text-slate-700">${m}</span><button onclick="removePaymentMethod(${idx})" class="text-rose-500 font-bold px-1.5"><i class="fa-regular fa-trash-can"></i></button>`;
         listDiv.appendChild(item);
       });
@@ -993,8 +853,7 @@
     async function addCustomPaymentMethod() {
       const input = document.getElementById('newPaymentMethodInput'); const val = input.value.trim(); if (!val) return;
       const currentMethods = houseConfig.paymentMethods || []; if (currentMethods.includes(val)) return;
-      const updatedMethods = [...currentMethods, val];
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { paymentMethods: updatedMethods });
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { paymentMethods: [...currentMethods, val] });
       input.value = ''; renderPaymentMethodsManager();
     }
 
@@ -1007,118 +866,22 @@
     function renderCategoriesManager() {
       const listDiv = document.getElementById('categoriesListManager'); const targetSelect = document.getElementById('targetMainCategorySelect');
       listDiv.innerHTML = ''; targetSelect.innerHTML = '';
-      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
-      Object.keys(cats).forEach((mainCat) => {
-        const subs = cats[mainCat] || [];
+      Object.keys(houseConfig.categories || DEFAULT_CATEGORIES).forEach((mainCat) => {
+        const subs = (houseConfig.categories || DEFAULT_CATEGORIES)[mainCat] || [];
         const opt = document.createElement('option'); opt.value = mainCat; opt.textContent = mainCat; targetSelect.appendChild(opt);
         const card = document.createElement('div');
-        card.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2";
-        card.innerHTML = `<div class="flex justify-between items-center font-bold text-indigo-900 border-b pb-1"><span>📁 ${mainCat}</span><button onclick="removeMainCategory('${mainCat}')" class="text-rose-500">מחק</button></div><div class="flex flex-wrap gap-1">${subs.map((sub, sIdx) => `<span class="bg-white border px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px]">${sub}<button onclick="removeSubCategory('${mainCat}', ${sIdx})" class="text-rose-400 font-bold">&times;</button></span>`).join('')}</div>`;
+        card.className = "bg-slate-50 p-3 rounded-xl border text-xs space-y-2";
+        card.innerHTML = `<div class="flex justify-between items-center font-bold text-slate-800 border-b pb-1"><span>${CATEGORY_ICONS[mainCat] || '📁'} ${mainCat}</span></div><div class="flex flex-wrap gap-1">${subs.map((sub, sIdx) => `<span class="bg-white border px-2 py-0.5 rounded-md text-[11px]">${sub}</span>`).join('')}</div>`;
         listDiv.appendChild(card);
       });
-    }
-
-    async function addCustomMainCategory() {
-      const input = document.getElementById('newMainCategoryInput'); const val = input.value.trim(); if (!val) return;
-      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; if (cats[val]) return;
-      cats[val] = ["אחר"];
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
-      input.value = ''; renderCategoriesManager();
-    }
-
-    async function removeMainCategory(mainCat) {
-      if (confirm(`למחוק את הקטגוריה "${mainCat}"?`)) {
-        const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; delete cats[mainCat];
-        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
-        renderCategoriesManager();
-      }
-    }
-
-    async function addCustomSubCategory() {
-      const mainCat = document.getElementById('targetMainCategorySelect').value; const input = document.getElementById('newSubCategoryInput'); const val = input.value.trim(); if (!mainCat || !val) return;
-      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) }; if (!cats[mainCat]) cats[mainCat] = []; if (cats[mainCat].includes(val)) return;
-      cats[mainCat].push(val);
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
-      input.value = ''; renderCategoriesManager();
-    }
-
-    async function removeSubCategory(mainCat, sIdx) {
-      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
-      if (cats[mainCat]) {
-        cats[mainCat].splice(sIdx, 1);
-        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
-        renderCategoriesManager();
-      }
-    }
-
-    function renderIncomeCategoriesManager() {
-      const listDiv = document.getElementById('incomeCategoriesListManager'); const targetSelect = document.getElementById('targetIncomeMainCategorySelect');
-      listDiv.innerHTML = ''; targetSelect.innerHTML = '';
-      const cats = houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES;
-      Object.keys(cats).forEach((mainCat) => {
-        const subs = cats[mainCat] || [];
-        const opt = document.createElement('option'); opt.value = mainCat; opt.textContent = mainCat; targetSelect.appendChild(opt);
-        const card = document.createElement('div');
-        card.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2";
-        card.innerHTML = `<div class="flex justify-between items-center font-bold text-emerald-900 border-b pb-1"><span>💰 ${mainCat}</span><button onclick="removeIncomeMainCategory('${mainCat}')" class="text-rose-500">מחק</button></div><div class="flex flex-wrap gap-1">${subs.map((sub, sIdx) => `<span class="bg-white border px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px]">${sub}<button onclick="removeIncomeSubCategory('${mainCat}', ${sIdx})" class="text-rose-400 font-bold">&times;</button></span>`).join('')}</div>`;
-        listDiv.appendChild(card);
-      });
-    }
-
-    async function addCustomIncomeMainCategory() {
-      const input = document.getElementById('newIncomeMainCategoryInput'); const val = input.value.trim(); if (!val) return;
-      const cats = { ...(houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES) }; if (cats[val]) return;
-      cats[val] = ["אחר"];
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { incomeCategories: cats });
-      input.value = ''; renderIncomeCategoriesManager();
-    }
-
-    async function removeIncomeMainCategory(mainCat) {
-      if (confirm(`למחוק את קטגוריית ההכנסה "${mainCat}"?`)) {
-        const cats = { ...(houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES) }; delete cats[mainCat];
-        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { incomeCategories: cats });
-        renderIncomeCategoriesManager();
-      }
-    }
-
-    async function addCustomIncomeSubCategory() {
-      const mainCat = document.getElementById('targetIncomeMainCategorySelect').value; const input = document.getElementById('newIncomeSubCategoryInput'); const val = input.value.trim(); if (!mainCat || !val) return;
-      const cats = { ...(houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES) }; if (!cats[mainCat]) cats[mainCat] = []; if (cats[mainCat].includes(val)) return;
-      cats[mainCat].push(val);
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { incomeCategories: cats });
-      input.value = ''; renderIncomeCategoriesManager();
-    }
-
-    async function removeIncomeSubCategory(mainCat, sIdx) {
-      const cats = { ...(houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES) };
-      if (cats[mainCat]) {
-        cats[mainCat].splice(sIdx, 1);
-        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { incomeCategories: cats });
-        renderIncomeCategoriesManager();
-      }
-    }
-
-    function toggleRecurringOptions() {
-      document.getElementById('recurringDetails').classList.toggle('hidden', !document.getElementById('isRecurringInput').checked);
     }
 
     function setTransactionType(type) {
       currentTransactionType = type;
       document.getElementById('typeExpenseBtn').className = type === 'expense' ? 'py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center font-bold' : 'py-2.5 rounded-xl transition text-slate-500 text-center';
       document.getElementById('typeIncomeBtn').className = type === 'income' ? 'py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center font-bold' : 'py-2.5 rounded-xl transition text-slate-500 text-center';
-      
       document.getElementById('paymentMethodFieldWrapper').classList.toggle('hidden', type === 'income');
       document.getElementById('expenseFields').classList.toggle('hidden', type !== 'expense');
-
-      const manageBtn = document.getElementById('manageCategoriesBtn');
-      if (type === 'income') {
-        manageBtn.textContent = "⚙️ ניהול קטגוריות הכנסה";
-        manageBtn.setAttribute("onclick", "openIncomeCategoriesModal()");
-      } else {
-        manageBtn.textContent = "⚙️ ניהול קטגוריות הוצאה";
-        manageBtn.setAttribute("onclick", "openCategoriesModal()");
-      }
-
       populateMainCategorySelect();
     }
 
@@ -1126,7 +889,7 @@
       const mainSelect = document.getElementById('mainCategory'); mainSelect.innerHTML = '';
       const group = currentTransactionType === 'expense' ? (houseConfig.categories || DEFAULT_CATEGORIES) : (houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES);
       Object.keys(group).forEach(cat => {
-        const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; mainSelect.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = cat; opt.textContent = `${CATEGORY_ICONS[cat] || '📁'} ${cat}`; mainSelect.appendChild(opt);
       });
       handleMainCategoryChange();
     }
@@ -1143,14 +906,12 @@
       e.preventDefault();
       const amount = parseFloat(document.getElementById('amount').value); const date = document.getElementById('transactionDate').value; const mainCat = document.getElementById('mainCategory').value;
       if (!amount || amount <= 0) return;
-      const isRecurring = document.getElementById('isRecurringInput').checked;
       
       const newTx = {
-        houseCode: activeHouseCode, type: currentTransactionType, amount: amount,
+        houseCode: activeHouseCode, type: currentTransactionType, amount,
         paymentMethod: currentTransactionType === 'expense' ? document.getElementById('paymentMethod').value : 'העברה בנקאית',
-        mainCategory: mainCat, subCategory: document.getElementById('subCategory').value, date: date,
+        mainCategory: mainCat, subCategory: document.getElementById('subCategory').value, date,
         description: document.getElementById('description').value || '-',
-        isRecurring: isRecurring, recurringEndDate: isRecurring ? document.getElementById('recurringEndDateInput').value : null,
         monthKey: date.slice(0, 7)
       };
 
@@ -1160,35 +921,10 @@
       }
 
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
-      
-      if (currentTransactionType === 'expense') {
-        checkBudgetCapWarnings(mainCat, newTx.subCategory, amount);
-      }
-      
       document.getElementById('amount').value = ''; document.getElementById('description').value = '';
-      document.getElementById('isRecurringInput').checked = false; toggleRecurringOptions();
       switchMainTab('overview');
     }
 
-    function checkBudgetCapWarnings(mainCat, subCat, newAmount) {
-      const monthTx = getTransactionsForCurrentCycle();
-      const caps = houseConfig.caps || {};
-      const capKey = `${mainCat} > ${subCat}`;
-
-      if (caps[capKey]) {
-        let currentSubTotal = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat && t.subCategory === subCat).reduce((sum, t) => sum + t.amount, 0);
-        const updatedSubTotal = currentSubTotal + newAmount;
-        if (updatedSubTotal >= caps[capKey]) {
-          showBudgetAlert("חריגה מתקציב תת-קטגוריה!", `חרגתם מתקרת התקציב עבור "${subCat}" (תחת ${mainCat}).`);
-        }
-      }
-    }
-
-    function showBudgetAlert(title, msg) {
-      document.getElementById('budgetAlertTitle').textContent = title; document.getElementById('budgetAlertMessage').textContent = msg;
-      document.getElementById('budgetAlertModal').classList.remove('hidden');
-    }
-    function closeBudgetAlert() { document.getElementById('budgetAlertModal').classList.add('hidden'); }
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
     function getTransactionsForCurrentCycle() {
@@ -1202,9 +938,7 @@
     function loadCurrentMonthData() {
       const monthTx = getTransactionsForCurrentCycle();
       let totalIncome = 0, totalExpenses = 0, needsTotal = 0, wantsTotal = 0, savingsTotal = 0;
-      let fixedTotal = 0, variableTotal = 0, unplannedTotal = 0;
       const catTotals = {};
-      const subCatTotals = {};
 
       monthTx.forEach(t => {
         if (t.type === 'income') { totalIncome += t.amount; }
@@ -1213,155 +947,85 @@
           if (t.budgetClassification === 'צרכים') needsTotal += t.amount;
           else if (t.budgetClassification === 'רצונות') wantsTotal += t.amount;
           else if (t.budgetClassification === 'חסכונות') savingsTotal += t.amount;
-          if (t.expenseType === 'קבועות') fixedTotal += t.amount;
-          else if (t.expenseType === 'משתנות') variableTotal += t.amount;
-          else if (t.expenseType === 'בלתי מתוכננות') unplannedTotal += t.amount;
-          
           catTotals[t.mainCategory] = (catTotals[t.mainCategory] || 0) + t.amount;
-          const subKey = `${t.mainCategory} > ${t.subCategory}`;
-          subCatTotals[subKey] = (subCatTotals[subKey] || 0) + t.amount;
         }
       });
 
       const netBalance = totalIncome - totalExpenses;
       document.getElementById('totalIncomeDisplay').textContent = `₪${totalIncome.toLocaleString()}`;
-      document.getElementById('totalExpensesDisplay').textContent = `₪${totalExpenses.toLocaleString()}`;
+      document.getElementById('totalExpensesDisplay').textContent = `₪-${totalExpenses.toLocaleString()}`;
       document.getElementById('netBalanceDisplay').textContent = `₪${netBalance.toLocaleString()}`;
-      document.getElementById('transferSurplusBtn').classList.toggle('hidden', !(netBalance > 0 && houseConfig.savingsGoals.length > 0));
 
       document.getElementById('needsAmount').textContent = `₪${needsTotal.toLocaleString()}`;
       document.getElementById('wantsAmount').textContent = `₪${wantsTotal.toLocaleString()}`;
       document.getElementById('savingsAmount').textContent = `₪${savingsTotal.toLocaleString()}`;
-      document.getElementById('fixedExpensesTotal').textContent = `₪${fixedTotal.toLocaleString()}`;
-      document.getElementById('variableExpensesTotal').textContent = `₪${variableTotal.toLocaleString()}`;
-      document.getElementById('unplannedExpensesTotal').textContent = `₪${unplannedTotal.toLocaleString()}`;
 
-      renderBudgetCaps(subCatTotals); renderSavingsGoals(); renderCategoryChart(catTotals);
-      renderCategorySummaryList(catTotals); renderTransactionsTable(monthTx);
+      renderRecentTransactions(monthTx);
+      renderCategoryChart(catTotals);
+      renderCategorySummaryList(catTotals);
+      renderTransactionsTable(monthTx);
     }
 
-    function renderBudgetCaps(subCatTotals) {
-      const container = document.getElementById('budgetCapsContainer'); container.innerHTML = '';
-      const caps = houseConfig.caps || {}; const capKeys = Object.keys(caps);
-      if (capKeys.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-6 text-slate-400 text-xs border border-dashed rounded-xl">טרם הגדרתם תקרות תקציב.</div>`;
+    function renderRecentTransactions(monthTx) {
+      const container = document.getElementById('recentTransactionsContainer'); container.innerHTML = '';
+      const sorted = [...monthTx].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+      if (sorted.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs">אין תנועות אחרונות לחודש זה.</div>`;
         return;
       }
-      capKeys.forEach(key => {
-        const cap = caps[key];
-        const spent = subCatTotals[key] || 0;
-        const parts = key.split(' > ');
-        const displayName = `תת-קטגוריה: ${parts[1]} <span class="text-[11px] text-slate-400 font-normal">(${parts[0]})</span>`;
-
-        const remaining = cap - spent; 
-        const pct = Math.min(100, Math.round((spent / cap) * 100));
-        let barColor = "bg-emerald-500"; 
-        if (pct >= 100) barColor = "bg-rose-500"; 
-        else if (pct >= 75) barColor = "bg-amber-500";
-
+      sorted.forEach(t => {
+        const isExpense = t.type === 'expense';
+        const icon = CATEGORY_ICONS[t.mainCategory] || '📁';
         const div = document.createElement('div');
-        div.className = "p-4 bg-slate-50 rounded-2xl border space-y-2";
+        div.className = "flex justify-between items-center bg-slate-50 p-3 rounded-2xl border text-xs";
         div.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-sm text-slate-800">${displayName}</span>
-            <button onclick="removeBudgetCap('${key}')" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-regular fa-trash-can"></i></button>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-lg shadow-sm border">${icon}</div>
+            <div>
+              <div class="font-bold text-slate-800">${t.mainCategory} (${t.subCategory})</div>
+              <div class="text-[11px] text-slate-400">${t.date} • ${t.paymentMethod || '-'}</div>
+            </div>
           </div>
-          <div class="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
-            <div class="${barColor} h-full transition-all duration-500" style="width: ${pct}%"></div>
-          </div>
-          <div class="flex justify-between text-xs text-slate-500">
-            <span>נוצלו: ₪${spent.toLocaleString()} מתוך ₪${cap.toLocaleString()}</span>
-            <span class="font-bold ${remaining < 0 ? 'text-rose-600' : 'text-slate-700'}">${remaining < 0 ? 'חריגה:' : 'נותר:'} ₪${Math.abs(remaining).toLocaleString()}</span>
-          </div>`;
+          <div class="font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${isExpense ? '-' : ''}${t.amount.toLocaleString()}</div>
+        `;
         container.appendChild(div);
       });
-    }
-
-    async function removeBudgetCap(key) {
-      if (confirm(`להסיר את תקרת התקציב הזו?`)) {
-        const caps = { ...(houseConfig.caps || {}) };
-        delete caps[key];
-        await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { caps: caps });
-      }
-    }
-
-    function renderSavingsGoals() {
-      const container = document.getElementById('savingsGoalsContainer'); container.innerHTML = '';
-      (houseConfig.savingsGoals || []).forEach((goal, idx) => {
-        const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
-        const div = document.createElement('div');
-        div.className = "p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-3";
-        div.innerHTML = `<div class="flex justify-between items-center"><span class="font-bold text-sm">${goal.name}</span><span class="text-xs font-bold text-emerald-600">${pct}%</span></div><div class="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${pct}%"></div></div><div class="flex justify-between text-xs text-slate-600 font-semibold"><span>נצבר: ₪${goal.saved.toLocaleString()}</span><span>יעד: ₪${goal.target.toLocaleString()}</span></div><button onclick="promptDepositToGoal(${idx})" class="w-full text-xs bg-emerald-600 text-white font-bold py-1.5 rounded-lg">+ הפקד לקופה</button>`;
-        container.appendChild(div);
-      });
-    }
-
-    async function promptCreateSavingsGoal() {
-      const name = prompt("שם קופת החיסכון:"); if (!name) return;
-      const target = parseFloat(prompt("סכום היעד בש\"ח:")); if (isNaN(target)) return;
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: [...(houseConfig.savingsGoals || []), { name, target, saved: 0 }] });
-    }
-
-    async function promptDepositToGoal(idx) {
-      const amount = parseFloat(prompt("כמה להפקיד?")); if (isNaN(amount) || amount <= 0) return;
-      const updatedGoals = [...houseConfig.savingsGoals]; updatedGoals[idx].saved += amount;
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: updatedGoals });
-    }
-
-    async function transferSurplusToSavings() {
-      if (!houseConfig.savingsGoals || houseConfig.savingsGoals.length === 0) return;
-      const choice = parseInt(prompt("בחר מספר קופה להעברת עודף חודשי:")) - 1;
-      if (isNaN(choice) || choice < 0) return;
-      const monthTx = getTransactionsForCurrentCycle(); let totalInc = 0, totalExp = 0;
-      monthTx.forEach(t => t.type === 'income' ? totalInc += t.amount : totalExp += t.amount);
-      const surplus = totalInc - totalExp; if (surplus <= 0) return;
-      const updatedGoals = [...houseConfig.savingsGoals]; updatedGoals[choice].saved += surplus;
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { savingsGoals: updatedGoals });
-      alert("העודף הועבר בהצלחה!");
     }
 
     function renderCategorySummaryList(catTotals) {
       const listDiv = document.getElementById('categorySummaryList'); listDiv.innerHTML = '';
       Object.keys(catTotals).forEach(cat => {
+        const icon = CATEGORY_ICONS[cat] || '📁';
         const row = document.createElement('div');
         row.className = "flex justify-between items-center bg-slate-50 p-3.5 rounded-xl border text-sm";
-        row.innerHTML = `<span class="font-bold text-slate-700">${cat}</span><span class="font-extrabold text-slate-900 text-base">₪${catTotals[cat].toLocaleString()}</span>`;
+        row.innerHTML = `<div class="flex items-center gap-2 font-bold text-slate-700"><span>${icon}</span><span>${cat}</span></div><span class="font-extrabold text-slate-900">₪${catTotals[cat].toLocaleString()}</span>`;
         listDiv.appendChild(row);
-      });
-    }
-
-    function getFilteredTransactions(monthTx) {
-      const filterCat = document.getElementById('filterCategory').value;
-      const filterPm = document.getElementById('filterPaymentMethod').value;
-      return monthTx.filter(t => {
-        if (filterCat !== 'ALL' && t.mainCategory !== filterCat) return false;
-        if (filterPm !== 'ALL' && t.paymentMethod !== filterPm) return false;
-        return true;
       });
     }
 
     function renderTransactionsTable(monthTx) {
       const tbody = document.getElementById('transactionsTableBody'); tbody.innerHTML = '';
-      const filteredTx = getFilteredTransactions(monthTx);
-      document.getElementById('emptyTableMessage').classList.toggle('hidden', filteredTx.length > 0);
+      const filterCat = document.getElementById('filterCategory').value;
+      const filtered = monthTx.filter(t => filterCat === 'ALL' || t.mainCategory === filterCat);
       
-      filteredTx.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
-        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 border-b";
+      document.getElementById('emptyTableMessage').classList.toggle('hidden', filtered.length > 0);
+      
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
         const isExpense = t.type === 'expense';
+        const icon = CATEGORY_ICONS[t.mainCategory] || '📁';
         const safeDesc = (t.description || '').replace(/'/g, "\\'");
-
+        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 border-b";
         tr.innerHTML = `
           <td class="p-4 font-mono text-sm">${t.date}</td>
           <td class="p-4">${t.paymentMethod || '-'}</td>
-          <td class="p-4 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'} ${t.isRecurring ? '🔄' : ''}</td>
-          <td class="p-4 font-bold text-indigo-900">${t.mainCategory}</td>
+          <td class="p-4 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'}</td>
+          <td class="p-4 font-bold text-slate-800 flex items-center gap-1.5"><span>${icon}</span><span>${t.mainCategory}</span></td>
           <td class="p-4">${t.subCategory}</td>
-          <td class="p-4">${isExpense ? (t.budgetClassification || '-') : '-'}</td>
-          <td class="p-4 font-medium max-w-xs truncate">${t.description}</td>
-          <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${t.amount.toLocaleString()}</td>
+          <td class="p-4 font-medium">${t.description}</td>
+          <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${isExpense ? '-' : ''}${t.amount.toLocaleString()}</td>
           <td class="p-4 text-center space-x-2 space-x-reverse">
-            <button onclick="openEditModal('${t.id}', ${t.amount}, '${t.date}', '${safeDesc}')" class="text-indigo-400 hover:text-indigo-600 p-1" title="ערוך תנועה"><i class="fa-solid fa-pen-to-square"></i></button>
-            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="מחק תנועה"><i class="fa-regular fa-trash-can"></i></button>
+            <button onclick="openEditModal('${t.id}', ${t.amount}, '${t.date}', '${safeDesc}')" class="text-indigo-500 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="deleteTransaction('${t.id}')" class="text-rose-500 p-1"><i class="fa-regular fa-trash-can"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1369,14 +1033,12 @@
     }
 
     function exportTableToCSV() {
-      const filteredTx = getFilteredTransactions(getTransactionsForCurrentCycle());
-      let csvContent = "\uFEFFתאריך,אמצעי תשלום,סוג,קטגוריה,תת-קטגוריה,סיווג,הערה,סכום\n";
-      filteredTx.forEach(t => {
-        csvContent += `${t.date},"${t.paymentMethod || ''}",${t.type},"${t.mainCategory}","${t.subCategory}","${t.budgetClassification || ''}","${t.description}",${t.amount}\n`;
+      let csvContent = "\uFEFFתאריך,אמצעי תשלום,סוג,קטגוריה,תת-קטגוריה,הערה,סכום\n";
+      getTransactionsForCurrentCycle().forEach(t => {
+        csvContent += `${t.date},"${t.paymentMethod || ''}",${t.type},"${t.mainCategory}","${t.subCategory}","${t.description}",${t.amount}\n`;
       });
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
+      link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
       link.download = `budget_${document.getElementById('selectedMonth').value}.csv`;
       link.click();
     }
@@ -1386,7 +1048,7 @@
       if (categoryChartInstance) categoryChartInstance.destroy();
       categoryChartInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#6366f1', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'] }] },
+        data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#8fb3bf', '#F9B2D7', '#CFECF3', '#DAF9DE', '#f59e0b', '#8b5cf6'] }] },
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
@@ -1396,16 +1058,15 @@
       const groupedData = {};
       transactions.forEach(t => {
         if (!t.monthKey) return;
-        const key = t.monthKey;
-        if (!groupedData[key]) groupedData[key] = { income: 0, expense: 0 };
-        t.type === 'income' ? groupedData[key].income += t.amount : groupedData[key].expense += t.amount;
+        if (!groupedData[t.monthKey]) groupedData[t.monthKey] = { income: 0, expense: 0 };
+        t.type === 'income' ? groupedData[t.monthKey].income += t.amount : groupedData[t.monthKey].expense += t.amount;
       });
       const labels = Object.keys(groupedData).sort().slice(-6);
       if (trendChartInstance) trendChartInstance.destroy();
       trendChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels,
           datasets: [
             { label: 'הכנסות', data: labels.map(k => groupedData[k].income), borderColor: '#10b981', fill: true },
             { label: 'הוצאות', data: labels.map(k => groupedData[k].expense), borderColor: '#f43f5e', fill: true }
