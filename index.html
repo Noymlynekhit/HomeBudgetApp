@@ -43,9 +43,24 @@
         <p class="text-xs text-slate-500 mt-1">חובה להזין מייל לקבלת עדכונים חשובים ותזכורות למאזן הבית.</p>
       </div>
       <div class="space-y-3 text-xs">
-        <input type="email" id="missingEmailInput" placeholder="name@example.com" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl p-3 text-center font-bold focus:outline-none">
+        <input type="email" id="missingEmailInput" placeholder="name@example.com" class="w-full text-sm bg-slate-50 border rounded-xl p-3 text-center font-bold focus:outline-none">
         <button onclick="saveMissingEmail()" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-3 rounded-xl transition shadow-md">שמור מייל והמשך</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Monthly Planning / Expected Budget Popup Modal -->
+  <div id="monthlyPlanningModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-800">🎯 תכנון צפי חודשי לתחילת מחזור</h3>
+          <p class="text-xs text-slate-500">הגדירי את הצפי והגג (תקציב) לכל קטגוריה החודש</p>
+        </div>
+        <button onclick="closeMonthlyPlanningModal()" class="text-slate-400 font-bold text-xl">&times;</button>
+      </div>
+      <div id="monthlyPlanningInputsContainer" class="space-y-3 text-xs"></div>
+      <button onclick="saveMonthlyPlanning()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור צפי חודשי</button>
     </div>
   </div>
 
@@ -63,6 +78,7 @@
 
       <nav class="space-y-2 text-xs font-bold">
         <button onclick="switchMainTab('overview'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-house text-[#8fb3bf]"></i><span>מסך הבית</span></button>
+        <button onclick="openMonthlyPlanningModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-bullseye text-indigo-500"></i><span>תכנון צפי חודשי</span></button>
         <button onclick="switchMainTab('reports'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-chart-pie text-[#F9B2D7]"></i><span>דוחות ופילוח קטגוריות</span></button>
         <button onclick="switchMainTab('details'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-list-check text-[#DAF9DE]"></i><span>פירוט תנועות</span></button>
         <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500"></i><span>אזור אישי</span></button>
@@ -221,7 +237,7 @@
         <button onclick="closeTutorialModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
       <div class="space-y-3 text-xs text-slate-600">
-        <p><b>מסך הבית:</b> מרכז את סיכום ההכנסות, ההוצאות, המאזן החודשי, תקרות התקציב, קופות החיסכון והתנועות האחרונות.</p>
+        <p><b>מסך הבית:</b> מרכז את סיכום ההכנסות, ההוצאות, המאזן החודשי, תקרות התקציב, קופות החיסכון, השוואת הצפי החודשי מול הביצוע והתנועות האחרונות.</p>
         <p><b>תפריט ניהול (3 פסים):</b> גישה מהירה לדוחות, פירוט תנועות מלא והגדרות האזור האישי.</p>
       </div>
       <button onclick="closeTutorialModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">הבנתי, תודה!</button>
@@ -339,7 +355,16 @@
         <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </section>
 
-      <!-- 3. תנועות אחרונות -->
+      <!-- 3. צפי חודשי - תכנון מול ביצוע -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-500"></i> תכנון חודשי (צפי מול ביצוע)</h2>
+          <button onclick="openMonthlyPlanningModal()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl transition">⚙️ ערוך צפי</button>
+        </div>
+        <div id="monthlyPlanOverviewContainer" class="space-y-3"></div>
+      </section>
+
+      <!-- 4. תנועות אחרונות -->
       <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-[#8fb3bf]"></i> תנועות אחרונות</h2>
@@ -498,7 +523,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.2";
+    const APP_VERSION = "1.2.3";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -529,7 +554,7 @@
     };
 
     let houseConfig = { 
-      cycleStartDay: 1, email: "", caps: {}, savingsGoals: [], 
+      cycleStartDay: 1, email: "", caps: {}, savingsGoals: [], monthlyPlans: {},
       paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
       categories: DEFAULT_CATEGORIES, incomeCategories: DEFAULT_INCOME_CATEGORIES
     };
@@ -617,6 +642,57 @@
       if (!email || !email.includes('@')) { alert("נא להזין כתובת מייל תקינה."); return; }
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email });
       document.getElementById('emailPromptModal').classList.add('hidden');
+    }
+
+    // --- Monthly Planning (Expected vs Actual) Functions ---
+    function openMonthlyPlanningModal() {
+      const monthKey = document.getElementById('selectedMonth').value;
+      const container = document.getElementById('monthlyPlanningInputsContainer');
+      container.innerHTML = '';
+      
+      const currentPlans = (houseConfig.monthlyPlans || {})[monthKey] || {};
+      
+      let html = `<div class="p-3 bg-indigo-50 rounded-xl mb-3"><label class="block font-bold text-indigo-900 mb-1">צפי הכנסות כולל לחודש ${monthKey}</label><input type="number" step="0.01" id="planIncomeInput" value="${currentPlans.expectedIncome || ''}" placeholder="12000" class="w-full bg-white border rounded-xl p-2.5 font-bold"></div>`;
+      
+      html += `<label class="block font-bold text-slate-700 mt-2 mb-1">צפי הוצאות (גג) לפי קטגוריה ראשית:</label>`;
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+      const catPlans = currentPlans.categoryBudgets || {};
+      
+      Object.keys(cats).forEach(cat => {
+        const val = catPlans[cat] || '';
+        html += `<div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border"><span class="font-bold">${CATEGORY_ICONS[cat] || '📁'} ${cat}</span><input type="number" step="0.01" data-cat="${cat}" class="plan-cat-input w-32 bg-white border rounded-lg p-1.5 text-center font-bold" value="${val}" placeholder="0"></div>`;
+      });
+      
+      container.innerHTML = html;
+      document.getElementById('monthlyPlanningModal').classList.remove('hidden');
+    }
+
+    function closeMonthlyPlanningModal() { document.getElementById('monthlyPlanningModal').classList.add('hidden'); }
+
+    async function saveMonthlyPlanning() {
+      const monthKey = document.getElementById('selectedMonth').value;
+      const expectedIncome = parseFloat(document.getElementById('planIncomeInput').value) || 0;
+      const categoryBudgets = {};
+      
+      document.querySelectorAll('.plan-cat-input').forEach(input => {
+        const cat = input.getAttribute('data-cat');
+        const val = parseFloat(input.value) || 0;
+        if (val > 0) categoryBudgets[cat] = val;
+      });
+
+      const updatedPlans = { ...(houseConfig.monthlyPlans || {}), [monthKey]: { expectedIncome, categoryBudgets } };
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { monthlyPlans: updatedPlans });
+      closeMonthlyPlanningModal();
+      loadCurrentMonthData();
+      alert("הצפי החודשי נשמר בהצלחה!");
+    }
+
+    function checkAndPromptMonthlyPlan() {
+      const monthKey = document.getElementById('selectedMonth').value;
+      const plans = houseConfig.monthlyPlans || {};
+      if (!plans[monthKey]) {
+        openMonthlyPlanningModal();
+      }
     }
 
     // --- Budget Cap Functions ---
@@ -708,7 +784,7 @@
       
       await window.setDoc(houseRef, {
         createdAt: new Date().toISOString(), houseCode: newCodeInput, email: emailInput,
-        cycleStartDay, caps: {}, savingsGoals: [], paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
+        cycleStartDay, caps: {}, savingsGoals: [], monthlyPlans: {}, paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
         categories: DEFAULT_CATEGORIES, incomeCategories: DEFAULT_INCOME_CATEGORIES
       });
       loginToHouse(newCodeInput, true);
@@ -736,6 +812,7 @@
           houseConfig = snap.data();
           if (!houseConfig.caps) houseConfig.caps = {};
           if (!houseConfig.savingsGoals) houseConfig.savingsGoals = [];
+          if (!houseConfig.monthlyPlans) houseConfig.monthlyPlans = {};
           if (!houseConfig.paymentMethods) houseConfig.paymentMethods = ["אשראי", "מזומן / העברה", "הוראת קבע"];
           if (!houseConfig.categories) houseConfig.categories = DEFAULT_CATEGORIES;
           if (!houseConfig.incomeCategories) houseConfig.incomeCategories = DEFAULT_INCOME_CATEGORIES;
@@ -746,6 +823,7 @@
           populateMainCategorySelect();
           updateFilterDropdowns();
           loadCurrentMonthData();
+          checkAndPromptMonthlyPlan();
         }
       });
 
@@ -899,10 +977,53 @@
 
       renderBudgetCaps(subCatTotals);
       renderSavingsGoals();
+      renderMonthlyPlanOverview(catTotals, totalIncome);
       renderRecentTransactions(monthTx);
       renderCategoryChart(catTotals);
       renderCategorySummaryList(catTotals);
       renderTransactionsTable(monthTx);
+    }
+
+    function renderMonthlyPlanOverview(catTotals, totalIncome) {
+      const container = document.getElementById('monthlyPlanOverviewContainer');
+      const monthKey = document.getElementById('selectedMonth').value;
+      const plans = (houseConfig.monthlyPlans || {})[monthKey];
+      
+      if (!plans) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs border border-dashed rounded-xl">טרם הוגדר צפי חודשי לחודש זה. <button onclick="openMonthlyPlanningModal()" class="text-indigo-600 underline font-bold">הגדר עכשיו</button></div>`;
+        return;
+      }
+
+      let html = `<div class="flex justify-between items-center text-xs font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border"><span>צפי הכנסות: ₪${(plans.expectedIncome || 0).toLocaleString()}</span><span class="text-emerald-700">בפועל: ₪${totalIncome.toLocaleString()}</span></div>`;
+      
+      const catBudgets = plans.categoryBudgets || {};
+      const catKeys = Object.keys(catBudgets);
+      
+      if (catKeys.length === 0) {
+        html += `<div class="text-center py-2 text-slate-400 text-xs">לא הוגדרו יעדי הוצאה לקטגוריות.</div>`;
+      } else {
+        html += `<div class="space-y-2 pt-1">`;
+        catKeys.forEach(cat => {
+          const expected = catBudgets[cat];
+          const actual = catTotals[cat] || 0;
+          const pct = Math.min(100, Math.round((actual / expected) * 100));
+          let barColor = "bg-indigo-500";
+          if (pct >= 100) barColor = "bg-rose-500"; else if (pct >= 75) barColor = "bg-amber-500";
+
+          html += `
+            <div class="p-2.5 bg-slate-50 rounded-xl border text-xs space-y-1">
+              <div class="flex justify-between font-bold text-slate-800">
+                <span>${CATEGORY_ICONS[cat] || '📁'} ${cat}</span>
+                <span>בפועל: ₪${actual.toLocaleString()} / צפי: ₪${expected.toLocaleString()}</span>
+              </div>
+              <div class="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div class="${barColor} h-full" style="width: ${pct}%"></div>
+              </div>
+            </div>`;
+        });
+        html += `</div>`;
+      }
+      container.innerHTML = html;
     }
 
     function renderBudgetCaps(subCatTotals) {
