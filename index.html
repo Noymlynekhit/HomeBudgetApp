@@ -30,8 +30,8 @@
 
   <!-- Update Banner -->
   <div id="updateBanner" class="bg-[#F9B2D7] text-slate-900 px-4 py-2 text-xs font-bold text-center fixed top-0 left-0 right-0 z-50 shadow-md flex items-center justify-center gap-3 hidden">
-    <span>🚀 יש גרסה חדשה ועדכנית לאפליקציה!</span>
-    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">עדכן עכשיו 🔄</button>
+    <span>יש גרסה חדשה ועדכנית לאפליקציה</span>
+    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">עדכן עכשיו</button>
   </div>
 
   <!-- Email Prompt Modal for Existing Users -->
@@ -49,17 +49,25 @@
     </div>
   </div>
 
-  <!-- Monthly Planning / Expected Budget Popup Modal -->
+  <!-- Monthly Planning / Expected Budget Popup Modal (With Accordions) -->
   <div id="monthlyPlanningModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
         <div>
-          <h3 class="text-base font-extrabold text-slate-800">🎯 תכנון צפי חודשי לתחילת מחזור</h3>
-          <p class="text-xs text-slate-500">הגדירי את הצפי והגג (תקציב) לכל קטגוריה החודש</p>
+          <h3 class="text-base font-extrabold text-slate-800">תכנון צפי חודשי ותקרות לתחילת מחזור</h3>
+          <p class="text-xs text-slate-500">הגדירי צפי הכנסות, גג לקטגוריות ראשיות, ותקרות פרטניות לתת-קטגוריות</p>
         </div>
         <button onclick="closeMonthlyPlanningModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
+      
+      <!-- Quick copy banner if previous month exists -->
+      <div id="copyPreviousMonthBanner" class="hidden p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex justify-between items-center text-xs">
+        <span class="font-bold text-indigo-900">האם תרצי להעתיק את הצפי והתקציב מהחודש הקודם?</span>
+        <button onclick="copyDataFromPreviousMonth()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl transition">העתק צפי קודם</button>
+      </div>
+
       <div id="monthlyPlanningInputsContainer" class="space-y-3 text-xs"></div>
+      
       <button onclick="saveMonthlyPlanning()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">שמור צפי חודשי</button>
     </div>
   </div>
@@ -244,10 +252,11 @@
     </div>
   </div>
 
-  <!-- Alert Modal -->
+  <!-- Alert / Budget Exceeded Modal -->
   <div id="budgetAlertModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 border border-rose-100">
-      <h3 class="text-xl font-extrabold text-slate-800" id="budgetAlertTitle">התראה!</h3>
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 class="text-xl font-extrabold text-slate-800" id="budgetAlertTitle">התראה תקציבית</h3>
       <p class="text-sm text-slate-600 mt-2" id="budgetAlertMessage"></p>
       <button onclick="closeBudgetAlert()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl">הבנתי</button>
     </div>
@@ -523,7 +532,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.3";
+    const APP_VERSION = "1.2.4";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -644,27 +653,90 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    // --- Monthly Planning (Expected vs Actual) Functions ---
+    // --- Monthly Planning & Accordion Functions ---
     function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
       container.innerHTML = '';
       
       const currentPlans = (houseConfig.monthlyPlans || {})[monthKey] || {};
+      const catBudgets = currentPlans.categoryBudgets || {};
+      const caps = houseConfig.caps || {};
+
+      // Check if previous month has plan to show quick-copy banner
+      const prevMonthKey = getPreviousMonthKey(monthKey);
+      const prevPlan = (houseConfig.monthlyPlans || {})[prevMonthKey];
+      document.getElementById('copyPreviousMonthBanner').classList.toggle('hidden', !prevPlan);
+
+      let html = `<div class="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 mb-3">
+        <label class="block font-bold text-indigo-900 mb-1.5">צפי הכנסות כולל לחודש ${monthKey}</label>
+        <input type="number" step="0.01" id="planIncomeInput" value="${currentPlans.expectedIncome || ''}" placeholder="12000" class="w-full bg-white border rounded-xl p-2.5 font-bold text-sm focus:outline-none">
+      </div>`;
+
+      html += `<label class="block font-extrabold text-slate-700 mt-3 mb-2">צפי ותקרות לפי קטגוריות ראשיות ותתי-קטגוריות:</label>`;
       
-      let html = `<div class="p-3 bg-indigo-50 rounded-xl mb-3"><label class="block font-bold text-indigo-900 mb-1">צפי הכנסות כולל לחודש ${monthKey}</label><input type="number" step="0.01" id="planIncomeInput" value="${currentPlans.expectedIncome || ''}" placeholder="12000" class="w-full bg-white border rounded-xl p-2.5 font-bold"></div>`;
-      
-      html += `<label class="block font-bold text-slate-700 mt-2 mb-1">צפי הוצאות (גג) לפי קטגוריה ראשית:</label>`;
       const cats = houseConfig.categories || DEFAULT_CATEGORIES;
-      const catPlans = currentPlans.categoryBudgets || {};
-      
+
       Object.keys(cats).forEach(cat => {
-        const val = catPlans[cat] || '';
-        html += `<div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border"><span class="font-bold">${CATEGORY_ICONS[cat] || '📁'} ${cat}</span><input type="number" step="0.01" data-cat="${cat}" class="plan-cat-input w-32 bg-white border rounded-lg p-1.5 text-center font-bold" value="${val}" placeholder="0"></div>`;
+        const catExpected = catBudgets[cat] || '';
+        const subs = cats[cat] || [];
+
+        html += `
+          <div class="bg-slate-50 rounded-2xl border overflow-hidden transition-all mb-2.5">
+            <div onclick="const content = this.nextElementSibling; content.classList.toggle('hidden');" class="p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
+              <div class="flex items-center gap-2 font-bold text-slate-800">
+                <span>${CATEGORY_ICONS[cat] || '📁'}</span>
+                <span>${cat}</span>
+              </div>
+              <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                <input type="number" step="0.01" data-cat="${cat}" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${catExpected}" placeholder="גג ראשי" />
+                <i class="fa-solid fa-chevron-down text-slate-400 text-xs mr-1"></i>
+              </div>
+            </div>
+            <div class="hidden bg-white p-3 border-t space-y-2">
+              <p class="text-[11px] font-bold text-slate-400 mb-1">תקרות לתת-קטגוריות (אופציונלי):</p>`;
+
+        subs.forEach(sub => {
+          const capKey = `${cat} > ${sub}`;
+          const subVal = caps[capKey] || '';
+          html += `
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border">
+              <span class="text-slate-700 font-medium text-xs">${sub}</span>
+              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" class="plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
+            </div>`;
+        });
+
+        html += `</div></div>`;
       });
-      
+
       container.innerHTML = html;
       document.getElementById('monthlyPlanningModal').classList.remove('hidden');
+    }
+
+    function getPreviousMonthKey(monthKey) {
+      const [year, month] = monthKey.split('-').map(Number);
+      let pYear = year;
+      let pMonth = month - 1;
+      if (pMonth === 0) { pMonth = 12; pYear -= 1; }
+      return `${pYear}-${String(pMonth).padStart(2, '0')}`;
+    }
+
+    function copyDataFromPreviousMonth() {
+      const monthKey = document.getElementById('selectedMonth').value;
+      const prevKey = getPreviousMonthKey(monthKey);
+      const prevPlan = (houseConfig.monthlyPlans || {})[prevKey];
+      if (!prevPlan) return;
+
+      document.getElementById('planIncomeInput').value = prevPlan.expectedIncome || '';
+      
+      const catInputs = document.querySelectorAll('.plan-cat-input');
+      catInputs.forEach(input => {
+        const cat = input.getAttribute('data-cat');
+        if (prevPlan.categoryBudgets && prevPlan.categoryBudgets[cat]) {
+          input.value = prevPlan.categoryBudgets[cat];
+        }
+      });
+      alert("הנתונים הועתקו בהצלחה מחודש קודם!");
     }
 
     function closeMonthlyPlanningModal() { document.getElementById('monthlyPlanningModal').classList.add('hidden'); }
@@ -673,6 +745,7 @@
       const monthKey = document.getElementById('selectedMonth').value;
       const expectedIncome = parseFloat(document.getElementById('planIncomeInput').value) || 0;
       const categoryBudgets = {};
+      const newCaps = { ...(houseConfig.caps || {}) };
       
       document.querySelectorAll('.plan-cat-input').forEach(input => {
         const cat = input.getAttribute('data-cat');
@@ -680,19 +753,50 @@
         if (val > 0) categoryBudgets[cat] = val;
       });
 
+      document.querySelectorAll('.plan-sub-input').forEach(input => {
+        const main = input.getAttribute('data-main');
+        const sub = input.getAttribute('data-sub');
+        const val = parseFloat(input.value) || 0;
+        const capKey = `${main} > ${sub}`;
+        if (val > 0) {
+          newCaps[capKey] = val;
+        } else {
+          delete newCaps[capKey];
+        }
+      });
+
       const updatedPlans = { ...(houseConfig.monthlyPlans || {}), [monthKey]: { expectedIncome, categoryBudgets } };
-      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { monthlyPlans: updatedPlans });
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { 
+        monthlyPlans: updatedPlans,
+        caps: newCaps
+      });
       closeMonthlyPlanningModal();
       loadCurrentMonthData();
-      alert("הצפי החודשי נשמר בהצלחה!");
+      alert("הצפי והתקרות נשמרו בהצלחה!");
     }
 
     function checkAndPromptMonthlyPlan() {
       const monthKey = document.getElementById('selectedMonth').value;
       const plans = houseConfig.monthlyPlans || {};
+      
+      // Check if monthly cycle anniversary reached (e.g. 10th of the month)
+      const today = new Date();
+      const cycleDay = houseConfig.cycleStartDay || 1;
+      const isCycleDay = today.getDate() === cycleDay;
+
       if (!plans[monthKey]) {
         openMonthlyPlanningModal();
+        if (isCycleDay && houseConfig.email) {
+          triggerSimulatedCycleEmail(monthKey);
+        }
       }
+    }
+
+    function triggerSimulatedCycleEmail(monthKey) {
+      console.log(`[Email System] Sending cycle reminder to ${houseConfig.email}:
+      נושא: הגיע זמן להתחיל מחזור תקציב חדש
+      שלום ${activeHouseCode}
+      מחזור התקציב החדש שלך החל היום! כדאי להגדיר את היעדים לתקופה הקרובה.`);
     }
 
     // --- Budget Cap Functions ---
@@ -914,17 +1018,47 @@
       });
     }
 
+    // --- Real-time Budget Exceeded Check & Add Transaction ---
     async function handleAddTransaction(e) {
       e.preventDefault();
-      const amount = parseFloat(document.getElementById('amount').value); const date = document.getElementById('transactionDate').value; const mainCat = document.getElementById('mainCategory').value;
+      const amount = parseFloat(document.getElementById('amount').value); 
+      const date = document.getElementById('transactionDate').value; 
+      const mainCat = document.getElementById('mainCategory').value;
+      const subCat = document.getElementById('subCategory').value;
       if (!amount || amount <= 0) return;
       
+      const monthKey = date.slice(0, 7);
+
+      // Real-time check against budget plans / caps
+      if (currentTransactionType === 'expense') {
+        const currentMonthTx = getTransactionsForCurrentCycle();
+        const mainCatSpent = currentMonthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat).reduce((acc, t) => acc + t.amount, 0);
+        const subCatKey = `${mainCat} > ${subCat}`;
+        const subCatSpent = currentMonthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat && t.subCategory === subCat).reduce((acc, t) => acc + t.amount, 0);
+
+        const monthlyPlans = (houseConfig.monthlyPlans || {})[monthKey] || {};
+        const mainCatBudget = (monthlyPlans.categoryBudgets || {})[mainCat];
+        const subCatCap = (houseConfig.caps || {})[subCatKey];
+
+        let warningMsg = "";
+        if (mainCatBudget && (mainCatSpent + amount > mainCatBudget)) {
+          warningMsg = `שים לב! הוצאה זו תגרום לחריגה מיעד הצפי לחודש זה בקטגוריה ${mainCat} (צפי: ₪${mainCatBudget.toLocaleString()})`;
+        } else if (subCatCap && (subCatSpent + amount > subCatCap)) {
+          warningMsg = `שים לב! הוצאה זו תעבור את תקרת התקציב של תת-הקטגוריה ${subCat} (תקרה: ₪${subCatCap.toLocaleString()})`;
+        }
+
+        if (warningMsg) {
+          document.getElementById('budgetAlertMessage').textContent = warningMsg;
+          document.getElementById('budgetAlertModal').classList.remove('hidden');
+        }
+      }
+
       const newTx = {
         houseCode: activeHouseCode, type: currentTransactionType, amount,
         paymentMethod: currentTransactionType === 'expense' ? document.getElementById('paymentMethod').value : 'העברה בנקאית',
-        mainCategory: mainCat, subCategory: document.getElementById('subCategory').value, date,
+        mainCategory: mainCat, subCategory: subCat, date,
         description: document.getElementById('description').value || '-',
-        monthKey: date.slice(0, 7)
+        monthKey
       };
 
       if (currentTransactionType === 'expense') {
@@ -935,6 +1069,10 @@
       await window.addDoc(window.collection(window.db, "house_transactions"), newTx);
       document.getElementById('amount').value = ''; document.getElementById('description').value = '';
       switchMainTab('overview');
+    }
+
+    function closeBudgetAlert() {
+      document.getElementById('budgetAlertModal').classList.add('hidden');
     }
 
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
@@ -1143,7 +1281,6 @@
           <td class="p-4 font-medium">${t.description}</td>
           <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">₪${isExpense ? '-' : ''}${t.amount.toLocaleString()}</td>
           <td class="p-4 text-center space-x-2 space-x-reverse">
-            <button onclick="openEditModal('${t.id}', ${t.amount}, '${t.date}', '${safeDesc}')" class="text-indigo-500 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
             <button onclick="deleteTransaction('${t.id}')" class="text-rose-500 p-1"><i class="fa-regular fa-trash-can"></i></button>
           </td>
         `;
