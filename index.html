@@ -318,22 +318,22 @@
         <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
       </button>
 
-      <!-- 1. קופות חיסכון -->
-      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
-        <div class="flex justify-between items-center">
-          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-600"></i> קופות ויעדי חיסכון</h2>
-          <button onclick="promptCreateSavingsGoal()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition">+ יעד חדש</button>
-        </div>
-        <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      </section>
-
-      <!-- 2. תכנון חודשי (צפי מול ביצוע כולל אקורדיונים נקיים בלי סוגריים) -->
+      <!-- 1. תכנון חודשי (צפי מול ביצוע כולל אקורדיונים נקיים בלי סוגריים - ממוקם ראשון לפני הקופות) -->
       <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-500"></i> תכנון חודשי (צפי מול ביצוע)</h2>
           <button onclick="openMonthlyPlanningModal()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl transition">ערוך צפי ותקרות</button>
         </div>
         <div id="monthlyPlanOverviewContainer" class="space-y-3"></div>
+      </section>
+
+      <!-- 2. קופות חיסכון -->
+      <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-600"></i> קופות ויעדי חיסכון</h2>
+          <button onclick="promptCreateSavingsGoal()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition">+ יעד חדש</button>
+        </div>
+        <div id="savingsGoalsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </section>
 
       <!-- 3. תנועות אחרונות -->
@@ -495,7 +495,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.5";
+    const APP_VERSION = "1.2.6";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -687,9 +687,7 @@
       }
     }
 
-    function updateCategorySum(cat) {
-      // User can also manually override main category sum if desired
-    }
+    function updateCategorySum(cat) {}
 
     function getPreviousMonthKey(monthKey) {
       const [year, month] = monthKey.split('-').map(Number);
@@ -770,10 +768,7 @@
     }
 
     function triggerSimulatedCycleEmail(monthKey) {
-      console.log(`[Email System] Sending cycle reminder to ${houseConfig.email}:
-      נושא: הגיע זמן להתחיל מחזור תקציב חדש
-      שלום ${activeHouseCode}
-      מחזור התקציב החדש שלך החל היום! כדאי להגדיר את היעדים לתקופה הקרובה.`);
+      console.log(`[Email System] Sending cycle reminder to ${houseConfig.email}`);
     }
 
     // --- Savings Goal Functions ---
@@ -1052,7 +1047,7 @@
       renderTransactionsTable(monthTx);
     }
 
-    // --- Clean Accordions on Home Screen (No Parentheses) ---
+    // --- Clean Accordions on Home Screen (Showing All Sub-categories & Expenses) ---
     function renderMonthlyPlanOverview(catTotals, subCatTotals, totalIncome) {
       const container = document.getElementById('monthlyPlanOverviewContainer');
       const monthKey = document.getElementById('selectedMonth').value;
@@ -1075,9 +1070,9 @@
       } else {
         html += `<div class="space-y-2.5 pt-1">`;
         catKeys.forEach(cat => {
-          const expected = catBudgets[cat];
+          const expected = catBudgets[cat] || 0;
           const actual = catTotals[cat] || 0;
-          const pct = Math.min(100, Math.round((actual / expected) * 100));
+          const pct = expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : 0;
           let barColor = "bg-indigo-500";
           if (pct >= 100) barColor = "bg-rose-500"; else if (pct >= 75) barColor = "bg-amber-500";
 
@@ -1085,7 +1080,7 @@
 
           html += `
             <div class="bg-slate-50 rounded-2xl border overflow-hidden transition-all">
-              <div onclick="const subDiv = this.nextElementSibling; subDiv.classList.toggle('hidden');" class="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
+              <div onclick="const subDiv = this.nextElementSibling.nextElementSibling; subDiv.classList.toggle('hidden');" class="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
                 <div class="flex items-center gap-2 font-bold text-slate-800 text-xs">
                   <span>${CATEGORY_ICONS[cat] || '📁'}</span>
                   <span>${cat}</span>
@@ -1099,29 +1094,28 @@
                 <div class="${barColor} h-full" style="width: ${pct}%"></div>
               </div>
 
-              <!-- Sub-categories accordion body -->
+              <!-- Sub-categories accordion body (Always show sub-categories with spent or optional cap) -->
               <div class="hidden bg-white p-3 border-t space-y-2">`;
 
           subs.forEach(sub => {
             const capKey = `${cat} > ${sub}`;
-            const subCap = caps[capKey];
-            if (subCap) {
-              const subSpent = subCatTotals[capKey] || 0;
-              const subPct = Math.min(100, Math.round((subSpent / subCap) * 100));
-              let subBarColor = "bg-emerald-500";
-              if (subPct >= 100) subBarColor = "bg-rose-500"; else if (subPct >= 75) subBarColor = "bg-amber-500";
+            const subCap = caps[capKey] || 0;
+            const subSpent = subCatTotals[capKey] || 0;
+            const subPct = subCap > 0 ? Math.min(100, Math.round((subSpent / subCap) * 100)) : 0;
+            let subBarColor = "bg-emerald-500";
+            if (subPct >= 100) subBarColor = "bg-rose-500"; else if (subPct >= 75) subBarColor = "bg-amber-500";
 
-              html += `
-                <div class="p-2 bg-slate-50 rounded-xl border text-xs space-y-1">
-                  <div class="flex justify-between font-bold text-slate-700">
-                    <span>${sub}</span>
-                    <span class="text-[11px]">נוצלו: ₪${subSpent.toLocaleString()} / ₪${subCap.toLocaleString()}</span>
-                  </div>
-                  <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <div class="${subBarColor} h-full" style="width: ${subPct}%"></div>
-                  </div>
-                </div>`;
-            }
+            html += `
+              <div class="p-2 bg-slate-50 rounded-xl border text-xs space-y-1">
+                <div class="flex justify-between font-bold text-slate-700">
+                  <span>${sub}</span>
+                  <span class="text-[11px] text-slate-600">בפועל: ₪${subSpent.toLocaleString()} ${subCap > `/ צפי: ₪${subCap.toLocaleString()}` : ''}</span>
+                </div>
+                ${subCap > 0 ? `
+                <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div class="${subBarColor} h-full" style="width: ${subPct}%"></div>
+                </div>` : ''}
+              </div>`;
           });
 
           html += `</div></div>`;
