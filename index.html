@@ -466,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.8";
+    const APP_VERSION = "1.2.9";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -832,11 +832,6 @@
     function checkAndPromptMonthlyPlan() {
       const monthKey = document.getElementById('selectedMonth').value;
       const plans = houseConfig.monthlyPlans || {};
-      
-      const today = new Date();
-      const cycleDay = houseConfig.cycleStartDay || 1;
-      const isCycleDay = today.getDate() === cycleDay;
-
       if (!plans[monthKey]) {
         openMonthlyPlanningModal();
       }
@@ -1060,14 +1055,13 @@
 
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
-    // --- Fixed Cycle Calculation Function (Respects user cycleStartDay) ---
+    // --- Fixed Cycle Calculation Function (Respects user cycleStartDay perfectly) ---
     function getTransactionsForCurrentCycle() {
       const selectedMonthKey = document.getElementById('selectedMonth').value; 
       const cycleStartDay = houseConfig.cycleStartDay || 1;
       
       const [year, month] = selectedMonthKey.split('-').map(Number);
       
-      // Calculate start and end date based on cycleStartDay (e.g. 10th of month to 9th of next month)
       let startDate, endDate;
       if (cycleStartDay === 1) {
         startDate = new Date(year, month - 1, 1);
@@ -1078,7 +1072,8 @@
       }
 
       return transactions.filter(t => {
-        const txDate = new Date(t.date);
+        const [tYear, tMonth, tDay] = t.date.split('-').map(Number);
+        const txDate = new Date(tYear, tMonth - 1, tDay);
         return txDate >= startDate && txDate <= endDate;
       });
     }
