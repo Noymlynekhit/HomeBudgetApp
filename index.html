@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  <!-- Monthly Planning / Expected Budget Popup Modal (With Accordions & Auto-Sum) -->
+  <!-- Monthly Planning / Expected Budget Popup Modal -->
   <div id="monthlyPlanningModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-right border max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
@@ -60,7 +60,6 @@
         <button onclick="closeMonthlyPlanningModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
       
-      <!-- Quick copy banner if previous month exists -->
       <div id="copyPreviousMonthBanner" class="hidden p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex justify-between items-center text-xs">
         <span class="font-bold text-indigo-900">האם תרצי להעתיק את הצפי והתקציב מהחודש הקודם?</span>
         <button onclick="copyDataFromPreviousMonth()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl transition">העתק צפי קודם</button>
@@ -72,7 +71,7 @@
     </div>
   </div>
 
-  <!-- Sidebar Menu (Hamburger Drawer) -->
+  <!-- Sidebar Menu -->
   <div id="sidebarOverlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden" onclick="toggleSidebar()"></div>
   <aside id="sidebarDrawer" class="fixed top-0 right-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300">
     <div class="space-y-6">
@@ -129,35 +128,6 @@
     </div>
   </div>
 
-  <!-- Edit Transaction Modal -->
-  <div id="editTransactionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800">עריכת תנועה</h3>
-        <button onclick="closeEditModal()" class="text-slate-400 font-bold text-lg">&times;</button>
-      </div>
-      <input type="hidden" id="editTxId">
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">סכום (בש"ח)</label>
-          <input type="number" step="0.01" inputmode="decimal" id="editAmount" class="w-full font-bold bg-slate-50 border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">תאריך</label>
-          <input type="date" id="editDate" class="w-full bg-slate-50 border rounded-xl p-2.5">
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1">הערה / פירוט</label>
-          <input type="text" id="editDescription" class="w-full bg-slate-50 border rounded-xl p-2.5">
-        </div>
-      </div>
-      <div class="flex gap-2 pt-2">
-        <button onclick="saveEditedTransaction()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-xs">שמור שינויים</button>
-        <button onclick="closeEditModal()" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs">ביטול</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Payment Methods Manager Modal -->
   <div id="paymentMethodsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border">
@@ -180,7 +150,7 @@
     </div>
   </div>
 
-  <!-- Categories Manager Modal -->
+  <!-- Categories Manager Modal (Updated with Edit & Delete support) -->
   <div id="categoriesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-right border max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
@@ -203,7 +173,8 @@
         </div>
       </div>
       <div class="space-y-2 pt-2 border-t">
-        <div id="categoriesListManager" class="space-y-2 max-h-48 overflow-y-auto"></div>
+        <label class="block text-xs font-bold text-slate-700">קטגוריות ותתי-קטגוריות קיימות (עריכה / מחיקה):</label>
+        <div id="categoriesListManager" class="space-y-2 max-h-56 overflow-y-auto"></div>
       </div>
       <button onclick="closeCategoriesModal()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-xs">סגור ושמור</button>
     </div>
@@ -318,7 +289,7 @@
         <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
       </button>
 
-      <!-- 1. תכנון חודשי (צפי מול ביצוע כולל אקורדיונים נקיים בלי סוגריים - ממוקם ראשון לפני הקופות) -->
+      <!-- 1. תכנון חודשי (צפי מול ביצוע) -->
       <section class="bg-white rounded-3xl p-5 shadow-sm border space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-line text-indigo-500"></i> תכנון חודשי (צפי מול ביצוע)</h2>
@@ -495,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.2.7";
+    const APP_VERSION = "1.2.8";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -606,6 +577,7 @@
       if (!email) { alert("נא להזין כתובת מייל תקינה."); return; }
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email, cycleStartDay });
       closeSettingsModal();
+      loadCurrentMonthData();
       alert("ההגדרות עודכנו בהצלחה!");
     }
 
@@ -616,7 +588,113 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    // --- Monthly Planning with Accordions & Auto-Sum from Sub-categories ---
+    // --- Categories Manager Functions (Add, Edit, Delete) ---
+    function renderCategoriesManager() {
+      const listDiv = document.getElementById('categoriesListManager'); 
+      const targetSelect = document.getElementById('targetMainCategorySelect');
+      listDiv.innerHTML = ''; 
+      targetSelect.innerHTML = '';
+
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+
+      Object.keys(cats).forEach((mainCat) => {
+        const subs = cats[mainCat] || [];
+        const opt = document.createElement('option'); 
+        opt.value = mainCat; 
+        opt.textContent = mainCat; 
+        targetSelect.appendChild(opt);
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 p-3 rounded-2xl border text-xs space-y-2";
+        
+        let subsHtml = subs.map((sub, sIdx) => `
+          <div class="flex items-center justify-between bg-white px-2 py-1 rounded-md border mb-1">
+            <span class="font-medium text-slate-700">${sub}</span>
+            <div class="space-x-1 space-x-reverse">
+              <button onclick="editSubCategory('${mainCat}', ${sIdx})" class="text-indigo-600 px-1"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteSubCategory('${mainCat}', ${sIdx})" class="text-rose-500 px-1"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center font-bold text-slate-800 border-b pb-1">
+            <span>${CATEGORY_ICONS[mainCat] || '📁'} ${mainCat}</span>
+            <div class="space-x-1 space-x-reverse">
+              <button onclick="editMainCategory('${mainCat}')" class="text-indigo-600 px-1"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteMainCategory('${mainCat}')" class="text-rose-500 px-1"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="space-y-1 mt-1">${subsHtml}</div>
+        `;
+        listDiv.appendChild(card);
+      });
+    }
+
+    async function addCustomMainCategory() {
+      const input = document.getElementById('newMainCategoryInput');
+      const val = input.value.trim();
+      if (!val) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (cats[val]) { alert("קטגוריה זו כבר קיימת."); return; }
+      cats[val] = ["אחר"];
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      input.value = '';
+      renderCategoriesManager();
+    }
+
+    async function addCustomSubCategory() {
+      const mainCat = document.getElementById('targetMainCategorySelect').value;
+      const input = document.getElementById('newSubCategoryInput');
+      const val = input.value.trim();
+      if (!mainCat || !val) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (!cats[mainCat]) cats[mainCat] = [];
+      if (cats[mainCat].includes(val)) { alert("תת-קטגוריה זו כבר קיימת בקטגוריה זו."); return; }
+      cats[mainCat].push(val);
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      input.value = '';
+      renderCategoriesManager();
+    }
+
+    async function editMainCategory(oldName) {
+      const newName = prompt("הקלידי שם חדש לקטגוריה הראשית:", oldName);
+      if (!newName || newName.trim() === oldName) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (cats[newName.trim()]) { alert("שם זה כבר קיים."); return; }
+      cats[newName.trim()] = cats[oldName];
+      delete cats[oldName];
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      renderCategoriesManager();
+    }
+
+    async function deleteMainCategory(catName) {
+      if (!confirm(`האם למחוק את הקטגוריה ${catName}?`)) return;
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      delete cats[catName];
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      renderCategoriesManager();
+    }
+
+    async function editSubCategory(mainCat, subIdx) {
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      const oldSub = cats[mainCat][subIdx];
+      const newSub = prompt("הקלידי שם חדש לתת-הקטגוריה:", oldSub);
+      if (!newSub || newSub.trim() === oldSub) return;
+      cats[mainCat][subIdx] = newSub.trim();
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      renderCategoriesManager();
+    }
+
+    async function deleteSubCategory(mainCat, subIdx) {
+      const cats = { ...(houseConfig.categories || DEFAULT_CATEGORIES) };
+      if (cats[mainCat].length <= 1) { alert("חייבת להישאר לפחות תת-קטגוריה אחת."); return; }
+      cats[mainCat].splice(subIdx, 1);
+      await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { categories: cats });
+      renderCategoriesManager();
+    }
+
+    // --- Monthly Planning Functions ---
     function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
@@ -656,7 +734,7 @@
               </div>
             </div>
             <div class="hidden bg-white p-3 border-t space-y-2">
-              <p class="text-[11px] font-bold text-slate-400 mb-1">תקרות לתת-קטגוריות (סכום שלהן יתעדכן אוטומטית למעלה):</p>`;
+              <p class="text-[11px] font-bold text-slate-400 mb-1">תקרות לתת-קטגוריות:</p>`;
 
         subs.forEach(sub => {
           const capKey = `${cat} > ${sub}`;
@@ -761,14 +839,7 @@
 
       if (!plans[monthKey]) {
         openMonthlyPlanningModal();
-        if (isCycleDay && houseConfig.email) {
-          triggerSimulatedCycleEmail(monthKey);
-        }
       }
-    }
-
-    function triggerSimulatedCycleEmail(monthKey) {
-      console.log(`[Email System] Sending cycle reminder to ${houseConfig.email}`);
     }
 
     // --- Savings Goal Functions ---
@@ -907,19 +978,6 @@
       renderPaymentMethodsManager();
     }
 
-    function renderCategoriesManager() {
-      const listDiv = document.getElementById('categoriesListManager'); const targetSelect = document.getElementById('targetMainCategorySelect');
-      listDiv.innerHTML = ''; targetSelect.innerHTML = '';
-      Object.keys(houseConfig.categories || DEFAULT_CATEGORIES).forEach((mainCat) => {
-        const subs = (houseConfig.categories || DEFAULT_CATEGORIES)[mainCat] || [];
-        const opt = document.createElement('option'); opt.value = mainCat; opt.textContent = mainCat; targetSelect.appendChild(opt);
-        const card = document.createElement('div');
-        card.className = "bg-slate-50 p-3 rounded-xl border text-xs space-y-2";
-        card.innerHTML = `<div class="flex justify-between items-center font-bold text-slate-800 border-b pb-1"><span>${CATEGORY_ICONS[mainCat] || '📁'} ${mainCat}</span></div><div class="flex flex-wrap gap-1">${subs.map((sub) => `<span class="bg-white border px-2 py-0.5 rounded-md text-[11px]">${sub}</span>`).join('')}</div>`;
-        listDiv.appendChild(card);
-      });
-    }
-
     function setTransactionType(type) {
       currentTransactionType = type;
       document.getElementById('typeExpenseBtn').className = type === 'expense' ? 'py-2.5 rounded-xl transition text-slate-700 bg-white shadow-sm text-center font-bold' : 'py-2.5 rounded-xl transition text-slate-500 text-center';
@@ -945,7 +1003,6 @@
       });
     }
 
-    // --- Real-time Budget Check & Add Transaction ---
     async function handleAddTransaction(e) {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('amount').value); 
@@ -1003,12 +1060,27 @@
 
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
+    // --- Fixed Cycle Calculation Function (Respects user cycleStartDay) ---
     function getTransactionsForCurrentCycle() {
-      const selectedMonthKey = document.getElementById('selectedMonth').value; const cycleStartDay = houseConfig.cycleStartDay || 1;
-      if (cycleStartDay === 1) return transactions.filter(t => t.monthKey === selectedMonthKey);
+      const selectedMonthKey = document.getElementById('selectedMonth').value; 
+      const cycleStartDay = houseConfig.cycleStartDay || 1;
+      
       const [year, month] = selectedMonthKey.split('-').map(Number);
-      const startDate = new Date(year, month - 1, cycleStartDay); const endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
-      return transactions.filter(t => { const txDate = new Date(t.date); return txDate >= startDate && txDate <= endDate; });
+      
+      // Calculate start and end date based on cycleStartDay (e.g. 10th of month to 9th of next month)
+      let startDate, endDate;
+      if (cycleStartDay === 1) {
+        startDate = new Date(year, month - 1, 1);
+        endDate = new Date(year, month, 0, 23, 59, 59);
+      } else {
+        startDate = new Date(year, month - 1, cycleStartDay);
+        endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
+      }
+
+      return transactions.filter(t => {
+        const txDate = new Date(t.date);
+        return txDate >= startDate && txDate <= endDate;
+      });
     }
 
     function loadCurrentMonthData() {
@@ -1047,7 +1119,6 @@
       renderTransactionsTable(monthTx);
     }
 
-    // --- Clean Accordions on Home Screen (Showing All Sub-categories & Expenses) ---
     function renderMonthlyPlanOverview(catTotals, subCatTotals, totalIncome) {
       const container = document.getElementById('monthlyPlanOverviewContainer');
       const monthKey = document.getElementById('selectedMonth').value;
@@ -1094,7 +1165,6 @@
                 <div class="${barColor} h-full" style="width: ${pct}%"></div>
               </div>
 
-              <!-- Sub-categories accordion body -->
               <div class="hidden bg-white p-3 border-t space-y-2">`;
 
           subs.forEach(sub => {
