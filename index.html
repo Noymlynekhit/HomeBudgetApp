@@ -466,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.3.1";
+    const APP_VERSION = "1.3.2";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -693,7 +693,7 @@
       renderCategoriesManager();
     }
 
-    // --- Monthly Planning Functions ---
+    // --- Monthly Planning Functions (Fixed Automatic Summing) ---
     function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
@@ -728,7 +728,7 @@
                 <span>${cat}</span>
               </div>
               <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                <input type="number" step="0.01" data-cat="${cat}" id="main_cat_input_${cat}" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${catExpected}" placeholder="גג ראשי" />
+                <input type="number" step="0.01" data-cat="${cat}" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${catExpected}" placeholder="גג ראשי" />
                 <i class="fa-solid fa-chevron-down text-slate-400 text-xs mr-1"></i>
               </div>
             </div>
@@ -741,7 +741,7 @@
           html += `
             <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border">
               <span class="text-slate-700 font-medium text-xs">${sub}</span>
-              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" oninput="recalculateMainCategory('${cat}')" class="plan-sub-input-${cat} plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
+              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" oninput="recalculateMainCategory(this, '${cat}')" class="plan-sub-input-${CSS.escape(cat)} plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
             </div>`;
         });
 
@@ -752,15 +752,19 @@
       document.getElementById('monthlyPlanningModal').classList.remove('hidden');
     }
 
-    function recalculateMainCategory(cat) {
+    function recalculateMainCategory(changedInput, cat) {
       let sum = 0;
-      document.querySelectorAll(`.plan-sub-input-${cat}`).forEach(input => {
-        const val = parseFloat(input.value) || 0;
-        sum += val;
-      });
-      const mainInput = document.getElementById(`main_cat_input_${cat}`);
-      if (mainInput) {
-        mainInput.value = sum > 0 ? sum : '';
+      // מציאת כל שדות תת-הקטגוריה השייכים לאותה קטגוריה ראשית בדיוק
+      const wrapper = changedInput.closest('.bg-slate-50');
+      if (wrapper) {
+        wrapper.querySelectorAll('.plan-sub-input').forEach(input => {
+          const val = parseFloat(input.value) || 0;
+          sum += val;
+        });
+        const mainInput = wrapper.querySelector('.plan-cat-input');
+        if (mainInput) {
+          mainInput.value = sum > 0 ? sum : '';
+        }
       }
     }
 
@@ -896,14 +900,12 @@
 
     function switchHouseCode() { localStorage.removeItem('budget_house_code'); location.reload(); }
 
-    // --- Smart Automatic Cycle Month Calculation (Fixes the November/October Reset Issue) ---
     function setDefaultCycleMonth() {
       const today = new Date();
       const cycleDay = houseConfig.cycleStartDay || 10;
       let year = today.getFullYear();
       let month = today.getMonth() + 1;
 
-      // אם היום נמצא לפני תאריך תחילת המחזור (למשל לפני ה-10 לחודש), המחזור הפעיל שייך לחודש הקודם!
       if (today.getDate() < cycleDay) {
         month -= 1;
         if (month === 0) { month = 12; year -= 1; }
@@ -1073,7 +1075,6 @@
 
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
-    // --- Correct Cycle Range Calculation Function ---
     function getTransactionsForCurrentCycle() {
       const selectedMonthKey = document.getElementById('selectedMonth').value || new Date().toISOString().slice(0, 7); 
       const cycleStartDay = houseConfig.cycleStartDay || 10;
@@ -1085,7 +1086,6 @@
         startDate = new Date(year, month - 1, 1);
         endDate = new Date(year, month, 0, 23, 59, 59);
       } else {
-        // לדוגמה עבור 10 לחודש: מתחיל ב-10 בחודש שנבחר ומסתיים ב-9 לחודש הבא ב-23:59:59
         startDate = new Date(year, month - 1, cycleStartDay);
         endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
       }
