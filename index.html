@@ -466,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.3.4";
+    const APP_VERSION = "1.3.6";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -693,7 +693,7 @@
       renderCategoriesManager();
     }
 
-    // --- Monthly Planning Functions (Fixed Robust Total Summing Loop) ---
+    // --- Monthly Planning Functions (Fixed Direct Category Linking) ---
     function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
@@ -723,6 +723,7 @@
       Object.keys(cats).forEach(cat => {
         const catExpected = catBudgets[cat] || '';
         const subs = cats[cat] || [];
+        const safeCatId = CSS.escape(cat);
 
         html += `
           <div class="bg-slate-50 rounded-2xl border overflow-hidden transition-all mb-2.5">
@@ -732,7 +733,7 @@
                 <span>${cat}</span>
               </div>
               <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                <input type="number" step="0.01" data-cat="${cat}" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${catExpected}" placeholder="גג ראשי" />
+                <input type="number" step="0.01" data-cat="${cat}" id="main_input_${safeCatId}" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${catExpected}" placeholder="גג ראשי" />
                 <i class="fa-solid fa-chevron-down text-slate-400 text-xs mr-1"></i>
               </div>
             </div>
@@ -745,7 +746,7 @@
           html += `
             <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border">
               <span class="text-slate-700 font-medium text-xs">${sub}</span>
-              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" oninput="recalculateMainCategory(this)" class="plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
+              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" oninput="recalculateMainCategory('${cat.replace(/'/g, "\\'")}')" class="plan-sub-input-${safeCatId} plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
             </div>`;
         });
 
@@ -756,19 +757,16 @@
       document.getElementById('monthlyPlanningModal').classList.remove('hidden');
     }
 
-    function recalculateMainCategory(changedInput) {
-      // מוצא את כרטיס הקטגוריה הראשית הנוכחי ועוטף באופן מושלם את כל שדות התת-קטגוריות בו
-      const cardWrapper = changedInput.closest('.bg-slate-50');
-      if (cardWrapper) {
-        let sum = 0;
-        cardWrapper.querySelectorAll('.plan-sub-input').forEach(input => {
-          const val = parseFloat(input.value) || 0;
-          sum += val;
-        });
-        const mainInput = cardWrapper.querySelector('.plan-cat-input');
-        if (mainInput) {
-          mainInput.value = sum > 0 ? sum : '';
-        }
+    function recalculateMainCategory(catName) {
+      const safeCatId = CSS.escape(catName);
+      let sum = 0;
+      document.querySelectorAll(`.plan-sub-input-${safeCatId}`).forEach(input => {
+        const val = parseFloat(input.value) || 0;
+        sum += val;
+      });
+      const mainInput = document.getElementById(`main_input_${safeCatId}`);
+      if (mainInput) {
+        mainInput.value = sum > 0 ? sum : '';
       }
     }
 
