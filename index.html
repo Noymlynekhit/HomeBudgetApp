@@ -231,7 +231,7 @@
           <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך מחזור חודשי</label>
           <select id="cycleStartDayInput" class="w-full text-sm bg-slate-50 border rounded-xl py-3 px-4 focus:outline-none font-bold">
             <option value="1">1 בחודש</option>
-            <option value="10">10 בחודש</option>
+            <option value="10" selected>10 בחודש</option>
             <option value="15">15 בחודש</option>
             <option value="25">25 בחודש</option>
           </select>
@@ -466,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.3.0";
+    const APP_VERSION = "1.3.1";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -497,7 +497,7 @@
     };
 
     let houseConfig = { 
-      cycleStartDay: 1, email: "", caps: {}, savingsGoals: [], monthlyPlans: {},
+      cycleStartDay: 10, email: "", caps: {}, savingsGoals: [], monthlyPlans: {},
       paymentMethods: ["אשראי", "מזומן / העברה", "הוראת קבע"],
       categories: DEFAULT_CATEGORIES, incomeCategories: DEFAULT_INCOME_CATEGORIES
     };
@@ -564,14 +564,14 @@
     
     function openSettingsModal() {
       document.getElementById('settingsEmailInput').value = houseConfig.email || "";
-      document.getElementById('settingsCycleDayInput').value = houseConfig.cycleStartDay || 1;
+      document.getElementById('settingsCycleDayInput').value = houseConfig.cycleStartDay || 10;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
 
     async function saveHouseSettings() {
       const email = document.getElementById('settingsEmailInput').value.trim();
-      const cycleStartDay = parseInt(document.getElementById('settingsCycleDayInput').value) || 1;
+      const cycleStartDay = parseInt(document.getElementById('settingsCycleDayInput').value) || 10;
       if (!email) { alert("נא להזין כתובת מייל תקינה."); return; }
       await window.updateDoc(window.doc(window.db, "registered_houses", activeHouseCode), { email, cycleStartDay });
       closeSettingsModal();
@@ -693,7 +693,7 @@
       renderCategoriesManager();
     }
 
-    // --- Monthly Planning Functions (Fixed Automatic Summing) ---
+    // --- Monthly Planning Functions ---
     function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
@@ -870,7 +870,7 @@
       e.preventDefault();
       const newCodeInput = document.getElementById('newHouseCodeInput').value.trim().toLowerCase();
       const emailInput = document.getElementById('newHouseEmailInput').value.trim();
-      const cycleStartDay = parseInt(document.getElementById('cycleStartDayInput').value) || 1;
+      const cycleStartDay = parseInt(document.getElementById('cycleStartDayInput').value) || 10;
       if (!newCodeInput || newCodeInput.length < 3) { alert("שם הבית חייב להכיל לפחות 3 תווים."); return; }
       if (!emailInput || !emailInput.includes('@')) { alert("נא להזין כתובת מייל תקינה."); return; }
       const houseRef = window.doc(window.db, "registered_houses", newCodeInput);
@@ -896,19 +896,22 @@
 
     function switchHouseCode() { localStorage.removeItem('budget_house_code'); location.reload(); }
 
+    // --- Smart Automatic Cycle Month Calculation (Fixes the November/October Reset Issue) ---
     function setDefaultCycleMonth() {
       const today = new Date();
-      const cycleDay = houseConfig.cycleStartDay || 1;
+      const cycleDay = houseConfig.cycleStartDay || 10;
       let year = today.getFullYear();
       let month = today.getMonth() + 1;
-      // אם היום קטן מיום תחילת המחזור, אנחנו עדיין שייכים למחזור של החודש הקודם
+
+      // אם היום נמצא לפני תאריך תחילת המחזור (למשל לפני ה-10 לחודש), המחזור הפעיל שייך לחודש הקודם!
       if (today.getDate() < cycleDay) {
         month -= 1;
         if (month === 0) { month = 12; year -= 1; }
       }
+
       const monthKey = `${year}-${String(month).padStart(2, '0')}`;
       const monthInput = document.getElementById('selectedMonth');
-      if (monthInput && !monthInput.value) {
+      if (monthInput) {
         monthInput.value = monthKey;
       }
     }
@@ -1070,10 +1073,10 @@
 
     async function deleteTransaction(id) { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); }
 
-    // --- Correct Cycle Calculation Function ---
+    // --- Correct Cycle Range Calculation Function ---
     function getTransactionsForCurrentCycle() {
       const selectedMonthKey = document.getElementById('selectedMonth').value || new Date().toISOString().slice(0, 7); 
-      const cycleStartDay = houseConfig.cycleStartDay || 1;
+      const cycleStartDay = houseConfig.cycleStartDay || 10;
       
       const [year, month] = selectedMonthKey.split('-').map(Number);
       
@@ -1082,6 +1085,7 @@
         startDate = new Date(year, month - 1, 1);
         endDate = new Date(year, month, 0, 23, 59, 59);
       } else {
+        // לדוגמה עבור 10 לחודש: מתחיל ב-10 בחודש שנבחר ומסתיים ב-9 לחודש הבא ב-23:59:59
         startDate = new Date(year, month - 1, cycleStartDay);
         endDate = new Date(year, month, cycleStartDay - 1, 23, 59, 59);
       }
