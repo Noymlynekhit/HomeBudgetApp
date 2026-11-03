@@ -1212,7 +1212,7 @@
       renderTransactionsTable(monthTx);
     }
 
-    function renderMonthlyPlanOverview(catTotals, subCatTotals, totalIncome) {
+   function renderMonthlyPlanOverview(catTotals, subCatTotals, totalIncome) {
       const container = document.getElementById('monthlyPlanOverviewContainer');
       const monthKey = document.getElementById('selectedMonth').value;
       const plans = (houseConfig.monthlyPlans || {})[monthKey];
@@ -1222,6 +1222,78 @@
         return;
       }
 
+      let html = `<div class="flex justify-between items-center text-xs font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border"><span>צפי הכנסות: ₪${(plans.expectedIncome || 0).toLocaleString()}</span><span class="text-emerald-700">בפועל: ₪${totalIncome.toLocaleString()}</span></div>`;
+      
+      const catBudgets = plans.categoryBudgets || {};
+      const catKeys = Object.keys(catBudgets);
+      const catsData = houseConfig.categories || DEFAULT_CATEGORIES;
+      const caps = houseConfig.caps || {};
+      
+      if (catKeys.length === 0) {
+        html += `<div class="text-center py-2 text-slate-400 text-xs">לא הוגדרו יעדי הוצאה לקטגוריות.</div>`;
+      } else {
+        html += `<div class="space-y-2.5 pt-1">`;
+        catKeys.forEach(cat => {
+          const expected = catBudgets[cat] || 0;
+          const actual = catTotals[cat] || 0;
+          const pct = expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : 0;
+          
+          // חיווי צבע ראשי לפי חריגה
+          let barColor = "bg-indigo-500";
+          if (actual > expected) barColor = "bg-rose-500"; 
+          else if (pct >= 75) barColor = "bg-amber-500";
+
+          const subs = catsData[cat] || [];
+
+          html += `
+            <div class="bg-slate-50 rounded-2xl border overflow-hidden transition-all">
+              <div onclick="const subDiv = this.nextElementSibling.nextElementSibling; subDiv.classList.toggle('hidden');" class="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
+                <div class="flex items-center gap-2 font-bold text-slate-800 text-xs">
+                  <span>${CATEGORY_ICONS[cat] || '📁'}</span>
+                  <span>${cat}</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs">
+                  <span class="font-extrabold ${actual > expected ? 'text-rose-600' : 'text-slate-700'}">בפועל: ₪${actual.toLocaleString()} / צפי: ₪${expected.toLocaleString()}</span>
+                  <i class="fa-solid fa-chevron-down text-slate-400 text-[10px]"></i>
+                </div>
+              </div>
+              <div class="h-2 w-full bg-slate-200 overflow-hidden">
+                <div class="${barColor} h-full" style="width: ${pct}%"></div>
+              </div>
+
+              <div class="hidden bg-white p-3 border-t space-y-2">`;
+
+          subs.forEach(sub => {
+            const capKey = `${cat} > ${sub}`;
+            const subCap = caps[capKey] || 0;
+            const subSpent = subCatTotals[capKey] || 0;
+            const subPct = subCap > 0 ? Math.min(100, Math.round((subSpent / subCap) * 100)) : (subSpent > 0 ? 100 : 0);
+            
+            // צבע פס התקדמות לתת-קטגוריה (אדום אם חרג מהתקרה)
+            let subBarColor = "bg-emerald-500";
+            if (subCap > 0 && subSpent > subCap) subBarColor = "bg-rose-500";
+            else if (subPct >= 75) subBarColor = "bg-amber-500";
+
+            html += `
+              <div class="p-2.5 bg-slate-50 rounded-xl border text-xs space-y-1">
+                <div class="flex justify-between font-bold text-slate-700">
+                  <span>${sub}</span>
+                  <span class="text-[11px] ${subCap > 0 && subSpent > subCap ? 'text-rose-600 font-extrabold' : 'text-slate-600'}">
+                    בפועל: ₪${subSpent.toLocaleString()} ${subCap > 0 ? `/ תקרה: ₪${subCap.toLocaleString()}` : ''}
+                  </span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div class="${subBarColor} h-full" style="width: ${subPct}%"></div>
+                </div>
+              </div>`;
+          });
+
+          html += `</div></div>`;
+        });
+        html += `</div>`;
+      }
+      container.innerHTML = html;
+    }
       let html = `<div class="flex justify-between items-center text-xs font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border"><span>צפי הכנסות: ₪${(plans.expectedIncome || 0).toLocaleString()}</span><span class="text-emerald-700">בפועל: ₪${totalIncome.toLocaleString()}</span></div>`;
       
       const catBudgets = plans.categoryBudgets || {};
