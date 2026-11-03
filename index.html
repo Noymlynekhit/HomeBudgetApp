@@ -694,7 +694,7 @@
     }
 
     // --- Monthly Planning Functions (Fixed Direct Category Linking & Manual Override) ---
-    function openMonthlyPlanningModal() {
+   function openMonthlyPlanningModal() {
       const monthKey = document.getElementById('selectedMonth').value;
       const container = document.getElementById('monthlyPlanningInputsContainer');
       container.innerHTML = '';
@@ -710,6 +710,66 @@
       if (bannerDiv) {
         bannerDiv.classList.toggle('hidden', !prevPlan);
       }
+
+      let html = `<div class="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 mb-3">
+        <label class="block font-bold text-indigo-900 mb-1.5">צפי הכנסות כולל לחודש ${monthKey}</label>
+        <input type="number" step="0.01" id="planIncomeInput" value="${currentPlans.expectedIncome || ''}" placeholder="12000" class="w-full bg-white border rounded-xl p-2.5 font-bold text-sm focus:outline-none">
+      </div>`;
+
+      html += `<label class="block font-extrabold text-slate-700 mt-3 mb-2">צפי ותקרות לפי קטגוריות ותתי-קטגוריות:</label>`;
+      
+      const cats = houseConfig.categories || DEFAULT_CATEGORIES;
+
+      Object.keys(cats).forEach(cat => {
+        const subs = cats[cat] || [];
+        const safeCatId = CSS.escape(cat);
+
+        // חישוב אוטומטי של סכום תתי-הקטגוריות
+        let subCategoriesSum = 0;
+        subs.forEach(sub => {
+          const capKey = `${cat} > ${sub}`;
+          subCategoriesSum += parseFloat(caps[capKey]) || 0;
+        });
+
+        // סדר עדיפויות חכם לטעינת הערך הראשי
+        let savedCatVal = '';
+        if (catBudgets[cat] !== undefined && catBudgets[cat] !== '') {
+          savedCatVal = catBudgets[cat];
+        } else if (subCategoriesSum > 0) {
+          savedCatVal = subCategoriesSum;
+        }
+
+        html += `
+          <div class="bg-slate-50 rounded-2xl border overflow-hidden transition-all mb-2.5">
+            <div onclick="const content = this.nextElementSibling; content.classList.toggle('hidden');" class="p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
+              <div class="flex items-center gap-2 font-bold text-slate-800">
+                <span>${CATEGORY_ICONS[cat] || '📁'}</span>
+                <span>${cat}</span>
+              </div>
+              <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                <input type="number" step="0.01" data-cat="${cat}" id="main_input_${safeCatId}" oninput="markCategoryAsManual('${cat.replace(/'/g, "\\'")}')" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${savedCatVal}" placeholder="סכום ראשי" />
+                <i class="fa-solid fa-chevron-down text-slate-400 text-xs mr-1"></i>
+              </div>
+            </div>
+            <div class="hidden bg-white p-3 border-t space-y-2">
+              <p class="text-[11px] font-bold text-slate-400 mb-1">תקרות לתת-קטגוריות:</p>`;
+
+        subs.forEach(sub => {
+          const capKey = `${cat} > ${sub}`;
+          const subVal = caps[capKey] || '';
+          html += `
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border">
+              <span class="text-slate-700 font-medium text-xs">${sub}</span>
+              <input type="number" step="0.01" data-main="${cat}" data-sub="${sub}" oninput="recalculateMainCategory('${cat.replace(/'/g, "\\'")}')" class="plan-sub-input-${safeCatId} plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${subVal}" placeholder="תקרה" />
+            </div>`;
+        });
+
+        html += `</div></div>`;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('monthlyPlanningModal').classList.remove('hidden');
+    }
 
       let html = `<div class="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 mb-3">
         <label class="block font-bold text-indigo-900 mb-1.5">צפי הכנסות כולל לחודש ${monthKey}</label>
