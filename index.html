@@ -466,7 +466,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.4.0";
+    const APP_VERSION = "1.4.1";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -1183,11 +1183,11 @@
           
           let barColor = "bg-indigo-500";
           if (actual > expected) barColor = "bg-rose-500"; 
-          else if (pct >= 75) barColor = "bg-amber-500";
+          else if (pct >= 75) barColor = "bg-amber-400";
 
           const subs = catsData[cat] || [];
 
-          // סדר עדיפויות מדויק: אדום (1) -> כתום/צהוב (2) -> בלוי/הגעה מדויקת לתקרה (3) -> ירוק/תקין (4) -> ריק (5)
+          // מיון גורף ואחיד: אדום (חריגה) -> כתום (מעל 75%) -> ירוק (תקין והגעה ליעד) -> ריק
           const sortedSubs = [...subs].sort((a, b) => {
             const capKeyA = `${cat} > ${a}`;
             const capKeyB = `${cat} > ${b}`;
@@ -1197,12 +1197,11 @@
             const capB = caps[capKeyB] || 0;
 
             const getPriority = (spent, cap) => {
-              if (cap > 0 && spent > cap) return 1; // אדום (חריגה)
+              if (cap > 0 && spent > cap) return 1; // אדום - חריגה
               const subPct = cap > 0 ? (spent / cap) * 100 : (spent > 0 ? 100 : 0);
-              if (subPct >= 75 && spent < cap) return 2; // כתום (מעל 75%)
-              if (cap > 0 && spent === cap) return 3; // בלוי (הגעה מדויקת לתקרה)
-              if (spent > 0 || cap > 0) return 4; // ירוק (תקין)
-              return 5; // ריק
+              if (subPct >= 75 && spent < cap) return 2; // כתום - קרוב לתקרה
+              if (spent > 0 || cap > 0) return 3; // ירוק - תקין / הגעה ליעד
+              return 4; // ריק
             };
 
             return getPriority(spentA, capA) - getPriority(spentB, capB);
@@ -1232,12 +1231,11 @@
             const subSpent = subCatTotals[capKey] || 0;
             const subPct = subCap > 0 ? Math.min(100, Math.round((subSpent / subCap) * 100)) : (subSpent > 0 ? 100 : 0);
             
-            // הגדרת צבעים מנוייקת: חריגה=אדום, הגעה מדויקת לתקרה=בלוי אלגנטי, מעל 75%=כתום, תקין=ירוק, ריק=אפור
+            // צבעים נקיים: חריגה=אדום, מעל 75%=כתום רך, תקין או הגעה ליעד=ירוק רגוע, ריק=אפור
             let subBarColor = "bg-emerald-500";
-            if (subCap > 0 && subSpent > subCap) subBarColor = "bg-rose-500"; // אדום לחורגים
-            else if (subCap > 0 && subSpent === subCap) subBarColor = "bg-sky-500"; // בלוי בהיר להגעה מדויקת לתקרה
-            else if (subPct >= 75) subBarColor = "bg-amber-500"; // כתום מעל 75%
-            else if (subSpent === 0 && subCap === 0) subBarColor = "bg-slate-200"; // אפור לריק
+            if (subCap > 0 && subSpent > subCap) subBarColor = "bg-rose-500"; 
+            else if (subPct >= 75 && subSpent < subCap) subBarColor = "bg-amber-400"; 
+            else if (subSpent === 0 && subCap === 0) subBarColor = "bg-slate-200";
 
             html += `
               <div class="p-2.5 bg-slate-50 rounded-xl border text-xs space-y-1">
