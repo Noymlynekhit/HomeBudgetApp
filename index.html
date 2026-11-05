@@ -472,7 +472,7 @@
       <!-- Chat Input Area -->
       <div class="flex gap-2 pt-2">
         <input type="text" id="aiChatInput" placeholder="לדוגמה: כמה הוצאתי על סופר החודש?" class="flex-1 bg-slate-50 border rounded-xl p-3 text-xs font-bold focus:outline-none" onkeypress="if(event.key === 'Enter') sendAiMessage()">
-        <button onclick="sendAiMessage()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-3 rounded-xl text-xs">ששלח</button>
+        <button onclick="sendAiMessage()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-3 rounded-xl text-xs">שלח</button>
       </div>
     </div>
   </div>
@@ -508,7 +508,8 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.5.0";
+    const APP_VERSION = "1.6.0";
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // החליפי במפתח ה-API שלך מ-Google AI Studio
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -634,8 +635,35 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    // --- AI Chat & File Processing Placeholders (For portfolio expansion) ---
-    function sendAiMessage() {
+    // --- REAL GEMINI API INTEGRATION ---
+    async function callGeminiAPI(promptText) {
+      if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+        return "שגיאה: נא להגדיר מפתח API חוקי של Gemini (GEMINI_API_KEY) בקוד.";
+      }
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+          })
+        });
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          return data.candidates[0].content.parts[0].text;
+        } else {
+          return "לא התקבלה תשובה תקינה ממודל ה-AI.";
+        }
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        label = "שגיאה בתקשורת מול שרתי ה-AI.";
+        return label;
+      }
+    }
+
+    async function sendAiMessage() {
       const input = document.getElementById('aiChatInput');
       const text = input.value.trim();
       if (!text) return;
@@ -643,15 +671,27 @@
       const msgsContainer = document.getElementById('aiChatMessages');
       msgsContainer.innerHTML += `<div class="bg-indigo-50 p-3 rounded-2xl border text-slate-800 font-bold text-left"><b>את:</b> ${text}</div>`;
       input.value = '';
+      msgsContainer.scrollTop = msgsContainer.scrollHeight;
 
-      // תגובת הדגמה ראשונית (בהמשך נחבר את זה ל-Gemini API האמיתי)
-      setTimeout(() => {
-        msgsContainer.innerHTML += `<div class="bg-white p-3 rounded-2xl border shadow-sm text-slate-700"><b>יועץ AI:</b> ניתחתי את השאלה שלך בהתבסס על נתוני החודש. המצב הפיננסי שלך תקין לגמרי, וההוצאות תואמות את הצפי!</div>`;
-        msgsContainer.scrollTop = msgsContainer.scrollHeight;
-      }, 800);
+      // איסוף הקשר פיננסי נוכחי לשליחה ל-AI
+      const monthTx = getTransactionsForCurrentCycle();
+      const summaryContext = JSON.stringify(monthTx);
+
+      const prompt = `אתה יעוץ פיננסי חכם למשפחה. להלן נתוני התנועות של החודש הנוכחי בפורמט JSON: ${summaryContext}. 
+      ענה על השאלה הבאה של המשתמש בעברית, בצורה מקצועית, קצרה ונעימה: ${text}`;
+
+      const loadingId = "loading_" + Date.now();
+      msgsContainer.innerHTML += `<div id="${loadingId}" class="bg-white p-3 rounded-2xl border shadow-sm text-slate-400"><b>יועץ AI:</b> מעבד את הנתונים...</div>`;
+      msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+      const aiReply = await callGeminiAPI(prompt);
+
+      document.getElementById(loadingId).remove();
+      msgsContainer.innerHTML += `<div class="bg-white p-3 rounded-2xl border shadow-sm text-slate-700"><b>יועץ AI:</b> ${aiReply}</div>`;
+      msgsContainer.scrollTop = msgsContainer.scrollHeight;
     }
 
-    function processCreditCardFile() {
+    async function processCreditCardFile() {
       const fileInput = document.getElementById('creditCardFileInput');
       if (fileInput.files.length === 0) {
         alert("נא לבחור קובץ פירוט אשראי תחילה.");
@@ -661,13 +701,26 @@
       const reader = new FileReader();
       
       reader.onload = function(e) {
-        const content = e.target.result;
+        const fileContent = e.target.result;
         const msgsContainer = document.getElementById('aiChatMessages');
-        msgsContainer.innerHTML += `<div class="bg-amber-50 p-3 rounded-2xl border text-amber-900 text-xs"><b>סקירת אשראי:</b> הקובץ ${file.name} נקרא בהצלחה. זוהו 14 עסקאות, ובוצעה השוואה מול המאזן – נמצא חיוב אחד בסך 89 ש"ח שלא עודכן ברשימה!</div>`;
+        msgsContainer.innerHTML += `<div class="bg-indigo-50 p-3 rounded-2xl border text-indigo-900 text-xs"><b>סקירת אשראי:</b> הקובץ ${file.name} נקרא, שולח לניתוח AI...</div>`;
         msgsContainer.scrollTop = msgsContainer.scrollHeight;
+
+        runAiReconciliation(fileContent);
       };
-      
       reader.readAsText(file);
+    }
+
+    async function runAiReconciliation(fileContent) {
+      const monthTx = getTransactionsForCurrentCycle();
+      const prompt = `יש לי רשימת תנועות שהזנתי למערכת: ${JSON.stringify(monthTx)}. 
+      ולהלן קובץ פירוט אשראי גולמי: ${fileContent}. 
+      אנא נתח את הקובץ, מצא האם יש חיובים באשראי שלא מופיעים ברשימת התנועות שהזנתי, והצג דוח התאמה קצר וברור בעברית שמציין אילו חיובים כנראה פספסתי או לא עודכנו.`;
+
+      const aiReply = await callGeminiAPI(prompt);
+      const msgsContainer = document.getElementById('aiChatMessages');
+      msgsContainer.innerHTML += `<div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-amber-900 text-xs"><b>דוח התאמת אשראי (AI):</b><br>${aiReply.replace(/\n/g, '<br>')}</div>`;
+      msgsContainer.scrollTop = msgsContainer.scrollHeight;
     }
 
     // --- Categories Manager Functions ---
