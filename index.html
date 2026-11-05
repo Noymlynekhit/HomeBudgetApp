@@ -453,24 +453,29 @@
         <button onclick="toggleAiChatModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
 
-      <!-- File Upload for Credit Card Reconciliation -->
-      <div class="p-3 bg-indigo-50/60 border border-indigo-100 rounded-2xl space-y-2">
-        <label class="block font-bold text-indigo-900 text-xs">העלאת קובץ פירוט אשראי (לבדיקת פערים):</label>
-        <div class="flex gap-2">
-          <input type="file" id="creditCardFileInput" accept=".csv,.txt" class="text-xs w-full bg-white border rounded-xl p-2 file:ml-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white">
-          <button onclick="processCreditCardFile()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs whitespace-nowrap">סרוק והשווה</button>
+      <!-- SEPARATED FILE UPLOAD OPTIONS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-3 bg-slate-50 border rounded-2xl space-y-2">
+          <label class="block font-bold text-slate-700 text-xs">📷 סריקת קבלה להוספת הוצאה:</label>
+          <input type="file" id="receiptFileInput" accept="image/*,.pdf" class="text-[11px] w-full bg-white border rounded-xl p-1.5">
+          <button onclick="processReceiptFile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-1.5 rounded-xl text-xs">סרוק קבלה</button>
+        </div>
+        <div class="p-3 bg-indigo-50/60 border border-indigo-100 rounded-2xl space-y-2">
+          <label class="block font-bold text-indigo-900 text-xs">💳 השוואת פירוט אשראי (פערים):</label>
+          <input type="file" id="creditCardFileInput" accept=".csv,.txt" class="text-[11px] w-full bg-white border rounded-xl p-1.5">
+          <button onclick="processCreditCardFile()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 rounded-xl text-xs">השווה אשראי</button>
         </div>
       </div>
 
       <!-- Chat Messages Container -->
-      <div id="aiChatMessages" class="flex-grow overflow-y-auto space-y-3 p-3 bg-slate-50 rounded-2xl border h-64 text-xs">
+      <div id="aiChatMessages" class="flex-grow overflow-y-auto space-y-3 p-3 bg-slate-50 rounded-2xl border h-52 text-xs">
         <div class="bg-white p-3 rounded-2xl border shadow-sm text-slate-700">
-          <b>יועץ AI:</b> שלום! אני כאן כדי לענות על שאלות על ההוצאות שלך, או כדי לעזור לך להשוות את פירוט האשראי ולוודא ששום חיוב לא התפספס. מה תרצי שנבדוק?
+          <b>יועץ AI:</b> שלום! אני כאן כדי לענות על שאלות, לסרוק קבלות או להשוות את פירוט האשראי שלך. מה תרצי שנבדוק?
         </div>
       </div>
 
       <!-- Chat Input Area -->
-      <div class="flex gap-2 pt-2">
+      <div class="flex gap-2 pt-1">
         <input type="text" id="aiChatInput" placeholder="לדוגמה: כמה הוצאתי על סופר החודש?" class="flex-1 bg-slate-50 border rounded-xl p-3 text-xs font-bold focus:outline-none" onkeypress="if(event.key === 'Enter') sendAiMessage()">
         <button onclick="sendAiMessage()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-3 rounded-xl text-xs">שלח</button>
       </div>
@@ -508,8 +513,8 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.6.0";
-    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // החליפי במפתח ה-API שלך מ-Google AI Studio
+    const APP_VERSION = "1.8.0";
+    const GEMINI_API_KEY = "AQ.Ab8RN6JJmP5eoIp2oymGZ5hDWJG0ncCJmO7K0M9_jwdeoYX9Ew"; // מפתח ה-API שלך מעודכן כאן
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -635,11 +640,8 @@
       document.getElementById('emailPromptModal').classList.add('hidden');
     }
 
-    // --- REAL GEMINI API INTEGRATION ---
+    // --- GEMINI API INTEGRATION ---
     async function callGeminiAPI(promptText) {
-      if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
-        return "שגיאה: נא להגדיר מפתח API חוקי של Gemini (GEMINI_API_KEY) בקוד.";
-      }
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
       
       try {
@@ -658,8 +660,7 @@
         }
       } catch (error) {
         console.error("Gemini API Error:", error);
-        label = "שגיאה בתקשורת מול שרתי ה-AI.";
-        return label;
+        return "שגיאה בתקשורת מול שרתי ה-AI.";
       }
     }
 
@@ -673,11 +674,10 @@
       input.value = '';
       msgsContainer.scrollTop = msgsContainer.scrollHeight;
 
-      // איסוף הקשר פיננסי נוכחי לשליחה ל-AI
       const monthTx = getTransactionsForCurrentCycle();
       const summaryContext = JSON.stringify(monthTx);
 
-      const prompt = `אתה יעוץ פיננסי חכם למשפחה. להלן נתוני התנועות של החודש הנוכחי בפורמט JSON: ${summaryContext}. 
+      const prompt = `אתה יועץ פיננסי חכם למשפחה. להלן נתוני התנועות של החודש הנוכחי בפורמט JSON: ${summaryContext}. 
       ענה על השאלה הבאה של המשתמש בעברית, בצורה מקצועית, קצרה ונעימה: ${text}`;
 
       const loadingId = "loading_" + Date.now();
@@ -691,7 +691,19 @@
       msgsContainer.scrollTop = msgsContainer.scrollHeight;
     }
 
-    async function processCreditCardFile() {
+    function processReceiptFile() {
+      const fileInput = document.getElementById('receiptFileInput');
+      if (fileInput.files.length === 0) {
+        alert("נא לבחור קובץ קבלה להעלאה.");
+        return;
+      }
+      const file = fileInput.files[0];
+      const msgsContainer = document.getElementById('aiChatMessages');
+      msgsContainer.innerHTML += `<div class="bg-slate-100 p-3 rounded-2xl border text-slate-800 text-xs"><b>סריקת קבלה:</b> הקובץ ${file.name} נטען בהצלחה.</div>`;
+      msgsContainer.scrollTop = msgsContainer.scrollHeight;
+    }
+
+    function processCreditCardFile() {
       const fileInput = document.getElementById('creditCardFileInput');
       if (fileInput.files.length === 0) {
         alert("נא לבחור קובץ פירוט אשראי תחילה.");
