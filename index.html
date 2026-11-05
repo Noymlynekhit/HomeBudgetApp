@@ -514,7 +514,7 @@
 
   <script>
     const APP_VERSION = "1.8.0";
-    const GEMINI_API_KEY = "AQ.Ab8RN6JJmP5eoIp2oymGZ5hDWJG0ncCJmO7K0M9_jwdeoYX9Ew"; // מפתח ה-API שלך מעודכן כאן
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // ודאי להכניס כאן מפתח תקין שמתחיל בקידומת AIza...
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
@@ -642,7 +642,8 @@
 
     // --- GEMINI API INTEGRATION ---
     async function callGeminiAPI(promptText) {
-     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      // עדכון ה-URL למבנה היציב והנכון של v1 עבור gemini-1.5-flash
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
       
       try {
         const response = await fetch(url, {
@@ -655,6 +656,9 @@
         const data = await response.json();
         if (data.candidates && data.candidates[0].content.parts[0].text) {
           return data.candidates[0].content.parts[0].text;
+        } else if (data.error) {
+          console.error("Gemini API Server Error:", data.error);
+          return `שגיאת שרת: ${data.error.message || 'לא התקבלה תשובה תקינה'}`;
         } else {
           return "לא התקבלה תשובה תקינה ממודל ה-AI.";
         }
