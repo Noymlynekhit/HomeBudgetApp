@@ -511,10 +511,10 @@
     window.query = query;
     window.where = where;
 
-    // חיבור ישיר ויציב ל-Gemini API באמצעות מפתח ה-AQ שלך
+    // חיבור ישיר ויציב מותאם לכתובת v1beta ולמפתח ה-AQ שלך
     window.callGeminiAPI = async function(promptText) {
-      const apiKey = "AQ.Ab8RN6JthczY2Ix152hgdGv4-hEYEj_07KN5BAxhclqyse-S7A";
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const apiKey = "AQ.Ab8RN6JthczY2Ix152hgdGv4-hEYEj_07KN5BAxhclqyse-S7A".trim();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       
       try {
         const response = await fetch(url, {
