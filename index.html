@@ -511,36 +511,29 @@
     window.query = query;
     window.where = where;
 
-    // חיבור אמיתי למנוע חלופי נתמך דפדפן (Groq API חינמי ופתוח ללא חסימות)
+    // חיבור אמיתי למנוע ה-AI דרך ה-Cloudflare Worker שיצרנו
     window.callGeminiAPI = async function(promptText) {
-      // מפתח ציבורי חינמי פתוח לדפדפן שמאפשר גישה למודל Llama חזק
-      const apiKey = "gsk_Xm9f8R7k4L2pQ1zW5vE3iT7bU0yH6nK8sD2jF4gH1xC9vB3nM5"; 
-      const url = "https://api.groq.com/openai/v1/chat/completions";
+      const workerUrl = "https://noisy-pine-944a.noymlynek7.workers.dev";
       
       try {
-        const response = await fetch(url, {
+        const response = await fetch(workerUrl, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [{ role: "user", content: promptText }]
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: promptText })
         });
+        
         const data = await response.json();
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          return data.choices0.message.content;
+        if (data.text) {
+          return data.text;
         } else if (data.error) {
-          console.error("AI API Error:", data.error);
-          return `שגיאת שרת: ${data.error.message || 'לא התקבלה תשובה תקינה'}`;
+          console.error("Worker Error:", data.error);
+          return `שגיאת שרת: ${data.error}`;
         } else {
-          return "לא התקבלה תשובה תקינה ממודל ה-AI.";
+          return "לא התקבלה תשובה תקינה מה-AI.";
         }
       } catch (error) {
         console.error("Fetch Error:", error);
-        // גיבוי למקרה חירום רשתי: ניתוח ישיר מהיר של הנתונים כדי שהמשתמש לעולם לא יתקע
+        // גיבוי למקרה חירום רשתי
         const monthTx = getTransactionsForCurrentCycle();
         let totalExp = monthTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
         return `ניתוח מערכת (גיבוי): סך ההוצאות החודש עומד על ₪${totalExp.toLocaleString()}. הנתונים שלך מעודכנים במערכת בצורה מלאה.`;
@@ -549,7 +542,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "1.8.0";
+    const APP_VERSION = "1.8.1";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
