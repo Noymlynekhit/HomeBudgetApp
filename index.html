@@ -15,14 +15,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Gen AI SDK Import Map -->
-  <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://esm.run/@google/genai"
-      }
-    }
-  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
     body {
@@ -493,7 +485,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { GoogleGenAI } from "@google/genai";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDepkiZnVn0Qk_6Nk_BeYOVbQwBKh3inN0",
@@ -520,21 +511,31 @@
     window.query = query;
     window.where = where;
 
-    // אתחול גוגל AI מול הספרייה הרשמית
-    const ai = new GoogleGenAI({ apiKey: "AIzaSy_הכניסי_כאן_את_המפתח_שלך" });
+    // חיבור ישיר ויציב ל-Gemini API באמצעות מפתח ה-AQ שלך
     window.callGeminiAPI = async function(promptText) {
+      const apiKey = "AQ.Ab8RN6JthczY2Ix152hgdGv4-hEYEj_07KN5BAxhclqyse-S7A";
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      
       try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
-          contents: promptText,
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+          })
         });
-        if (response && response.text) {
-          return response.text;
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          return data.candidates[0].content.parts[0].text;
+        } else if (data.error) {
+          console.error("Gemini API Error:", data.error);
+          return `שגיאת שרת: ${data.error.message || 'לא התקבלה תשובה תקינה'}`;
+        } else {
+          return "לא התקבלה תשובה תקינה ממודל ה-AI.";
         }
-        return "לא התקבלה תשובה תקינה ממודל ה-AI.";
       } catch (error) {
-        console.error("Gemini SDK Error:", error);
-        return "שגיאה בתקשורת מול שרתי ה-AI. ודאי שהמפתח תקין.";
+        console.error("Fetch Error:", error);
+        return "שגיאה בתקשורת מול שרתי ה-AI.";
       }
     };
   </script>
