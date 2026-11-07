@@ -448,7 +448,7 @@
       <div class="flex justify-between items-center border-b pb-3">
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-robot"></i></div>
-          <h3 class="text-base font-extrabold text-slate-800">יועץ פיננסי חכם (AI אמיתי)</h3>
+          <h3 class="text-base font-extrabold text-slate-800">יועץ פיננסי חכם (AI)</h3>
         </div>
         <button onclick="toggleAiChatModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
@@ -470,7 +470,7 @@
       <!-- Chat Messages Container -->
       <div id="aiChatMessages" class="flex-grow overflow-y-auto space-y-3 p-3 bg-slate-50 rounded-2xl border h-52 text-xs">
         <div class="bg-white p-3 rounded-2xl border shadow-sm text-slate-700">
-          <b>יועץ AI:</b> שלום! אני מחובר למנוע AI אמיתי שפועל בצורה מושלמת בדפדפן. מה תרצי שנבדוק?
+          <b>יועץ AI:</b> שלום! אני כאן כדי לענות על שאלות, לסרוק קבלות או להשוות את פירוט האשראי שלך. מה תרצי שנבדוק?
         </div>
       </div>
 
@@ -511,38 +511,40 @@
     window.query = query;
     window.where = where;
 
-    // חיבור אמיתי למנוע ה-AI דרך ה-Cloudflare Worker שיצרנו
+    // מפתח הוסר מהקוד הציבורי למניעת דליפה ב-GitHub. ניתן להשתמש במשתנה סביבה או בשרת מקומי.
     window.callGeminiAPI = async function(promptText) {
-      const workerUrl = "https://noisy-pine-944a.noymlynek7.workers.dev";
+      const apiKey = "".trim(); 
+      if (!apiKey) {
+        return "מפתח ה-API אינו מוגדר בקוד הציבורי מטעמי אבטחה.";
+      }
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       
       try {
-        const response = await fetch(workerUrl, {
+        const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: promptText })
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+          })
         });
-        
         const data = await response.json();
-        if (data.text) {
-          return data.text;
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          return data.candidates[0].content.parts[0].text;
         } else if (data.error) {
-          console.error("Worker Error:", data.error);
-          return `שגיאת שרת: ${data.error}`;
+          console.error("Gemini API Error:", data.error);
+          return `שגיאת שרת: ${data.error.message || 'לא התקבלה תשובה תקינה'}`;
         } else {
-          return "לא התקבלה תשובה תקינה מה-AI.";
+          return "לא התקבלה תשובה תקינה ממודל ה-AI.";
         }
       } catch (error) {
         console.error("Fetch Error:", error);
-        // גיבוי למקרה חירום רשתי
-        const monthTx = getTransactionsForCurrentCycle();
-        let totalExp = monthTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-        return `ניתוח מערכת (גיבוי): סך ההוצאות החודש עומד על ₪${totalExp.toLocaleString()}. הנתונים שלך מעודכנים במערכת בצורה מלאה.`;
+        return "שגיאה בתקשורת מול שרתי ה-AI.";
       }
     };
   </script>
 
   <script>
-    const APP_VERSION = "1.8.1";
+    const APP_VERSION = "1.8.0";
     let activeHouseCode = localStorage.getItem('budget_house_code') || '';
     
     const CATEGORY_ICONS = {
