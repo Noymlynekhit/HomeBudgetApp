@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null
+          && request.auth.token.email != null
+          && request.auth.token.email_verified == true;
+    }
+    function myEmail() { return request.auth.token.email.lower(); }
+
+    // בתים ישנים (לפני האימות) שמורים עם שדה email בלבד, ולכן יש גם גיבוי אליו
+    function membersOf(d) { return d.get('memberEmails', [d.get('email', '').lower()]); }
+    function isMember(d) { return myEmail() in membersOf(d); }
+
+    match /registered_houses/{houseId} {
+      // resource == null מאפשר לבדוק אם שם בית פנוי בזמן יצירה
+      allow get: if signedIn() && (resource == null || isMember(resource.data));
+      allow create: if signedIn()
+                    && request.resource.data.houseCode == houseId
+                    && myEmail() in request.resource.data.memberEmails;
+      // אי אפשר להסיר את עצמך מהרשימה ולנעול את הבית
+      allow update: if signedIn() && isMember(resource.data)
+                    && myEmail() in request.resource.data.memberEmails;
+      allow list, delete: if false;
+    }
+
+    match /house_transactions/{txId} {
+      function houseMembers(code) {
+        return isMember(get(/databases/$(database)/documents/registered_houses/$(code)).data);
+      }
+      allow read: if signedIn() && houseMembers(resource.data.houseCode);
+      allow create: if signedIn() && houseMembers(request.resource.data.houseCode);
+      allow update: if signedIn() && houseMembers(resource.data.houseCode)
+                    && request.resource.data.houseCode == resource.data.houseCode;
+      allow delete: if signedIn() && houseMembers(resource.data.houseCode);
+    }
+  }
+}
