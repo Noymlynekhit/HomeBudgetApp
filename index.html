@@ -6,8 +6,9 @@
   <meta name="theme-color" content="#CFECF3">
   <title>ניהול תקציב ומאזן ביתי</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏡%3C/text%3E%3C/svg%3E">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="js/budget-logic.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,6 +72,7 @@
         <button onclick="openMonthlyPlanningModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-bullseye text-indigo-500 w-4"></i><span>תכנון צפי חודשי</span></button>
         <button onclick="switchMainTab('reports'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-chart-pie text-[#F9B2D7] w-4"></i><span>דוחות ופילוח קטגוריות</span></button>
         <button onclick="switchMainTab('details'); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-list-check text-emerald-400 w-4"></i><span>פירוט תנועות</span></button>
+        <button onclick="openRecurringModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-rotate text-sky-500 w-4"></i><span>תנועות קבועות</span></button>
         <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500 w-4"></i><span>אזור אישי</span></button>
         <button onclick="openTutorialModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-circle-question text-amber-500 w-4"></i><span>מדריך למשתמש</span></button>
       </nav>
@@ -100,6 +102,10 @@
             <button type="button" onclick="addMember()" class="bg-slate-800 text-white text-xs font-bold px-4 rounded-xl">הוסף</button>
           </div>
           <p class="text-[11px] text-slate-400">מי שנוסף צריך להירשם עם המייל הזה, לאמת אותו ולהזין את שם הבית.</p>
+        </div>
+        <div>
+          <label for="settingsDisplayNameInput" class="block font-semibold text-slate-600 mb-1">שם תצוגה לבית</label>
+          <input type="text" id="settingsDisplayNameInput" maxlength="30" placeholder="לדוגמה: משפחת כהן" class="w-full bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
         </div>
         <div>
           <label for="settingsCycleDayInput" class="block font-semibold text-slate-600 mb-1">תאריך מחזור חודשי</label>
@@ -188,6 +194,22 @@
         <button type="button" onclick="resolveFormModal(null)" class="bg-slate-100 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs">ביטול</button>
       </div>
     </form>
+  </div>
+
+  <!-- Recurring Transactions Modal -->
+  <div id="recurringModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-right border max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">תנועות קבועות</h3>
+          <p class="text-xs text-slate-500">נוצרות אוטומטית בכל מחזור, ביום שהגדרתם</p>
+        </div>
+        <button data-close onclick="closeRecurringModal()" aria-label="סגור" class="text-slate-400 font-bold text-xl">&times;</button>
+      </div>
+      <div id="recurringList" class="space-y-2"></div>
+      <p class="text-[11px] text-slate-400">כדי להוסיף: בטופס הזנת תנועה מסמנים "תנועה קבועה". עצירה לא מוחקת תנועות שכבר נוצרו.</p>
+      <button onclick="closeRecurringModal()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-xs">סגור</button>
+    </div>
   </div>
 
   <!-- Tutorial Modal -->
@@ -414,6 +436,10 @@
               <input type="text" id="description" placeholder="פירוט..." class="w-full text-sm bg-slate-50 border rounded-xl p-2.5">
             </div>
           </div>
+          <label id="recurringFieldWrapper" class="flex items-start gap-2 text-xs bg-slate-50 border rounded-xl p-3 cursor-pointer">
+            <input type="checkbox" id="isRecurring" class="mt-0.5">
+            <span><b class="text-slate-700">תנועה קבועה</b> <span class="text-slate-500">תיווצר אוטומטית בכל מחזור, ביום <b id="recurringDayLabel"></b> בחודש</span></span>
+          </label>
           <div class="flex gap-2">
             <button type="submit" id="transactionSubmitBtn" class="flex-1 bg-slate-800 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg">הוסף תנועה למאזן</button>
             <button type="button" id="transactionCancelBtn" onclick="cancelEditTransaction()" class="hidden bg-slate-100 text-slate-700 font-bold text-sm px-5 rounded-xl">ביטול</button>
@@ -583,8 +609,10 @@
 
     const CATEGORY_ICONS = {
       "הוצאות בית": "🏡", "ביטוחים ואחריות": "🛡️", "בריאות": "💊", "תחבורה": "🚗", "תקשורת": "📱",
-      "אוכל וקניות": "🛒", "פנאי ושונות": "🎉", "הכנסות מעבודה": "💰", "קצבאות ומענקים": "🎁"
+      "אוכל וקניות": "🛒", "פנאי ושונות": "🎉", "הכנסות מעבודה": "💰", "קצבאות ומענקים": "🎁", "חיסכון": "🌱"
     };
+    const SAVINGS_CATEGORY = "חיסכון";
+    const SAVINGS_SUBCATEGORY = "הפקדה לקופה";
 
     const DEFAULT_CATEGORIES = {
       "הוצאות בית": ["דיור - שכר דירה / משכנתא", "ארנונה", "ועד בית", "מים", "גז", "חשמל", "תחזוקה לבית", "אחר"],
@@ -614,11 +642,12 @@
     let unsubscribeFirestore = null;
     let unsubscribeConfig = null;
     let currentTab = 'overview';
+    let configLoaded = false, txLoaded = false, recurringRunning = false;
 
     // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const pad = n => String(n).padStart(2, '0');
+    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId } = window.BudgetLogic;
     const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
     function money(n) {
@@ -629,27 +658,6 @@
 
     function localDateStr(d = new Date()) {
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    }
-
-    function shiftMonth(key, delta) {
-      let [y, m] = key.split('-').map(Number);
-      m += delta;
-      while (m < 1) { m += 12; y--; }
-      while (m > 12) { m -= 12; y++; }
-      return `${y}-${pad(m)}`;
-    }
-
-    // מפתח מחזור לפי תאריך: מחזור שמתחיל ב-10 לחודש נקרא על שם החודש שבו הוא מתחיל
-    function cycleKeyForDate(dateStr, cycleDay) {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const key = `${y}-${pad(m)}`;
-      return (cycleDay > 1 && d < cycleDay) ? shiftMonth(key, -1) : key;
-    }
-
-    function cycleRange(monthKey, cycleDay) {
-      const [y, m] = monthKey.split('-').map(Number);
-      if (cycleDay === 1) return { start: new Date(y, m - 1, 1), end: new Date(y, m, 0, 23, 59, 59) };
-      return { start: new Date(y, m - 1, cycleDay), end: new Date(y, m, cycleDay - 1, 23, 59, 59) };
     }
 
     function toast(msg, type = 'ok') {
@@ -708,6 +716,8 @@
       checkAppVersionBanner();
       $('appVersionLabel').textContent = `גרסה ${APP_VERSION}`;
       $('transactionDate').value = localDateStr();
+      $('transactionDate').addEventListener('change', updateRecurringLabel);
+      updateRecurringLabel();
 
       initAuth();
       populateMainCategorySelect();
@@ -794,6 +804,7 @@
       $('settingsAccountEmail').textContent = (currentUser && currentUser.email) || '';
       renderMembers();
       $('settingsCycleDayInput').value = houseConfig.cycleStartDay || 10;
+      $('settingsDisplayNameInput').value = houseConfig.displayName || '';
       $('settingsGeminiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
       show('settingsModal');
     }
@@ -838,9 +849,12 @@
       const cycleStartDay = parseInt($('settingsCycleDayInput').value) || 10;
       const key = $('settingsGeminiKeyInput').value.trim();
       if (key) localStorage.setItem(GEMINI_KEY_STORAGE, key); else localStorage.removeItem(GEMINI_KEY_STORAGE);
-      if (!(await updateHouse({ cycleStartDay }))) return;
+      const displayName = $('settingsDisplayNameInput').value.trim().slice(0, 30);
+      if (!(await updateHouse({ cycleStartDay, displayName }))) return;
       closeSettingsModal();
       houseConfig.cycleStartDay = cycleStartDay;
+      houseConfig.displayName = displayName;
+      updateGreeting();
       setDefaultCycleMonth(true);
       loadCurrentMonthData();
       toast("ההגדרות עודכנו בהצלחה");
@@ -1233,6 +1247,92 @@
       openMonthlyPlanningModal();
     }
 
+    // ---------- Recurring transactions ----------
+    const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    // יוצרת תנועות קבועות שהגיע זמנן. מזהה קבוע לכל תנועה (rec_<id>_<מחזור>) מבטיח שגם אם שני מכשירים
+    // מריצים את זה באותו זמן, לא ייווצרו כפילויות.
+    async function runRecurringGenerator() {
+      if (!configLoaded || !txLoaded || recurringRunning) return;
+      const list = houseConfig.recurring || [];
+      if (!list.length) return;
+      const plan = planRecurringGenerations({
+        recurring: list, existingIds: transactions.map(t => t.id),
+        today: localDateStr(), cycleDay: houseConfig.cycleStartDay || 10
+      });
+      if (!plan.length) return;
+      recurringRunning = true;
+      try {
+        await Promise.all(plan.map(p => window.setDoc(window.doc(window.db, "house_transactions", p.id), { houseCode: activeHouseCode, ...p.data })));
+        toast(plan.length === 1 ? "נוספה תנועה קבועה" : `נוספו ${plan.length} תנועות קבועות`);
+      } catch (e) { console.error(e); toast("יצירת התנועות הקבועות נכשלה.", 'error'); }
+      finally { recurringRunning = false; }
+    }
+
+    function updateRecurringLabel() {
+      const d = $('transactionDate').value;
+      $('recurringDayLabel').textContent = d ? String(parseInt(d.slice(8, 10), 10)) : '';
+    }
+
+    async function saveRecurringFromForm(payload, monthKey) {
+      const btn = $('transactionSubmitBtn'); btn.disabled = true;
+      try {
+        const rec = {
+          id: newId(), type: payload.type, amount: payload.amount,
+          mainCategory: payload.mainCategory, subCategory: payload.subCategory,
+          dayOfMonth: parseInt(payload.date.slice(8, 10), 10),
+          description: payload.description === '-' ? '' : payload.description,
+          startCycle: monthKey, skip: [], active: true
+        };
+        if (payload.type === 'expense') { rec.paymentMethod = payload.paymentMethod; rec.expenseType = payload.expenseType; }
+        const ok = await updateHouse({ recurring: [...(houseConfig.recurring || []), rec] });
+        if (!ok) return;
+        houseConfig.recurring = [...(houseConfig.recurring || []), rec];
+        resetTransactionForm();
+        switchMainTab('overview');
+        toast(`נשמרה תנועה קבועה: כל חודש ביום ${rec.dayOfMonth}`);
+        runRecurringGenerator();
+      } finally { btn.disabled = false; }
+    }
+
+    function openRecurringModal() { renderRecurringList(); show('recurringModal'); }
+    function closeRecurringModal() { hide('recurringModal'); }
+
+    function renderRecurringList() {
+      const box = $('recurringList');
+      const list = houseConfig.recurring || [];
+      if (!list.length) { box.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs border border-dashed rounded-xl">אין תנועות קבועות. סמנו "תנועה קבועה" בטופס הזנת תנועה.</div>'; return; }
+      box.innerHTML = list.map((r, i) => `
+        <div class="flex items-center justify-between gap-2 bg-slate-50 border rounded-2xl p-3 text-xs">
+          <div class="min-w-0">
+            <div class="font-bold text-slate-800 truncate">${CATEGORY_ICONS[r.mainCategory] || '📁'} ${esc(r.description || r.subCategory)}</div>
+            <div class="text-[11px] text-slate-500 truncate">${esc(r.mainCategory)} · ${esc(r.subCategory)} · כל ${esc(r.dayOfMonth)} בחודש</div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <span class="font-extrabold ${r.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}">${money(r.type === 'expense' ? -r.amount : r.amount)}</span>
+            <button onclick="editRecurringAmount(${i})" aria-label="ערוך סכום" class="text-indigo-500 px-1.5"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteRecurring(${i})" aria-label="עצור" class="text-rose-500 px-1.5"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
+        </div>`).join('');
+    }
+
+    async function editRecurringAmount(i) {
+      const r = (houseConfig.recurring || [])[i]; if (!r) return;
+      const res = await askForm({ title: 'עדכון סכום', submitLabel: 'שמור', fields: [{ id: 'amount', label: 'סכום חדש (₪). ישפיע על תנועות עתידיות', type: 'number', value: r.amount }] });
+      if (!res) return;
+      const amount = parseFloat(res.amount);
+      if (!(amount > 0)) { toast("נא להזין סכום חיובי.", 'error'); return; }
+      const next = houseConfig.recurring.map((x, j) => j === i ? { ...x, amount } : x);
+      if (await updateHouse({ recurring: next })) { houseConfig.recurring = next; renderRecurringList(); }
+    }
+
+    async function deleteRecurring(i) {
+      const r = (houseConfig.recurring || [])[i]; if (!r) return;
+      if (!confirm("לעצור את התנועה הקבועה? תנועות שכבר נוצרו יישארו.")) return;
+      const next = houseConfig.recurring.filter((_, j) => j !== i);
+      if (await updateHouse({ recurring: next })) { houseConfig.recurring = next; renderRecurringList(); }
+    }
+
     // ---------- Savings goals ----------
     async function promptCreateSavingsGoal() {
       const res = await askForm({
@@ -1245,14 +1345,40 @@
       await updateHouse({ savingsGoals: [...(houseConfig.savingsGoals || []), { name: res.name, target, saved: 0 }] });
     }
 
+    async function ensureSavingsCategory() {
+      const cats = catsNow();
+      if (cats[SAVINGS_CATEGORY] && cats[SAVINGS_CATEGORY].includes(SAVINGS_SUBCATEGORY)) return true;
+      const next = cloneCats();
+      next[SAVINGS_CATEGORY] = [...new Set([...(next[SAVINGS_CATEGORY] || []), SAVINGS_SUBCATEGORY])];
+      if (!(await updateHouse({ categories: next }))) return false;
+      houseConfig.categories = next;
+      return true;
+    }
+
+    // הפקדה לקופה נרשמת גם כהוצאה, כדי שהמאזן החודשי ישקף את הכסף שיצא מהתזרים
     async function promptDepositToGoal(idx) {
       const goal = houseConfig.savingsGoals[idx];
-      const res = await askForm({ title: `הפקדה ל${goal.name}`, submitLabel: 'הפקד', fields: [{ id: 'amount', label: 'סכום להפקדה (₪)', type: 'number' }] });
+      const res = await askForm({
+        title: `הפקדה ל${goal.name}`, submitLabel: 'הפקד',
+        fields: [{ id: 'amount', label: 'סכום להפקדה (₪)', type: 'number' }, { id: 'date', label: 'תאריך', type: 'date', value: localDateStr() }]
+      });
       if (!res) return;
       const amount = parseFloat(res.amount);
       if (!(amount > 0)) { toast("נא להזין סכום חיובי.", 'error'); return; }
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(res.date) ? res.date : localDateStr();
+      if (!(await ensureSavingsCategory())) return;
+      const methods = houseConfig.paymentMethods || [];
+      try {
+        await window.addDoc(window.collection(window.db, "house_transactions"), {
+          houseCode: activeHouseCode, type: 'expense', amount,
+          paymentMethod: methods.find(m => m.includes('העברה')) || methods[0] || 'העברה בנקאית',
+          mainCategory: SAVINGS_CATEGORY, subCategory: SAVINGS_SUBCATEGORY, date,
+          description: `הפקדה ל${goal.name}`, monthKey: cycleKeyForDate(date, houseConfig.cycleStartDay || 10),
+          expenseType: 'משתנות', budgetClassification: 'צרכים', savingsGoal: goal.name
+        });
+      } catch (e) { console.error(e); toast("רישום ההפקדה נכשל.", 'error'); return; }
       const goals = houseConfig.savingsGoals.map((g, i) => i === idx ? { ...g, saved: (g.saved || 0) + amount } : g);
-      await updateHouse({ savingsGoals: goals });
+      if (await updateHouse({ savingsGoals: goals })) toast("ההפקדה נרשמה גם כהוצאה במאזן");
     }
 
     async function deleteSavingsGoal(idx) {
@@ -1276,6 +1402,7 @@
     }
 
     function stopSync() {
+      configLoaded = false; txLoaded = false;
       if (unsubscribeFirestore) { unsubscribeFirestore(); unsubscribeFirestore = null; }
       if (unsubscribeConfig) { unsubscribeConfig(); unsubscribeConfig = null; }
     }
@@ -1442,6 +1569,11 @@
       finally { btn.disabled = false; }
     }
 
+    function updateGreeting() {
+      const name = (houseConfig.displayName || '').trim() || activeHouseCode.toUpperCase();
+      $('greetingTitle').textContent = `שלום ${name}`;
+    }
+
     function loginToHouse(code, isNewUser = false) {
       activeHouseCode = code;
       localStorage.setItem('budget_house_code', code);
@@ -1483,6 +1615,9 @@
         houseConfig.paymentMethods = houseConfig.paymentMethods || DEFAULT_PAYMENT_METHODS;
         houseConfig.categories = houseConfig.categories || DEFAULT_CATEGORIES;
         houseConfig.incomeCategories = houseConfig.incomeCategories || DEFAULT_INCOME_CATEGORIES;
+        houseConfig.recurring = houseConfig.recurring || [];
+        configLoaded = true;
+        updateGreeting();
 
         setDefaultCycleMonth();
         populatePaymentMethodSelect();
@@ -1490,6 +1625,8 @@
         updateFilterDropdowns();
         loadCurrentMonthData();
         checkAndPromptMonthlyPlan();
+        if (!$('recurringModal').classList.contains('hidden')) renderRecurringList();
+        runRecurringGenerator();
       }, err => { console.error(err); toast("שגיאת טעינת הנתונים. ייתכן שאין הרשאה.", 'error'); });
 
       unsubscribeFirestore = window.onSnapshot(
@@ -1497,7 +1634,9 @@
         snapshot => {
           transactions = [];
           snapshot.forEach(d => transactions.push({ id: d.id, ...d.data() }));
+          txLoaded = true;
           loadCurrentMonthData();
+          runRecurringGenerator();
         },
         err => { console.error(err); toast("שגיאת טעינת התנועות.", 'error'); }
       );
@@ -1604,6 +1743,8 @@
       $('transactionFormTitle').querySelector('span').textContent = 'הזנת תנועה חדשה למאזן';
       $('transactionSubmitBtn').textContent = 'הוסף תנועה למאזן';
       $('transactionCancelBtn').classList.add('hidden');
+      $('recurringFieldWrapper').classList.remove('hidden');
+      updateRecurringLabel();
       setTransactionType('expense');
     }
 
@@ -1628,6 +1769,7 @@
       $('transactionFormTitle').querySelector('span').textContent = 'עריכת תנועה';
       $('transactionSubmitBtn').textContent = 'שמור שינויים';
       $('transactionCancelBtn').classList.remove('hidden');
+      $('recurringFieldWrapper').classList.add('hidden');
     }
 
     async function handleAddTransaction(e) {
@@ -1650,6 +1792,8 @@
         description: $('description').value.trim() || '-', monthKey
       };
       if (isExpense) payload.expenseType = $('expenseType').value;
+
+      if ($('isRecurring').checked && !editingTxId) { await saveRecurringFromForm(payload, monthKey); return; }
 
       const btn = $('transactionSubmitBtn'); btn.disabled = true;
       try {
@@ -1689,9 +1833,20 @@
     async function deleteTransaction(id) {
       const t = transactions.find(x => x.id === id);
       const label = t ? `${t.mainCategory} ${money(t.amount)}` : 'התנועה';
-      if (!confirm(`למחוק את ${label}?`)) return;
-      try { await window.deleteDoc(window.doc(window.db, "house_transactions", id)); toast("התנועה נמחקה"); }
-      catch (e) { console.error(e); toast("המחיקה נכשלה.", 'error'); }
+      const extra = t && t.recurringId ? '\nזו תנועה קבועה: היא לא תיווצר שוב במחזור הזה.' : (t && t.savingsGoal ? `\nהסכום יוסר גם מהקופה "${t.savingsGoal}".` : '');
+      if (!confirm(`למחוק את ${label}?${extra}`)) return;
+      try {
+        await window.deleteDoc(window.doc(window.db, "house_transactions", id));
+        toast("התנועה נמחקה");
+      } catch (e) { console.error(e); toast("המחיקה נכשלה.", 'error'); return; }
+      if (!t) return;
+      if (t.recurringId) {
+        const next = (houseConfig.recurring || []).map(r => r.id === t.recurringId ? { ...r, skip: [...new Set([...(r.skip || []), t.monthKey])] } : r);
+        if (await updateHouse({ recurring: next })) houseConfig.recurring = next;
+      } else if (t.savingsGoal) {
+        const goals = (houseConfig.savingsGoals || []).map(g => g.name === t.savingsGoal ? { ...g, saved: Math.max(0, (g.saved || 0) - t.amount) } : g);
+        if (await updateHouse({ savingsGoals: goals })) houseConfig.savingsGoals = goals;
+      }
     }
 
     // ---------- Data & rendering ----------
@@ -1921,7 +2076,7 @@
           <td class="p-4 font-semibold">${isExpense ? 'הוצאה' : 'הכנסה'}</td>
           <td class="p-4 font-bold text-slate-800"><span class="inline-flex items-center gap-1.5"><span>${CATEGORY_ICONS[t.mainCategory] || '📁'}</span><span>${esc(t.mainCategory)}</span></span></td>
           <td class="p-4">${esc(t.subCategory)}</td>
-          <td class="p-4 font-medium">${esc(t.description)}</td>
+          <td class="p-4 font-medium">${t.recurringId ? '<span title="תנועה קבועה">🔁</span> ' : ''}${esc(t.description)}</td>
           <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${money(isExpense ? -t.amount : t.amount)}</td>
           <td class="p-4 text-center">
             <button onclick="editTransaction('${esc(t.id)}')" aria-label="ערוך" class="text-indigo-500 p-1"><i class="fa-solid fa-pen"></i></button>

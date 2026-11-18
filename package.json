@@ -1,0 +1,8 @@
+{
+  "name": "homebudgetapp",
+  "private": true,
+  "description": "Hebrew household budget app (Firebase + vanilla JS)",
+  "scripts": {
+    "test": "node --test tests/budget-logic.test.js"
+  }
+}
