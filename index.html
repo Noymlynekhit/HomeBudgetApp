@@ -504,12 +504,37 @@
     <!-- TAB 4: REPORTS -->
     <div id="tabContentReports" class="hidden space-y-6">
       <section class="bg-white rounded-3xl p-2 shadow-sm border flex gap-2 text-xs font-bold overflow-x-auto">
-        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center whitespace-nowrap">פילוח קטגוריות</button>
+        <button id="reportTabPeriodBtn" onclick="switchReportSubTab('period')" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center whitespace-nowrap">סיכום תקופה</button>
+        <button id="reportTabCategoryBtn" onclick="switchReportSubTab('category')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap">פילוח קטגוריות</button>
         <button id="reportTabTrendBtn" onclick="switchReportSubTab('trend')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap">השוואת מגמות</button>
         <button id="reportTabTypesBtn" onclick="switchReportSubTab('types')" class="flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap">קבועות מול משתנות</button>
       </section>
 
-      <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <section id="reportViewPeriod" class="space-y-4">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border space-y-3">
+          <div id="periodKindBar" role="tablist" aria-label="סוג תקופה" class="flex gap-1.5 text-xs font-bold"></div>
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="stepReportPeriod(1)" aria-label="התקופה הבאה" class="w-10 h-10 rounded-xl border bg-slate-50 hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-chevron-right"></i></button>
+            <div class="text-center"><div id="periodTitle" class="font-extrabold text-slate-800 text-base"></div><div id="periodSub" class="text-[11px] text-slate-400"></div></div>
+            <button onclick="stepReportPeriod(-1)" aria-label="התקופה הקודמת" class="w-10 h-10 rounded-xl border bg-slate-50 hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-chevron-left"></i></button>
+          </div>
+        </div>
+        <div id="periodKpis" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+        <div id="periodChangesCard" class="bg-white rounded-3xl p-5 shadow-sm border space-y-3 hidden">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-dollar text-[#8fb3bf]"></i> לאן הכסף נעלם?</h2>
+          <div id="periodChanges" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div>
+        </div>
+        <div id="periodCyclesCard" class="bg-white rounded-3xl p-5 shadow-sm border space-y-3 hidden">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-column text-[#8fb3bf]"></i> הכנסות והוצאות לפי חודש</h2>
+          <div class="relative h-56 w-full"><canvas id="periodChart"></canvas></div>
+        </div>
+        <div class="bg-white rounded-3xl p-5 shadow-sm border space-y-3">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-list text-[#8fb3bf]"></i> הוצאות לפי קטגוריה</h2>
+          <div id="periodCategories" class="space-y-3 text-sm"></div>
+        </div>
+      </section>
+
+      <section id="reportViewCategory" class="grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
         <div class="lg:col-span-6 bg-white rounded-3xl p-5 shadow-sm border">
           <h2 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-[#8fb3bf]"></i> פילוח הוצאות לפי קטגוריות</h2>
           <div class="relative h-64 w-full flex items-center justify-center">
@@ -666,7 +691,7 @@
     // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId, recurringEndCycle, getSubCaps, budgetAlert, monthStatus } = window.BudgetLogic;
+    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId, recurringEndCycle, getSubCaps, budgetAlert, monthStatus, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan } = window.BudgetLogic;
     const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
     function money(n) {
@@ -709,8 +734,8 @@
       $('formModalSubmit').textContent = submitLabel;
       $('formModalFields').innerHTML = fields.map(f => `
         <div>
-          <label for="fm_${esc(f.id)}" class="block font-semibold text-slate-600 mb-1">${esc(f.label)}</label>
-          <input id="fm_${esc(f.id)}" type="${f.type || 'text'}" ${f.type === 'number' ? 'step="0.01" min="0" inputmode="decimal"' : ''} value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}" required class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
+          <label for="fm_${esc(f.id)}" class="block font-semibold text-slate-600 mb-1">${esc(f.label)}${f.optional ? ' <span class="font-normal text-slate-400">(לא חובה)</span>' : ''}</label>
+          <input id="fm_${esc(f.id)}" type="${f.type || 'text'}" ${f.type === 'number' ? 'step="0.01" min="0" inputmode="decimal"' : ''} value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}" ${f.optional ? '' : 'required'} class="w-full text-sm bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
         </div>`).join('');
       show('formModal');
       setTimeout(() => { const first = $('formModalFields').querySelector('input'); if (first) first.focus(); }, 50);
@@ -787,20 +812,140 @@
       $('tabContentReports').classList.toggle('hidden', tab !== 'reports');
       updateNavActive();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (tab === 'reports') { renderCategoryChart(computeTotals().catTotals); if (!$('reportViewTrend').classList.contains('hidden')) renderTrendChart(); }
+      if (tab === 'reports') { reportAnchor = null; if (!$('reportViewPeriod').classList.contains('hidden')) renderPeriodReport(); renderCategoryChart(computeTotals().catTotals); if (!$('reportViewTrend').classList.contains('hidden')) renderTrendChart(); }
     }
 
     function switchReportSubTab(subTab) {
+      $('reportViewPeriod').classList.toggle('hidden', subTab !== 'period');
       $('reportViewCategory').classList.toggle('hidden', subTab !== 'category');
       $('reportViewTrend').classList.toggle('hidden', subTab !== 'trend');
       $('reportViewTypes').classList.toggle('hidden', subTab !== 'types');
       const on = 'flex-1 py-2.5 rounded-2xl bg-slate-800 text-white transition text-center whitespace-nowrap';
       const off = 'flex-1 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 transition text-center whitespace-nowrap';
+      $('reportTabPeriodBtn').className = subTab === 'period' ? on : off;
       $('reportTabCategoryBtn').className = subTab === 'category' ? on : off;
       $('reportTabTrendBtn').className = subTab === 'trend' ? on : off;
       $('reportTabTypesBtn').className = subTab === 'types' ? on : off;
+      if (subTab === 'period') renderPeriodReport();
       if (subTab === 'trend') renderTrendChart();
       if (subTab === 'category') renderCategoryChart(computeTotals().catTotals);
+    }
+
+    // ---------- Period report ----------
+    let reportPeriod = 'month', reportAnchor = null, periodChartInstance = null;
+    const PERIOD_KINDS = [['month', 'חודש'], ['quarter', 'רבעון'], ['half', 'מחצית'], ['year', 'שנה']];
+    const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+    function periodTitle(cycles, kind) {
+      const [y, m] = cycles[0].split('-').map(Number);
+      if (kind === 'month') return `${HE_MONTHS[m - 1]} ${y}`;
+      if (kind === 'quarter') return `רבעון ${Math.floor((m - 1) / 3) + 1} · ${y}`;
+      if (kind === 'half') return `מחצית ${m === 1 ? 'א׳' : 'ב׳'} · ${y}`;
+      return `שנת ${y}`;
+    }
+    function stepReportPeriod(d) {
+      reportAnchor = shiftPeriod(reportAnchor || $('selectedMonth').value, reportPeriod, d);
+      renderPeriodReport();
+    }
+    function setReportPeriod(kind) { reportPeriod = kind; renderPeriodReport(); }
+
+    // שינוי באחוזים מול התקופה הקודמת. כלפי מעלה בהוצאות נצבע באדום, בהכנסות ובחיסכון בירוק, והחץ והטקסט נושאים את המשמעות גם בלי צבע.
+    function deltaHtml(cur, prev, upIsGood) {
+      if (!(prev > 0)) return `<span class="text-[11px] text-slate-400">אין נתוני השוואה</span>`;
+      const diff = cur - prev, pct = Math.round(Math.abs(diff) / prev * 100);
+      if (pct === 0) return `<span class="text-[11px] text-slate-500">ללא שינוי לעומת התקופה הקודמת</span>`;
+      const good = (diff > 0) === upIsGood;
+      return `<span class="text-[11px] font-bold ${good ? 'text-emerald-600' : 'text-rose-600'}">${diff > 0 ? '▲' : '▼'} ${pct}% ${diff > 0 ? 'יותר' : 'פחות'} מהתקופה הקודמת</span>`;
+    }
+
+    function renderPeriodReport() {
+      if (!$('reportViewPeriod')) return;
+      const day = houseConfig.cycleStartDay || 10;
+      const anchor = reportAnchor || $('selectedMonth').value;
+      if (!anchor) return;
+      const cycles = periodCycles(anchor, reportPeriod);
+      const prevCycles = periodCycles(shiftPeriod(anchor, reportPeriod, -1), reportPeriod);
+
+      $('periodKindBar').innerHTML = PERIOD_KINDS.map(([k, label]) =>
+        `<button role="tab" aria-selected="${k === reportPeriod}" onclick="setReportPeriod('${k}')" class="flex-1 py-2 rounded-xl border transition ${k === reportPeriod ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 hover:bg-slate-50'}">${label}</button>`).join('');
+      $('periodTitle').textContent = periodTitle(cycles, reportPeriod);
+      const first = cycleRange(cycles[0], day).start, last = cycleRange(cycles[cycles.length - 1], day).end;
+      const f = d => `${d.getDate()}/${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}`;
+      $('periodSub').textContent = `${f(first)} – ${f(last)}`;
+
+      const cur = aggregateTransactions(transactions, cycles, day);
+      const prev = aggregateTransactions(transactions, prevCycles, day);
+      // הפקדות לחיסכון נספרות בנפרד: זה כסף שנשאר שלכם ולא "הוצאה" במובן של צריכה
+      const saved = cur.byCategory[SAVINGS_CATEGORY] || 0, prevSaved = prev.byCategory[SAVINGS_CATEGORY] || 0;
+      const spend = cur.expense - saved, prevSpend = prev.expense - prevSaved;
+      const kept = cur.income - spend, prevKept = prev.income - prevSpend;
+      const rate = cur.income > 0 ? Math.round(kept / cur.income * 100) : null;
+
+      if (cur.count === 0) {
+        $('periodKpis').innerHTML = `<div class="sm:col-span-3 bg-white rounded-3xl p-6 border border-dashed text-center text-slate-400 text-sm">אין תנועות בתקופה הזו.</div>`;
+        ['periodChangesCard', 'periodCyclesCard'].forEach(id => $(id).classList.add('hidden'));
+        $('periodCategories').innerHTML = '';
+        return;
+      }
+
+      const kpi = (label, value, cls, extra, delta) => `
+        <div class="bg-white rounded-3xl p-4 shadow-sm border space-y-1">
+          <div class="text-[11px] font-bold text-slate-400">${label}</div>
+          <div class="text-2xl font-extrabold ${cls}">${value}</div>
+          ${extra ? `<div class="text-[11px] text-slate-500">${extra}</div>` : ''}
+          <div>${delta}</div>
+        </div>`;
+      $('periodKpis').innerHTML =
+        kpi('הכנסות', money(cur.income), 'text-slate-800', '', deltaHtml(cur.income, prev.income, true)) +
+        kpi('הוצאות', money(spend), 'text-slate-800', saved > 0 ? `ועוד ${money(saved)} שהופקדו לחיסכון` : '', deltaHtml(spend, prevSpend, false)) +
+        kpi('נשאר בצד', money(kept), kept < 0 ? 'text-rose-600' : 'text-emerald-600', rate === null ? '' : `${rate}% מההכנסות`, deltaHtml(kept, prevKept, true));
+
+      // לאן הכסף נעלם: ההפקדות לחיסכון לא נחשבות
+      const curCats = { ...cur.byCategory }, prevCats = { ...prev.byCategory };
+      delete curCats[SAVINGS_CATEGORY]; delete prevCats[SAVINGS_CATEGORY];
+      const rows = compareCategories(curCats, prevCats);
+      const { up, down } = topChanges(rows);
+      const hasPrev = prev.count > 0;
+      const changeList = (title, list, cls, arrow) => `
+        <div class="rounded-2xl border p-3 space-y-2">
+          <div class="text-xs font-bold ${cls}">${arrow} ${title}</div>
+          ${list.length ? list.map(r => `<div class="flex justify-between items-center gap-2"><span class="font-semibold text-slate-700 truncate">${CATEGORY_ICONS[r.cat] || '📁'} ${esc(r.cat)}</span><span class="font-extrabold ${cls} shrink-0">${r.diff > 0 ? '+' : '−'}${money(Math.abs(r.diff))}${r.isNew ? ' <span class="text-[10px] font-bold">(חדש)</span>' : ''}</span></div>`).join('') : `<div class="text-xs text-slate-400">אין שינוי משמעותי</div>`}
+        </div>`;
+      $('periodChangesCard').classList.toggle('hidden', !hasPrev);
+      if (hasPrev) $('periodChanges').innerHTML = changeList('עלו הכי הרבה', up, 'text-rose-600', '▲') + changeList('ירדו הכי הרבה', down, 'text-emerald-600', '▼');
+
+      // גרף לפי חודש, רק בתקופה של יותר מחודש אחד
+      const multi = cycles.length > 1;
+      $('periodCyclesCard').classList.toggle('hidden', !multi);
+      if (periodChartInstance) { periodChartInstance.destroy(); periodChartInstance = null; }
+      if (multi) {
+        periodChartInstance = new Chart($('periodChart').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: cycles.map(k => HE_MONTHS[Number(k.split('-')[1]) - 1]),
+            datasets: [
+              { label: 'הכנסות', data: cycles.map(k => cur.byCycle[k].income), backgroundColor: '#10b981', borderRadius: 6 },
+              { label: 'הוצאות', data: cycles.map(k => cur.byCycle[k].expense), backgroundColor: '#f43f5e', borderRadius: 6 }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { rtl: true, labels: { font: { family: 'Rubik' } } }, tooltip: { rtl: true, callbacks: { label: c => ` ${c.dataset.label}: ${money(c.parsed.y)}` } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => money(v) } } }
+          }
+        });
+      }
+
+      const total = rows.reduce((a, r) => a + r.cur, 0);
+      $('periodCategories').innerHTML = rows.filter(r => r.cur > 0).map(r => {
+        const share = total > 0 ? Math.round(r.cur / total * 100) : 0;
+        const ch = r.isNew ? '<span class="text-slate-500">חדש</span>' : r.pct === null || !hasPrev ? '' : r.pct === 0 ? '<span class="text-slate-400">ללא שינוי</span>' : `<span class="font-bold ${r.diff > 0 ? 'text-rose-600' : 'text-emerald-600'}">${r.diff > 0 ? '▲' : '▼'} ${Math.abs(r.pct)}%</span>`;
+        return `<div class="space-y-1">
+          <div class="flex justify-between items-center gap-2"><span class="font-semibold text-slate-700 truncate">${CATEGORY_ICONS[r.cat] || '📁'} ${esc(r.cat)}</span><span class="shrink-0"><span class="font-extrabold text-slate-800">${money(r.cur)}</span> <span class="text-[11px] text-slate-400">· ${share}%</span></span></div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden" role="img" aria-label="${esc(r.cat)} ${share}% מההוצאות"><div class="h-full bg-[#8fb3bf]" style="width:${share}%"></div></div>
+          <div class="text-[11px] h-4">${ch}</div>
+        </div>`;
+      }).join('') || `<div class="text-center text-slate-400 text-xs">אין הוצאות בתקופה הזו.</div>`;
     }
 
     function changeMonth(delta) {
@@ -1418,12 +1563,12 @@
     async function promptCreateSavingsGoal() {
       const res = await askForm({
         title: 'יעד חיסכון חדש', submitLabel: 'צור יעד',
-        fields: [{ id: 'name', label: 'שם הקופה', placeholder: 'לדוגמה: חופשה' }, { id: 'target', label: 'סכום היעד (₪)', type: 'number' }]
+        fields: [{ id: 'name', label: 'שם הקופה', placeholder: 'לדוגמה: חופשה' }, { id: 'target', label: 'סכום היעד (₪)', type: 'number' }, { id: 'deadline', label: 'להגיע ליעד עד חודש', type: 'month', optional: true }]
       });
       if (!res) return;
       const target = parseFloat(res.target);
       if (!res.name || !(target > 0)) { toast("נא להזין שם וסכום יעד חיובי.", 'error'); return; }
-      await updateHouse({ savingsGoals: [...(houseConfig.savingsGoals || []), { name: res.name, target, saved: 0 }] });
+      await updateHouse({ savingsGoals: [...(houseConfig.savingsGoals || []), { name: res.name, target, saved: 0, ...(/^\d{4}-\d{2}$/.test(res.deadline || '') ? { deadline: res.deadline } : {}) }] });
     }
 
     async function ensureSavingsCategory() {
@@ -2016,6 +2161,7 @@
       renderCategorySummaryList(r.catTotals);
       renderTransactionsTable(r.monthTx);
       if (currentTab === 'reports') {
+        if (!$('reportViewPeriod').classList.contains('hidden')) renderPeriodReport();
         renderCategoryChart(r.catTotals);
         if (!$('reportViewTrend').classList.contains('hidden')) renderTrendChart();
       }
@@ -2150,6 +2296,16 @@
         </div>`).join('');
     }
 
+    function goalPlanLine(goal) {
+      if (!goal.deadline) return '';
+      const p = savingsPlan({ target: goal.target, saved: goal.saved || 0, deadline: goal.deadline, today: localDateStr().slice(0, 7) });
+      const [y, m] = goal.deadline.split('-').map(Number);
+      const when = `${HE_MONTHS[m - 1]} ${y}`;
+      if (p.status === 'done') return `<div class="text-[11px] font-bold text-emerald-700">🎉 היעד הושג</div>`;
+      if (p.status === 'overdue') return `<div class="text-[11px] font-bold text-amber-700">עבר המועד (${when}). חסרים ${money(p.remaining)}</div>`;
+      return `<div class="text-[11px] text-slate-600">עד ${when}: כדאי להפקיד <b class="text-emerald-700">${money(p.perMonth)}</b> בחודש (${p.monthsLeft} חודשים)</div>`;
+    }
+
     function renderSavingsGoals() {
       const container = $('savingsGoalsContainer'); container.innerHTML = '';
       const goals = houseConfig.savingsGoals || [];
@@ -2169,6 +2325,7 @@
               <button onclick="deleteSavingsGoal(${idx})" aria-label="מחק קופה" class="text-slate-300 hover:text-rose-500"><i class="fa-regular fa-trash-can"></i></button></span>
           </div>
           <div class="h-2 w-full bg-emerald-100 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${pct}%"></div></div>
+          ${goalPlanLine(goal)}
           <div class="flex justify-between text-[11px] text-slate-600 font-semibold">
             <span>נצבר: ${money(saved)} / ${money(goal.target)}</span>
             <button onclick="promptDepositToGoal(${idx})" class="text-emerald-600 underline font-bold">+ הפקד</button>

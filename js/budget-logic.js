@@ -161,5 +161,66 @@
     };
   }
 
-  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations, recurringEndCycle, getSubCaps, budgetAlert, daysLeftInCycle, monthStatus };
+  // ---------- דוחות לפי תקופה ----------
+  const PERIOD_LEN = { month: 1, quarter: 3, half: 6, year: 12 };
+
+  // מחזורי החיוב (מפתחות YYYY-MM) שנכללים בתקופה שבה נמצא anchorKey. רבעון/מחצית/שנה לפי לוח שנה.
+  function periodCycles(anchorKey, period) {
+    const len = PERIOD_LEN[period] || 1;
+    const [y, m] = anchorKey.split('-').map(Number);
+    const startM = len === 1 ? m : Math.floor((m - 1) / len) * len + 1;
+    const first = `${y}-${pad(startM)}`;
+    return Array.from({ length: len }, (_, i) => shiftMonth(first, i));
+  }
+
+  function shiftPeriod(anchorKey, period, delta) {
+    const len = PERIOD_LEN[period] || 1;
+    return shiftMonth(periodCycles(anchorKey, period)[0], delta * len);
+  }
+
+  // סיכום תנועות בתקופה. המחזור נקבע לפי התאריך והגדרת תחילת המחזור הנוכחית.
+  function aggregateTransactions(transactions, cycleKeys, cycleDay) {
+    const set = new Set(cycleKeys);
+    const out = { income: 0, expense: 0, byCategory: {}, byCycle: {}, count: 0 };
+    cycleKeys.forEach(k => { out.byCycle[k] = { income: 0, expense: 0 }; });
+    (transactions || []).forEach(t => {
+      if (!t || !t.date) return;
+      const key = cycleKeyForDate(t.date, cycleDay);
+      if (!set.has(key)) return;
+      const amt = Number(t.amount) || 0;
+      out.count++;
+      if (t.type === 'income') { out.income += amt; out.byCycle[key].income += amt; }
+      else { out.expense += amt; out.byCycle[key].expense += amt; out.byCategory[t.mainCategory] = (out.byCategory[t.mainCategory] || 0) + amt; }
+    });
+    return out;
+  }
+
+  // שינוי לכל קטגוריה מול תקופה קודמת. pct הוא null כשלא היו הוצאות בתקופה הקודמת (חדש).
+  function compareCategories(curMap, prevMap) {
+    const names = [...new Set([...Object.keys(curMap || {}), ...Object.keys(prevMap || {})])];
+    return names.map(cat => {
+      const cur = (curMap || {})[cat] || 0, prev = (prevMap || {})[cat] || 0, diff = cur - prev;
+      return { cat, cur, prev, diff, pct: prev > 0 ? Math.round(diff / prev * 100) : null, isNew: prev === 0 && cur > 0 };
+    }).sort((a, b) => b.cur - a.cur);
+  }
+
+  // "לאן הכסף נעלם": העליות והירידות הגדולות ביותר, בלי רעש של שינויים קטנים
+  function topChanges(rows, { n = 3, minDiff = 50 } = {}) {
+    const up = rows.filter(r => r.diff >= minDiff).sort((a, b) => b.diff - a.diff).slice(0, n);
+    const down = rows.filter(r => r.diff <= -minDiff).sort((a, b) => a.diff - b.diff).slice(0, n);
+    return { up, down };
+  }
+
+  // כמה להפקיד בחודש כדי להגיע ליעד עד חודש מסוים (כולל החודש הנוכחי)
+  function savingsPlan({ target, saved, deadline, today }) {
+    const remaining = Math.max(0, (Number(target) || 0) - (Number(saved) || 0));
+    if (remaining === 0) return { status: 'done', remaining: 0 };
+    if (!/^\d{4}-\d{2}$/.test(deadline || '')) return { status: 'nodeadline', remaining };
+    const [ty, tm] = today.split('-').map(Number), [dy, dm] = deadline.split('-').map(Number);
+    const monthsLeft = (dy * 12 + dm) - (ty * 12 + tm) + 1;
+    if (monthsLeft <= 0) return { status: 'overdue', remaining };
+    return { status: 'ok', remaining, monthsLeft, perMonth: Math.ceil(remaining / monthsLeft) };
+  }
+
+  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations, recurringEndCycle, getSubCaps, budgetAlert, daysLeftInCycle, monthStatus, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan };
 });

@@ -132,3 +132,64 @@ test('monthStatus: בלי תקציב', () => {
   const st = L.monthStatus({ today: '2026-11-18', cycleKey: '2026-11', cycleDay: 10, plan: undefined, catTotals: {}, totalExpenses: 0 });
   assert.equal(st.hasBudget, false); assert.equal(st.perDay, 0);
 });
+
+test('periodCycles: חודש, רבעון, מחצית ושנה לפי לוח שנה', () => {
+  assert.deepEqual(L.periodCycles('2026-11', 'month'), ['2026-11']);
+  assert.deepEqual(L.periodCycles('2026-11', 'quarter'), ['2026-10', '2026-11', '2026-12']);
+  assert.deepEqual(L.periodCycles('2026-03', 'quarter'), ['2026-01', '2026-02', '2026-03']);
+  assert.deepEqual(L.periodCycles('2026-07', 'half'), ['2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12']);
+  assert.equal(L.periodCycles('2026-05', 'year').length, 12);
+  assert.equal(L.periodCycles('2026-05', 'year')[0], '2026-01');
+});
+
+test('shiftPeriod: קדימה ואחורה, כולל חציית שנה', () => {
+  assert.equal(L.shiftPeriod('2026-11', 'month', -1), '2026-10');
+  assert.equal(L.shiftPeriod('2026-11', 'quarter', -1), '2026-07');
+  assert.equal(L.shiftPeriod('2026-01', 'quarter', -1), '2025-10');
+  assert.equal(L.shiftPeriod('2026-08', 'half', 1), '2027-01');
+  assert.equal(L.shiftPeriod('2026-08', 'year', -1), '2025-01');
+});
+
+const txs = [
+  { type: 'expense', amount: 100, date: '2026-10-12', mainCategory: 'אוכל' },  // מחזור 2026-10
+  { type: 'expense', amount: 50, date: '2026-11-09', mainCategory: 'אוכל' },   // עדיין 2026-10 (לפני ה-10)
+  { type: 'expense', amount: 300, date: '2026-11-15', mainCategory: 'תחבורה' }, // 2026-11
+  { type: 'income', amount: 9000, date: '2026-11-10', mainCategory: 'משכורת' }, // 2026-11
+  { type: 'expense', amount: 999, date: '2025-01-01', mainCategory: 'אוכל' }     // מחוץ לתקופה
+];
+
+test('aggregateTransactions: סכומים לפי מחזור וקטגוריה', () => {
+  const a = L.aggregateTransactions(txs, ['2026-10', '2026-11'], 10);
+  assert.equal(a.expense, 450); assert.equal(a.income, 9000); assert.equal(a.count, 4);
+  assert.equal(a.byCategory['אוכל'], 150);
+  assert.equal(a.byCycle['2026-10'].expense, 150);
+  assert.equal(a.byCycle['2026-11'].income, 9000);
+});
+
+test('aggregateTransactions: קלט ריק', () => {
+  const a = L.aggregateTransactions([], ['2026-11'], 10);
+  assert.equal(a.expense, 0); assert.equal(a.count, 0); assert.deepEqual(a.byCycle['2026-11'], { income: 0, expense: 0 });
+});
+
+test('compareCategories + topChanges: לאן הכסף נעלם', () => {
+  const rows = L.compareCategories({ 'אוכל': 1500, 'תחבורה': 300, 'בילויים': 400 }, { 'אוכל': 1000, 'תחבורה': 320, 'ביטוח': 700 });
+  const food = rows.find(r => r.cat === 'אוכל');
+  assert.equal(food.diff, 500); assert.equal(food.pct, 50);
+  assert.equal(rows.find(r => r.cat === 'בילויים').isNew, true);
+  assert.equal(rows.find(r => r.cat === 'בילויים').pct, null);
+  assert.equal(rows[0].cat, 'אוכל'); // ממוין לפי סכום נוכחי
+  const { up, down } = L.topChanges(rows);
+  assert.deepEqual(up.map(r => r.cat), ['אוכל', 'בילויים']);
+  assert.deepEqual(down.map(r => r.cat), ['ביטוח']);
+  assert.ok(!up.concat(down).some(r => r.cat === 'תחבורה')); // שינוי קטן מ-50 ₪ לא נחשב
+});
+
+test('savingsPlan: הפקדה חודשית נדרשת', () => {
+  const p = L.savingsPlan({ target: 5000, saved: 1000, deadline: '2027-06', today: '2026-11-18' });
+  assert.equal(p.status, 'ok'); assert.equal(p.monthsLeft, 8); assert.equal(p.perMonth, 500);
+  assert.equal(L.savingsPlan({ target: 5000, saved: 1000, deadline: '2027-06', today: '2027-06-01' }).perMonth, 4000); // חודש אחרון
+  assert.equal(L.savingsPlan({ target: 5000, saved: 5000, deadline: '2027-06', today: '2026-11-18' }).status, 'done');
+  assert.equal(L.savingsPlan({ target: 5000, saved: 0, deadline: '2026-10', today: '2026-11-18' }).status, 'overdue');
+  assert.equal(L.savingsPlan({ target: 5000, saved: 0, today: '2026-11-18' }).status, 'nodeadline');
+  assert.equal(L.savingsPlan({ target: 1000, saved: 0, deadline: '2027-01', today: '2026-11-18' }).perMonth, 334); // עיגול כלפי מעלה
+});

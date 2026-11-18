@@ -209,6 +209,34 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   await page.click('#transactionSubmitBtn'); await page.waitForTimeout(300);
   check('מספר תשלומים לא תקין לא נשמר', (await house()).recurring.length === before);
 
+  // 15. דוח תקופה
+  await page.evaluate(() => switchMainTab('reports'));
+  check('סיכום תקופה הוא ברירת המחדל', await page.isVisible('#reportViewPeriod'));
+  const kpis = await page.textContent('#periodKpis');
+  check('KPI הכנסות והוצאות מוצגים', kpis.includes('הכנסות') && kpis.includes('הוצאות') && kpis.includes('נשאר בצד'));
+  await page.evaluate(() => setReportPeriod('year'));
+  check('תקופה שנתית מציגה גרף חודשים', await page.isVisible('#periodCyclesCard'));
+  check('כותרת שנה', (await page.textContent('#periodTitle')).includes('2026'));
+  await page.evaluate(() => stepReportPeriod(-1));
+  check('שנה קודמת ריקה מציגה הודעה', (await page.textContent('#periodKpis')).includes('אין תנועות'));
+  await page.evaluate(() => { setReportPeriod('quarter'); });
+
+  // 16. יעד חיסכון עם תאריך
+  await page.evaluate(() => switchMainTab('overview'));
+  const goalP = page.evaluate(() => promptCreateSavingsGoal());
+  await page.waitForSelector('#fm_name');
+  await page.fill('#fm_name', 'טיול'); await page.fill('#fm_target', '4000'); await page.fill('#fm_deadline', '2027-03');
+  await page.click('#formModalSubmit'); await goalP; await page.waitForTimeout(300);
+  h = await house();
+  const g = h.savingsGoals.find(x => x.name === 'טיול');
+  check('יעד נשמר עם תאריך', g && g.deadline === '2027-03', JSON.stringify(g));
+  check('כרטיס יעד מציג הפקדה חודשית', (await page.textContent('#savingsGoalsContainer')).includes('בחודש'));
+  const goalP2 = page.evaluate(() => promptCreateSavingsGoal());
+  await page.waitForSelector('#fm_name');
+  await page.fill('#fm_name', 'קרן'); await page.fill('#fm_target', '1000');
+  await page.click('#formModalSubmit'); await goalP2; await page.waitForTimeout(300);
+  check('תאריך הוא לא חובה', (await house()).savingsGoals.some(x => x.name === 'קרן' && !x.deadline));
+
   console.log(errors.length ? 'JS ERRORS:\n' + errors.join('\n') : 'no JS errors');
   if (errors.length) process.exitCode = 1;
   await browser.close();
