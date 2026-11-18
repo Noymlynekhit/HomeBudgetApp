@@ -42,7 +42,8 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const errors = [];
-  page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+  page.on('pageerror', e => { errors.push('pageerror: ' + e.message); if (process.env.DEBUG_E2E) console.log('pageerror', e.message, e.stack); });
+  if (process.env.DEBUG_E2E) page.on('console', m => console.log('console:', m.text()));
   page.on('dialog', d => d.accept());
 
   await page.route('**/*', route => {
@@ -236,6 +237,14 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   await page.fill('#fm_name', 'קרן'); await page.fill('#fm_target', '1000');
   await page.click('#formModalSubmit'); await goalP2; await page.waitForTimeout(300);
   check('תאריך הוא לא חובה', (await house()).savingsGoals.some(x => x.name === 'קרן' && !x.deadline));
+
+  // 17. מצב כהה
+  await page.evaluate(() => { toggleTheme(); });
+  check('מצב כהה הופעל', await page.evaluate(() => document.documentElement.classList.contains('dark') && localStorage.getItem('budget_theme') === 'dark'));
+  check('הרקע השתנה לכהה', await page.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(15, 23, 42)');
+  await page.evaluate(() => { toggleTheme(); });
+  check('חזרה למצב בהיר', await page.evaluate(() => !document.documentElement.classList.contains('dark')));
+  check('manifest מקושר', await page.evaluate(() => !!document.querySelector('link[rel=manifest]')));
 
   console.log(errors.length ? 'JS ERRORS:\n' + errors.join('\n') : 'no JS errors');
   if (errors.length) process.exitCode = 1;
