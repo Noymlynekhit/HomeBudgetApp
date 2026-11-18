@@ -68,6 +68,7 @@
       for (let i = lookback; i >= 0; i--) {
         const cycleKey = shiftMonth(currentCycle, -i);
         if (rec.startCycle && cycleKey < rec.startCycle) continue;
+        if (rec.endCycle && cycleKey > rec.endCycle) continue; // הסתיימה (תשלומים / עד חודש)
         if (skip.has(cycleKey)) continue;
         const id = recurringTxId(rec.id, cycleKey);
         if (have.has(id)) continue;
@@ -85,6 +86,7 @@
             description: rec.description || '-',
             monthKey: cycleKey,
             recurringId: rec.id,
+            ...(rec.createdBy ? { createdBy: rec.createdBy } : {}),
             ...(rec.type === 'expense' ? { expenseType: rec.expenseType || 'קבועות', budgetClassification: 'צרכים' } : {})
           }
         });
@@ -93,5 +95,71 @@
     return out;
   }
 
-  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations };
+
+  /**
+   * מחזור הסיום של תנועה קבועה.
+   * mode: 'none' | 'until' (endMonth = 'YYYY-MM') | 'count' (count = מספר תשלומים כולל הראשון)
+   * firstCycle הוא המחזור של התשלום הראשון.
+   */
+  function recurringEndCycle({ mode, endMonth, count, firstCycle }) {
+    if (mode === 'until' && /^\d{4}-\d{2}$/.test(endMonth || '')) return endMonth;
+    if (mode === 'count' && Number.isInteger(count) && count >= 1) return shiftMonth(firstCycle, count - 1);
+    return null;
+  }
+
+  // התקרות של תתי-קטגוריות לחודש מסוים. אם לחודש אין תקרות משלו, נופלים אחורה לתקרות הישנות המשותפות.
+  function getSubCaps(house, monthKey) {
+    const plan = (house.monthlyPlans || {})[monthKey];
+    if (plan && plan.subCaps) return plan.subCaps;
+    return house.caps || {};
+  }
+
+  /**
+   * התראה לפני הוספת הוצאה.
+   * 'over'  - ההוצאה תעבור את הגבול
+   * 'warn'  - ההוצאה תחצה את 80% מהגבול (פעם אחת, לא בכל הוצאה)
+   */
+  function budgetAlert({ spent, amount, limit }) {
+    if (limit === undefined || limit === null || limit === '' || isNaN(Number(limit))) return { level: null };
+    limit = Number(limit);
+    const after = spent + amount;
+    if (after > limit) return { level: 'over', pct: limit > 0 ? Math.round(after / limit * 100) : null };
+    if (limit > 0 && after / limit >= 0.8 && spent / limit < 0.8) return { level: 'warn', pct: Math.round(after / limit * 100) };
+    return { level: null };
+  }
+
+  function parseLocalDate(str) { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); }
+
+  // כמה ימים נשארו במחזור (כולל היום). state: 'past' | 'current' | 'future'
+  function daysLeftInCycle(today, cycleKey, cycleDay) {
+    const { start, end } = cycleRange(cycleKey, cycleDay);
+    const t = parseLocalDate(today);
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const totalDays = Math.round((endDay - start) / 864e5) + 1;
+    if (t < start) return { state: 'future', left: totalDays, totalDays };
+    if (t > endDay) return { state: 'past', left: 0, totalDays };
+    return { state: 'current', left: Math.round((endDay - t) / 864e5) + 1, totalDays };
+  }
+
+  // נתוני כרטיס "איפה אני עומד"
+  function monthStatus({ today, cycleKey, cycleDay, plan, catTotals, totalExpenses }) {
+    const d = daysLeftInCycle(today, cycleKey, cycleDay);
+    const budgets = (plan && plan.categoryBudgets) || {};
+    const names = Object.keys(budgets);
+    const totalBudget = names.reduce((s, c) => s + (budgets[c] || 0), 0);
+    const budgetedSpent = names.reduce((s, c) => s + ((catTotals || {})[c] || 0), 0);
+    const remaining = totalBudget - budgetedSpent;
+    const perDay = d.state === 'current' && d.left > 0 ? Math.max(0, remaining) / d.left : null;
+    const near = names.map(cat => {
+      const budget = budgets[cat] || 0, spent = (catTotals || {})[cat] || 0;
+      return { cat, budget, spent, pct: budget > 0 ? Math.round(spent / budget * 100) : (spent > 0 ? 999 : 0) };
+    }).filter(x => x.pct >= 80).sort((a, b) => b.pct - a.pct);
+    return {
+      state: d.state, daysLeft: d.left, totalDays: d.totalDays,
+      hasBudget: totalBudget > 0, totalBudget, budgetedSpent, remaining, perDay, near,
+      unbudgetedSpent: Math.max(0, (totalExpenses || 0) - budgetedSpent)
+    };
+  }
+
+  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations, recurringEndCycle, getSubCaps, budgetAlert, daysLeftInCycle, monthStatus };
 });

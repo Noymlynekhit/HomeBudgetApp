@@ -104,6 +104,10 @@
           <p class="text-[11px] text-slate-400">מי שנוסף צריך להירשם עם המייל הזה, לאמת אותו ולהזין את שם הבית.</p>
         </div>
         <div>
+          <label for="settingsMyNameInput" class="block font-semibold text-slate-600 mb-1">השם שלי (יוצג ליד תנועות שהזנתי)</label>
+          <input type="text" id="settingsMyNameInput" maxlength="20" placeholder="לדוגמה: נוי" class="w-full bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
+        </div>
+        <div>
           <label for="settingsDisplayNameInput" class="block font-semibold text-slate-600 mb-1">שם תצוגה לבית</label>
           <input type="text" id="settingsDisplayNameInput" maxlength="30" placeholder="לדוגמה: משפחת כהן" class="w-full bg-slate-50 border rounded-xl p-2.5 font-bold focus:outline-none">
         </div>
@@ -354,6 +358,8 @@
         <div class="p-3.5 bg-[#CFECF3]/40 text-slate-700 rounded-2xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
       </section>
 
+      <section id="statusCard" class="bg-white rounded-3xl p-5 shadow-sm border space-y-3"></section>
+
       <button onclick="switchMainTab('add')" class="w-full bg-[#8fb3bf] hover:bg-[#789ca8] text-white font-bold py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition">
         <i class="fa-solid fa-circle-plus text-lg"></i><span>הזנת תנועה חדשה מהירה</span>
       </button>
@@ -437,9 +443,19 @@
             </div>
           </div>
           <label id="recurringFieldWrapper" class="flex items-start gap-2 text-xs bg-slate-50 border rounded-xl p-3 cursor-pointer">
-            <input type="checkbox" id="isRecurring" class="mt-0.5">
+            <input type="checkbox" id="isRecurring" class="mt-0.5" onchange="onRecurringToggle()">
             <span><b class="text-slate-700">תנועה קבועה</b> <span class="text-slate-500">תיווצר אוטומטית בכל מחזור, ביום <b id="recurringDayLabel"></b> בחודש</span></span>
           </label>
+          <div id="recurringOptions" class="hidden space-y-2 text-xs bg-slate-50 border rounded-xl p-3">
+            <label for="recurringMode" class="block font-semibold text-slate-600">עד מתי?</label>
+            <select id="recurringMode" onchange="onRecurringToggle()" class="w-full text-sm bg-white border rounded-xl p-2.5">
+              <option value="none">ללא סיום (הוראת קבע, שכר דירה)</option>
+              <option value="until">עד חודש מסוים</option>
+              <option value="count">מספר תשלומים</option>
+            </select>
+            <input type="month" id="recurringEndMonth" aria-label="חודש סיום" class="hidden w-full text-sm bg-white border rounded-xl p-2.5">
+            <input type="number" id="recurringCount" min="2" max="120" inputmode="numeric" placeholder="מספר תשלומים (כולל הראשון)" aria-label="מספר תשלומים" class="hidden w-full text-sm bg-white border rounded-xl p-2.5">
+          </div>
           <div class="flex gap-2">
             <button type="submit" id="transactionSubmitBtn" class="flex-1 bg-slate-800 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg">הוסף תנועה למאזן</button>
             <button type="button" id="transactionCancelBtn" onclick="cancelEditTransaction()" class="hidden bg-slate-100 text-slate-700 font-bold text-sm px-5 rounded-xl">ביטול</button>
@@ -458,11 +474,12 @@
             <select id="filterCategory" onchange="loadCurrentMonthData()" aria-label="סינון לפי קטגוריה" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 text-xs">
               <option value="ALL">כל הקטגוריות</option>
             </select>
+            <select id="filterPerson" onchange="loadCurrentMonthData()" aria-label="סינון לפי מי הזין" class="bg-slate-50 border rounded-xl px-3 py-2 font-bold text-slate-700 text-xs"><option value="ALL">כולם</option></select>
             <button onclick="exportTableToCSV()" class="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i><span>ייצא לאקסל</span></button>
           </div>
         </div>
         <div class="w-full overflow-x-auto pb-2 border rounded-2xl">
-          <table class="w-full text-right text-sm whitespace-nowrap min-w-[750px]">
+          <table class="w-full text-right text-sm whitespace-nowrap min-w-[850px]">
             <thead>
               <tr class="bg-slate-50 text-slate-600 border-b-2">
                 <th class="p-4 font-bold">תאריך</th>
@@ -471,6 +488,7 @@
                 <th class="p-4 font-bold">קטגוריה</th>
                 <th class="p-4 font-bold">תת-קטגוריה</th>
                 <th class="p-4 font-bold">הערה</th>
+                <th class="p-4 font-bold">הוזן ע"י</th>
                 <th class="p-4 font-bold">סכום</th>
                 <th class="p-4 font-bold text-center">פעולות</th>
               </tr>
@@ -502,6 +520,7 @@
         <div class="lg:col-span-6 bg-white rounded-3xl p-5 shadow-sm border flex flex-col justify-center space-y-3">
           <h3 class="text-xs font-bold text-slate-400 uppercase">סיכום סך הכל מקטגוריה</h3>
           <div id="categorySummaryList" class="space-y-2.5 max-h-72 overflow-y-auto text-sm"></div>
+          <div id="personSummary" class="hidden pt-3 border-t space-y-2"></div>
         </div>
       </section>
 
@@ -647,7 +666,7 @@
     // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId } = window.BudgetLogic;
+    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId, recurringEndCycle, getSubCaps, budgetAlert, monthStatus } = window.BudgetLogic;
     const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
     function money(n) {
@@ -805,6 +824,8 @@
       renderMembers();
       $('settingsCycleDayInput').value = houseConfig.cycleStartDay || 10;
       $('settingsDisplayNameInput').value = houseConfig.displayName || '';
+      const myProfile = (houseConfig.memberProfiles || []).find(x => (x.email || '').toLowerCase() === myEmail());
+      $('settingsMyNameInput').value = (myProfile && myProfile.name) || '';
       $('settingsGeminiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
       show('settingsModal');
     }
@@ -850,7 +871,11 @@
       const key = $('settingsGeminiKeyInput').value.trim();
       if (key) localStorage.setItem(GEMINI_KEY_STORAGE, key); else localStorage.removeItem(GEMINI_KEY_STORAGE);
       const displayName = $('settingsDisplayNameInput').value.trim().slice(0, 30);
-      if (!(await updateHouse({ cycleStartDay, displayName }))) return;
+      const myName = $('settingsMyNameInput').value.trim().slice(0, 20);
+      const profiles = (houseConfig.memberProfiles || []).filter(x => (x.email || '').toLowerCase() !== myEmail());
+      if (myName) profiles.push({ email: myEmail(), name: myName });
+      if (!(await updateHouse({ cycleStartDay, displayName, memberProfiles: profiles }))) return;
+      houseConfig.memberProfiles = profiles;
       closeSettingsModal();
       houseConfig.cycleStartDay = cycleStartDay;
       houseConfig.displayName = displayName;
@@ -1097,6 +1122,12 @@
           p.categoryBudgets[newName] = p.categoryBudgets[oldName];
           delete p.categoryBudgets[oldName];
         }
+        if (p.subCaps) {
+          Object.keys(p.subCaps).forEach(k => {
+            if (k.startsWith(`${oldName} > `)) { p.subCaps[`${newName} > ${k.slice(oldName.length + 3)}`] = p.subCaps[k]; delete p.subCaps[k]; }
+          });
+        }
+        if (p.manualCats) p.manualCats = p.manualCats.map(c => c === oldName ? newName : c);
       });
       if (!(await updateHouse({ categories: cats, caps, monthlyPlans: plans }))) return;
       await migrateTransactions(t => t.type === 'expense' && t.mainCategory === oldName, { mainCategory: newName });
@@ -1125,7 +1156,11 @@
       const caps = { ...(houseConfig.caps || {}) };
       const oldKey = `${main} > ${oldSub}`;
       if (caps[oldKey] !== undefined) { caps[`${main} > ${newSub}`] = caps[oldKey]; delete caps[oldKey]; }
-      if (!(await updateHouse({ categories: cats, caps }))) return;
+      const plans = JSON.parse(JSON.stringify(houseConfig.monthlyPlans || {}));
+      Object.values(plans).forEach(p => {
+        if (p.subCaps && p.subCaps[oldKey] !== undefined) { p.subCaps[`${main} > ${newSub}`] = p.subCaps[oldKey]; delete p.subCaps[oldKey]; }
+      });
+      if (!(await updateHouse({ categories: cats, caps, monthlyPlans: plans }))) return;
       await migrateTransactions(t => t.type === 'expense' && t.mainCategory === main && t.subCategory === oldSub, { subCategory: newSub });
       renderCategoriesManager();
     }
@@ -1153,7 +1188,8 @@
       const container = $('monthlyPlanningInputsContainer');
       const currentPlans = (houseConfig.monthlyPlans || {})[monthKey] || {};
       const catBudgets = currentPlans.categoryBudgets || {};
-      const caps = houseConfig.caps || {};
+      const caps = getSubCaps(houseConfig, monthKey);
+      const manualCats = new Set(currentPlans.manualCats || []);
       const prevPlan = (houseConfig.monthlyPlans || {})[shiftMonth(monthKey, -1)];
       $('copyPreviousMonthBanner').classList.toggle('hidden', !prevPlan);
 
@@ -1162,14 +1198,14 @@
         <input type="number" step="0.01" min="0" inputmode="decimal" id="planIncomeInput" value="${esc(currentPlans.expectedIncome || '')}" placeholder="12000" class="w-full bg-white border rounded-xl p-2.5 font-bold text-sm focus:outline-none">
       </div>
       <p class="font-extrabold text-slate-700 mt-3 mb-1">צפי ותקרות לפי קטגוריות ותתי-קטגוריות:</p>
-      <p class="text-[11px] text-slate-400 mb-2">סכום הקטגוריה מתעדכן אוטומטית מסכום התקרות, אלא אם הזנתם אותו ידנית. תקרות תתי-הקטגוריות משותפות לכל החודשים.</p>`;
+      <p class="text-[11px] text-slate-400 mb-2">סכום הקטגוריה מתעדכן אוטומטית מסכום התקרות, אלא אם הזנתם אותו ידנית. התקרות נשמרות לכל חודש בנפרד, ואפשר להזין 0 במפורש.</p>`;
 
       const cats = catsNow();
       Object.keys(cats).forEach((cat, i) => {
         const subs = cats[cat] || [];
         const subSum = subs.reduce((s, sub) => s + (parseFloat(caps[`${cat} > ${sub}`]) || 0), 0);
         let savedCatVal = '';
-        if (catBudgets[cat] !== undefined && catBudgets[cat] !== '') savedCatVal = catBudgets[cat];
+        if (catBudgets[cat] !== undefined && catBudgets[cat] !== '') savedCatVal = catBudgets[cat]; // כולל 0
         else if (subSum > 0) savedCatVal = subSum;
 
         html += `
@@ -1177,7 +1213,7 @@
             <div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
               <div class="flex items-center gap-2 font-bold text-slate-800"><span>${CATEGORY_ICONS[cat] || '📁'}</span><span>${esc(cat)}</span></div>
               <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                <input type="number" step="0.01" min="0" inputmode="decimal" data-cat="${esc(cat)}" id="main_input_${i}" oninput="markCategoryAsManual(${i})" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${esc(savedCatVal)}" placeholder="סכום ראשי" aria-label="צפי ל${esc(cat)}">
+                <input type="number" step="0.01" min="0" inputmode="decimal" data-cat="${esc(cat)}" id="main_input_${i}" ${manualCats.has(cat) ? 'data-manual-override="true"' : ''} oninput="markCategoryAsManual(${i})" class="plan-cat-input w-28 bg-white border rounded-lg p-1.5 text-center font-bold text-xs" value="${esc(savedCatVal)}" placeholder="סכום ראשי" aria-label="צפי ל${esc(cat)}">
                 <i class="fa-solid fa-chevron-down text-slate-400 text-xs mr-1"></i>
               </div>
             </div>
@@ -1187,7 +1223,7 @@
           html += `
               <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border">
                 <span class="text-slate-700 font-medium text-xs">${esc(sub)}</span>
-                <input type="number" step="0.01" min="0" inputmode="decimal" data-main="${esc(cat)}" data-sub="${esc(sub)}" oninput="recalculateMainCategory(${i})" class="plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${esc(caps[`${cat} > ${sub}`] || '')}" placeholder="תקרה" aria-label="תקרה ל${esc(sub)}">
+                <input type="number" step="0.01" min="0" inputmode="decimal" data-main="${esc(cat)}" data-sub="${esc(sub)}" oninput="recalculateMainCategory(${i})" class="plan-sub-input w-24 bg-white border rounded-lg p-1 text-center font-bold text-xs" value="${esc(caps[`${cat} > ${sub}`] !== undefined ? caps[`${cat} > ${sub}`] : '')}" placeholder="תקרה" aria-label="תקרה ל${esc(sub)}">
               </div>`;
         });
         html += `</div></div>`;
@@ -1203,17 +1239,32 @@
       const mainInput = $(`main_input_${i}`);
       if (mainInput && !mainInput.dataset.manualOverride) mainInput.value = sum > 0 ? sum : '';
     }
-    function markCategoryAsManual(i) { const el = $(`main_input_${i}`); if (el) el.dataset.manualOverride = "true"; }
+    function markCategoryAsManual(i) {
+      const el = $(`main_input_${i}`); if (!el) return;
+      if (el.value.trim() === '') { delete el.dataset.manualOverride; recalculateMainCategory(i); } // ריק = חוזרים לחישוב אוטומטי
+      else el.dataset.manualOverride = "true";
+    }
 
     function copyDataFromPreviousMonth() {
-      const prevPlan = (houseConfig.monthlyPlans || {})[shiftMonth($('selectedMonth').value, -1)];
+      const monthKey = $('selectedMonth').value;
+      const prevKey = shiftMonth(monthKey, -1);
+      const prevPlan = (houseConfig.monthlyPlans || {})[prevKey];
       if (!prevPlan) return;
-      $('planIncomeInput').value = prevPlan.expectedIncome || '';
+      const prevCaps = getSubCaps(houseConfig, prevKey);
+      const prevManual = new Set(prevPlan.manualCats || []);
+      $('planIncomeInput').value = prevPlan.expectedIncome ?? '';
+      document.querySelectorAll('.plan-sub-input').forEach(inp => {
+        const k = `${inp.dataset.main} > ${inp.dataset.sub}`;
+        inp.value = prevCaps[k] !== undefined ? prevCaps[k] : '';
+      });
       document.querySelectorAll('.plan-cat-input').forEach(input => {
         const v = prevPlan.categoryBudgets && prevPlan.categoryBudgets[input.dataset.cat];
-        if (v) { input.value = v; input.dataset.manualOverride = "true"; }
+        input.value = v !== undefined ? v : '';
+        if (prevManual.has(input.dataset.cat)) input.dataset.manualOverride = "true"; else delete input.dataset.manualOverride;
+        const idx = input.id.replace('main_input_', '');
+        if (v === undefined) recalculateMainCategory(Number(idx));
       });
-      toast("הנתונים הועתקו מהחודש הקודם");
+      toast("הצפי והתקרות הועתקו מהחודש הקודם. שמרו כדי לאשר.");
     }
 
     function closeMonthlyPlanningModal() { hide('monthlyPlanningModal'); }
@@ -1221,21 +1272,22 @@
     async function saveMonthlyPlanning() {
       const monthKey = $('selectedMonth').value;
       const expectedIncome = parseFloat($('planIncomeInput').value) || 0;
-      const categoryBudgets = {};
-      const newCaps = { ...(houseConfig.caps || {}) };
+      const categoryBudgets = {}, manualCats = [], subCaps = {};
       document.querySelectorAll('.plan-cat-input').forEach(input => {
-        const val = parseFloat(input.value) || 0;
-        if (val > 0) categoryBudgets[input.dataset.cat] = val;
+        const raw = input.value.trim(); if (raw === '') return;
+        const val = parseFloat(raw); if (isNaN(val) || val < 0) return;
+        categoryBudgets[input.dataset.cat] = val; // 0 הוא ערך תקין ("לא מתכננים להוציא")
+        if (input.dataset.manualOverride) manualCats.push(input.dataset.cat);
       });
       document.querySelectorAll('.plan-sub-input').forEach(input => {
-        const capKey = `${input.dataset.main} > ${input.dataset.sub}`;
-        const val = parseFloat(input.value) || 0;
-        if (val > 0) newCaps[capKey] = val; else delete newCaps[capKey];
+        const raw = input.value.trim(); if (raw === '') return;
+        const val = parseFloat(raw); if (isNaN(val) || val < 0) return;
+        subCaps[`${input.dataset.main} > ${input.dataset.sub}`] = val;
       });
-      const updatedPlans = { ...(houseConfig.monthlyPlans || {}), [monthKey]: { expectedIncome, categoryBudgets } };
-      if (!(await updateHouse({ monthlyPlans: updatedPlans, caps: newCaps }))) return;
+      const updatedPlans = { ...(houseConfig.monthlyPlans || {}), [monthKey]: { expectedIncome, categoryBudgets, subCaps, manualCats } };
+      if (!(await updateHouse({ monthlyPlans: updatedPlans }))) return;
       closeMonthlyPlanningModal();
-      toast("הצפי והתקרות נשמרו");
+      toast("הצפי והתקרות נשמרו למחזור הזה");
     }
 
     function checkAndPromptMonthlyPlan() {
@@ -1245,6 +1297,15 @@
       if (localStorage.getItem(flag)) return; // מציגים אוטומטית פעם אחת בלבד לכל מחזור
       localStorage.setItem(flag, '1');
       openMonthlyPlanningModal();
+    }
+
+    // ---------- Who entered ----------
+    const myEmail = () => (currentUser && currentUser.email ? currentUser.email.toLowerCase() : '');
+    function personName(email) {
+      if (!email) return 'לא ידוע';
+      const e = String(email).toLowerCase();
+      const p = (houseConfig.memberProfiles || []).find(x => (x.email || '').toLowerCase() === e);
+      return (p && p.name) || e.split('@')[0];
     }
 
     // ---------- Recurring transactions ----------
@@ -1274,23 +1335,43 @@
       $('recurringDayLabel').textContent = d ? String(parseInt(d.slice(8, 10), 10)) : '';
     }
 
-    async function saveRecurringFromForm(payload, monthKey) {
+    function onRecurringToggle() {
+      const on = $('isRecurring').checked;
+      $('recurringOptions').classList.toggle('hidden', !on);
+      const mode = $('recurringMode').value;
+      $('recurringEndMonth').classList.toggle('hidden', !(on && mode === 'until'));
+      $('recurringCount').classList.toggle('hidden', !(on && mode === 'count'));
+    }
+
+    // בונה הגדרה קבועה מהטופס. בעריכה של תנועה קיימת, התנועה הקיימת היא התשלום הראשון והקבועה מתחילה מהמחזור הבא.
+    function buildRecurringFromForm(payload, monthKey, isEdit) {
+      const mode = $('recurringMode').value;
+      const endMonth = $('recurringEndMonth').value;
+      const count = parseInt($('recurringCount').value, 10);
+      if (mode === 'until' && !(endMonth && endMonth >= monthKey)) { toast("חודש הסיום חייב להיות החודש הזה או מאוחר יותר.", 'error'); return null; }
+      if (mode === 'count' && !(count >= 2)) { toast("נא להזין מספר תשלומים (2 ומעלה).", 'error'); return null; }
+      const rec = {
+        id: newId(), type: payload.type, amount: payload.amount,
+        mainCategory: payload.mainCategory, subCategory: payload.subCategory,
+        dayOfMonth: parseInt(payload.date.slice(8, 10), 10),
+        description: payload.description === '-' ? '' : payload.description,
+        startCycle: isEdit ? shiftMonth(monthKey, 1) : monthKey, skip: [], active: true, createdBy: myEmail()
+      };
+      const endCycle = recurringEndCycle({ mode, endMonth, count, firstCycle: monthKey });
+      if (endCycle) rec.endCycle = endCycle;
+      if (payload.type === 'expense') { rec.paymentMethod = payload.paymentMethod; rec.expenseType = payload.expenseType; }
+      return rec;
+    }
+
+    async function saveRecurring(rec) {
       const btn = $('transactionSubmitBtn'); btn.disabled = true;
       try {
-        const rec = {
-          id: newId(), type: payload.type, amount: payload.amount,
-          mainCategory: payload.mainCategory, subCategory: payload.subCategory,
-          dayOfMonth: parseInt(payload.date.slice(8, 10), 10),
-          description: payload.description === '-' ? '' : payload.description,
-          startCycle: monthKey, skip: [], active: true
-        };
-        if (payload.type === 'expense') { rec.paymentMethod = payload.paymentMethod; rec.expenseType = payload.expenseType; }
-        const ok = await updateHouse({ recurring: [...(houseConfig.recurring || []), rec] });
-        if (!ok) return;
-        houseConfig.recurring = [...(houseConfig.recurring || []), rec];
+        const next = [...(houseConfig.recurring || []), rec];
+        if (!(await updateHouse({ recurring: next }))) return;
+        houseConfig.recurring = next;
         resetTransactionForm();
         switchMainTab('overview');
-        toast(`נשמרה תנועה קבועה: כל חודש ביום ${rec.dayOfMonth}`);
+        toast(`נשמרה תנועה קבועה: כל חודש ביום ${rec.dayOfMonth}${rec.endCycle ? ' עד ' + rec.endCycle : ''}`);
         runRecurringGenerator();
       } finally { btn.disabled = false; }
     }
@@ -1306,7 +1387,7 @@
         <div class="flex items-center justify-between gap-2 bg-slate-50 border rounded-2xl p-3 text-xs">
           <div class="min-w-0">
             <div class="font-bold text-slate-800 truncate">${CATEGORY_ICONS[r.mainCategory] || '📁'} ${esc(r.description || r.subCategory)}</div>
-            <div class="text-[11px] text-slate-500 truncate">${esc(r.mainCategory)} · ${esc(r.subCategory)} · כל ${esc(r.dayOfMonth)} בחודש</div>
+            <div class="text-[11px] text-slate-500 truncate">${esc(r.mainCategory)} · ${esc(r.subCategory)} · כל ${esc(r.dayOfMonth)} בחודש${r.endCycle ? (r.endCycle < cycleKeyForDate(localDateStr(), houseConfig.cycleStartDay || 10) ? ' · הסתיימה' : ' · עד ' + esc(r.endCycle)) : ''}</div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <span class="font-extrabold ${r.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}">${money(r.type === 'expense' ? -r.amount : r.amount)}</span>
@@ -1374,7 +1455,7 @@
           paymentMethod: methods.find(m => m.includes('העברה')) || methods[0] || 'העברה בנקאית',
           mainCategory: SAVINGS_CATEGORY, subCategory: SAVINGS_SUBCATEGORY, date,
           description: `הפקדה ל${goal.name}`, monthKey: cycleKeyForDate(date, houseConfig.cycleStartDay || 10),
-          expenseType: 'משתנות', budgetClassification: 'צרכים', savingsGoal: goal.name
+          expenseType: 'משתנות', budgetClassification: 'צרכים', savingsGoal: goal.name, createdBy: myEmail()
         });
       } catch (e) { console.error(e); toast("רישום ההפקדה נכשל.", 'error'); return; }
       const goals = houseConfig.savingsGoals.map((g, i) => i === idx ? { ...g, saved: (g.saved || 0) + amount } : g);
@@ -1662,6 +1743,12 @@
         const opt = document.createElement('option'); opt.value = c; opt.textContent = `${CATEGORY_ICONS[c] || '📁'} ${c}`; sel.appendChild(opt);
       });
       sel.value = [...sel.options].some(o => o.value === prev) ? prev : 'ALL';
+
+      const ps = $('filterPerson'); const prevP = ps.value;
+      ps.innerHTML = '<option value="ALL">כולם</option>';
+      getMembers().forEach(m => { const o = document.createElement('option'); o.value = m.toLowerCase(); o.textContent = personName(m); ps.appendChild(o); });
+      const unk = document.createElement('option'); unk.value = 'UNKNOWN'; unk.textContent = 'לא ידוע'; ps.appendChild(unk);
+      ps.value = [...ps.options].some(o => o.value === prevP) ? prevP : 'ALL';
     }
 
     function renderPaymentMethodsManager() {
@@ -1744,6 +1831,7 @@
       $('transactionSubmitBtn').textContent = 'הוסף תנועה למאזן';
       $('transactionCancelBtn').classList.add('hidden');
       $('recurringFieldWrapper').classList.remove('hidden');
+      onRecurringToggle();
       updateRecurringLabel();
       setTransactionType('expense');
     }
@@ -1769,7 +1857,10 @@
       $('transactionFormTitle').querySelector('span').textContent = 'עריכת תנועה';
       $('transactionSubmitBtn').textContent = 'שמור שינויים';
       $('transactionCancelBtn').classList.remove('hidden');
-      $('recurringFieldWrapper').classList.add('hidden');
+      // תנועה שנוצרה אוטומטית כבר קבועה. תנועה רגילה אפשר להפוך לקבועה מכאן.
+      $('recurringFieldWrapper').classList.toggle('hidden', !!t.recurringId);
+      $('isRecurring').checked = false;
+      onRecurringToggle();
     }
 
     async function handleAddTransaction(e) {
@@ -1793,15 +1884,26 @@
       };
       if (isExpense) payload.expenseType = $('expenseType').value;
 
-      if ($('isRecurring').checked && !editingTxId) { await saveRecurringFromForm(payload, monthKey); return; }
+      let newRec = null;
+      if ($('isRecurring').checked) {
+        newRec = buildRecurringFromForm(payload, monthKey, !!editingTxId);
+        if (!newRec) return; // הוודאות נכשלה, ההודעה כבר הוצגה
+        if (!editingTxId) { await saveRecurring(newRec); return; }
+        payload.recurringId = newRec.id; // תנועה קיימת שהפכה לקבועה
+      }
 
       const btn = $('transactionSubmitBtn'); btn.disabled = true;
       try {
         if (editingTxId) {
           await window.updateDoc(window.doc(window.db, "house_transactions", editingTxId), payload);
-          toast("התנועה עודכנה");
+          if (newRec) {
+            const next = [...(houseConfig.recurring || []), newRec];
+            if (await updateHouse({ recurring: next })) { houseConfig.recurring = next; runRecurringGenerator(); }
+            toast("התנועה עודכנה, והיא תיווצר אוטומטית מהמחזור הבא");
+          } else toast("התנועה עודכנה");
         } else {
           if (isExpense) payload.budgetClassification = "צרכים";
+          payload.createdBy = myEmail();
           await window.addDoc(window.collection(window.db, "house_transactions"), { houseCode: activeHouseCode, ...payload });
           toast("התנועה נוספה");
         }
@@ -1818,15 +1920,20 @@
     }
 
     function showBudgetWarningIfNeeded(mainCat, subCat, amount, monthKey) {
-      const monthTx = getTransactionsForCurrentCycle();
-      const mainSpent = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat).reduce((a, t) => a + t.amount, 0);
-      const subSpent = monthTx.filter(t => t.type === 'expense' && t.mainCategory === mainCat && t.subCategory === subCat).reduce((a, t) => a + t.amount, 0);
+      const cycleDay = houseConfig.cycleStartDay || 10;
+      const inCycle = transactions.filter(t => t.type === 'expense' && (t.monthKey || cycleKeyForDate(t.date, cycleDay)) === monthKey);
+      const mainSpent = inCycle.filter(t => t.mainCategory === mainCat).reduce((a, t) => a + t.amount, 0);
+      const subSpent = inCycle.filter(t => t.mainCategory === mainCat && t.subCategory === subCat).reduce((a, t) => a + t.amount, 0);
       const plan = (houseConfig.monthlyPlans || {})[monthKey] || {};
       const mainBudget = (plan.categoryBudgets || {})[mainCat];
-      const subCap = (houseConfig.caps || {})[`${mainCat} > ${subCat}`];
+      const subCap = getSubCaps(houseConfig, monthKey)[`${mainCat} > ${subCat}`];
+      const m = budgetAlert({ spent: mainSpent, amount, limit: mainBudget });
+      const sc = budgetAlert({ spent: subSpent, amount, limit: subCap });
       let msg = "";
-      if (mainBudget && mainSpent + amount > mainBudget) msg = `שימו לב! הוצאה זו תגרום לחריגה מיעד הצפי לקטגוריה ${mainCat} (צפי: ${money(mainBudget)})`;
-      else if (subCap && subSpent + amount > subCap) msg = `שימו לב! הוצאה זו תעבור את תקרת התקציב לתת-הקטגוריה ${subCat} (תקרה: ${money(subCap)})`;
+      if (m.level === 'over') msg = `שימו לב! הוצאה זו תגרום לחריגה מיעד הצפי לקטגוריה ${mainCat} (צפי: ${money(mainBudget)})`;
+      else if (sc.level === 'over') msg = `שימו לב! הוצאה זו תעבור את תקרת התקציב לתת-הקטגוריה ${subCat} (תקרה: ${money(subCap)})`;
+      else if (m.level === 'warn') msg = `הוצאה זו תביא אתכם ל-${m.pct}% מהצפי לקטגוריה ${mainCat} (צפי: ${money(mainBudget)})`;
+      else if (sc.level === 'warn') msg = `הוצאה זו תביא אתכם ל-${sc.pct}% מהתקרה של ${subCat} (תקרה: ${money(subCap)})`;
       if (msg) { $('budgetAlertMessage').textContent = msg; show('budgetAlertModal'); }
     }
 
@@ -1901,7 +2008,9 @@
       $('variableExpensesTotal').textContent = money(r.variableTotal);
       $('unplannedExpensesTotal').textContent = money(r.unplannedTotal);
 
+      renderStatusCard(r);
       renderMonthlyPlanOverview(r.catTotals, r.subCatTotals, r.totalIncome);
+      renderPersonSummary(r.monthTx);
       renderSavingsGoals();
       renderRecentTransactions(r.monthTx);
       renderCategorySummaryList(r.catTotals);
@@ -1926,14 +2035,14 @@
       const catBudgets = plans.categoryBudgets || {};
       const catKeys = Object.keys(catBudgets);
       const catsData = catsNow();
-      const caps = houseConfig.caps || {};
+      const caps = getSubCaps(houseConfig, monthKey);
 
       if (catKeys.length === 0) {
         html += `<div class="text-center py-2 text-slate-400 text-xs">לא הוגדרו יעדי הוצאה לקטגוריות.</div>`;
       } else {
         html += `<div class="space-y-2.5 pt-1">`;
         catKeys.forEach(cat => {
-          const expected = catBudgets[cat] || 0;
+          const expected = catBudgets[cat] || 0; // 0 = לא מתכננים להוציא
           const actual = catTotals[cat] || 0;
           const pct = expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : 0;
           let barColor = "bg-indigo-500";
@@ -1966,20 +2075,22 @@
 
           sortedSubs.forEach(sub => {
             const capKey = `${cat} > ${sub}`;
-            const subCap = caps[capKey] || 0;
+            const hasCap = caps[capKey] !== undefined;
+            const subCap = hasCap ? caps[capKey] : 0;
             const subSpent = subCatTotals[capKey] || 0;
             const subPct = subCap > 0 ? Math.min(100, Math.round((subSpent / subCap) * 100)) : (subSpent > 0 ? 100 : 0);
+            const subOver = hasCap && subSpent > subCap;
             let subBarColor = "bg-emerald-500";
-            if (subCap > 0 && subSpent > subCap) subBarColor = "bg-rose-500";
+            if (subOver) subBarColor = "bg-rose-500";
             else if (subPct >= 75 && subSpent < subCap) subBarColor = "bg-amber-400";
-            else if (subSpent === 0 && subCap === 0) subBarColor = "bg-slate-200";
+            else if (subSpent === 0 && !hasCap) subBarColor = "bg-slate-200";
             html += `
               <div class="p-2.5 bg-slate-50 rounded-xl border text-xs space-y-1">
                 <div class="flex justify-between font-bold text-slate-700">
                   <span>${esc(sub)}</span>
-                  <span class="text-[11px] ${subCap > 0 && subSpent > subCap ? 'text-rose-600 font-extrabold' : 'text-slate-600'}">בפועל: ${money(subSpent)} ${subCap > 0 ? `/ תקרה: ${money(subCap)}` : ''}</span>
+                  <span class="text-[11px] ${subOver ? 'text-rose-600 font-extrabold' : 'text-slate-600'}">בפועל: ${money(subSpent)} ${hasCap ? `/ תקרה: ${money(subCap)}` : ''}</span>
                 </div>
-                <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${subBarColor} h-full" style="width: ${subSpent > 0 || subCap > 0 ? Math.max(subPct, 5) : 0}%"></div></div>
+                <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden"><div class="${subBarColor} h-full" style="width: ${subSpent > 0 || hasCap ? Math.max(subPct, 5) : 0}%"></div></div>
               </div>`;
           });
           html += `</div></div>`;
@@ -1987,6 +2098,56 @@
         html += `</div>`;
       }
       container.innerHTML = html;
+    }
+
+    function renderStatusCard(r) {
+      const box = $('statusCard');
+      const key = $('selectedMonth').value;
+      const plan = (houseConfig.monthlyPlans || {})[key];
+      const st = monthStatus({ today: localDateStr(), cycleKey: key, cycleDay: houseConfig.cycleStartDay || 10, plan, catTotals: r.catTotals, totalExpenses: r.totalExpenses });
+      const sub = st.state === 'current' ? `נותרו ${st.daysLeft} ימים מתוך ${st.totalDays}` : st.state === 'past' ? 'המחזור הסתיים' : 'המחזור עוד לא התחיל';
+      const head = `<div class="flex justify-between items-baseline"><h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-indigo-500"></i> איפה אני עומד</h2><span class="text-[11px] text-slate-400 font-medium">${sub}</span></div>`;
+      if (!st.hasBudget) {
+        box.innerHTML = head + `<div class="text-center py-3 text-slate-400 text-xs border border-dashed rounded-xl">כדי לראות כמה נשאר לכם, <button onclick="openMonthlyPlanningModal()" class="text-indigo-600 underline font-bold">הגדירו צפי ותקרות</button></div>`;
+        return;
+      }
+      const pct = Math.min(100, Math.round(st.budgetedSpent / st.totalBudget * 100));
+      const elapsed = st.state === 'current' ? Math.round((st.totalDays - st.daysLeft) / st.totalDays * 100) : (st.state === 'past' ? 100 : 0);
+      const over = st.remaining < 0;
+      const faster = st.state === 'current' && !over && pct > elapsed + 10;
+      const bar = over ? 'bg-rose-500' : (faster ? 'bg-amber-400' : 'bg-indigo-500');
+      const chips = st.near.map(n => {
+        const c = n.pct >= 100 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-800 border-amber-200';
+        return `<span class="inline-flex items-center gap-1 text-[11px] font-bold border rounded-full px-2.5 py-1 ${c}">${CATEGORY_ICONS[n.cat] || '📁'} ${esc(n.cat)} ${n.pct > 300 ? '300%+' : n.pct + '%'}</span>`;
+      }).join('');
+      box.innerHTML = head + `
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-50 rounded-2xl p-3 border"><div class="text-[11px] text-slate-500 font-semibold">${over ? 'חריגה מהתקציב' : 'נותר לתקציב'}</div><div class="text-base font-extrabold ${over ? 'text-rose-600' : 'text-slate-800'}">${money(Math.abs(st.remaining))}</div></div>
+          <div class="bg-slate-50 rounded-2xl p-3 border"><div class="text-[11px] text-slate-500 font-semibold">ממוצע ליום</div><div class="text-base font-extrabold text-slate-800">${st.perDay === null || over ? '—' : money(st.perDay)}</div></div>
+          <div class="bg-slate-50 rounded-2xl p-3 border"><div class="text-[11px] text-slate-500 font-semibold">נוצל מהתקציב</div><div class="text-base font-extrabold text-slate-800">${Math.round(st.budgetedSpent / st.totalBudget * 100)}%</div></div>
+        </div>
+        <div class="relative h-2.5 w-full bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+          <div class="${bar} h-full rounded-full" style="width:${pct}%"></div>
+          ${st.state === 'current' ? `<div class="absolute top-0 bottom-0 w-0.5 bg-slate-500/70" style="right:${elapsed}%" title="איפה אמורים להיות לפי הזמן"></div>` : ''}
+        </div>
+        ${faster ? '<p class="text-[11px] text-amber-700 font-semibold">קצב ההוצאה מהיר מהקצב של המחזור.</p>' : ''}
+        ${chips ? `<div class="flex flex-wrap gap-1.5">${chips}</div>` : ''}
+        ${st.unbudgetedSpent > 0 ? `<p class="text-[11px] text-slate-400">הוצאות מחוץ לתקציב שהוגדר: ${money(st.unbudgetedSpent)}</p>` : ''}`;
+    }
+
+    function renderPersonSummary(monthTx) {
+      const box = $('personSummary');
+      const totals = {};
+      monthTx.filter(t => t.type === 'expense').forEach(t => { const k = (t.createdBy || '').toLowerCase() || 'UNKNOWN'; totals[k] = (totals[k] || 0) + t.amount; });
+      const keys = Object.keys(totals);
+      if (keys.filter(k => k !== 'UNKNOWN').length === 0) { box.classList.add('hidden'); return; } // אין מידע על מי הזין
+      const sum = keys.reduce((a, k) => a + totals[k], 0);
+      box.classList.remove('hidden');
+      box.innerHTML = `<h3 class="text-xs font-bold text-slate-400 uppercase">הוצאות לפי אדם</h3>` + keys.sort((a, b) => totals[b] - totals[a]).map(k => `
+        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border text-sm">
+          <span class="font-bold text-slate-700">${esc(k === 'UNKNOWN' ? 'לא ידוע' : personName(k))} <span class="text-[11px] font-medium text-slate-400">${Math.round(totals[k] / sum * 100)}%</span></span>
+          <span class="font-extrabold text-slate-900">${money(totals[k])}</span>
+        </div>`).join('');
     }
 
     function renderSavingsGoals() {
@@ -2032,7 +2193,7 @@
             <div class="w-10 h-10 shrink-0 bg-white rounded-xl flex items-center justify-center text-lg shadow-sm border">${CATEGORY_ICONS[t.mainCategory] || '📁'}</div>
             <div class="min-w-0">
               <div class="font-bold text-slate-800 truncate">${esc(t.mainCategory)} (${esc(t.subCategory)})</div>
-              <div class="text-[11px] text-slate-400 truncate">${esc(t.date)} • ${esc(t.paymentMethod || '-')}${t.description && t.description !== '-' ? ' • ' + esc(t.description) : ''}</div>
+              <div class="text-[11px] text-slate-400 truncate">${esc(t.date)} • ${esc(t.paymentMethod || '-')}${t.createdBy ? ' • ' + esc(personName(t.createdBy)) : ''}${t.description && t.description !== '-' ? ' • ' + esc(t.description) : ''}</div>
             </div>
           </div>
           <div class="font-extrabold shrink-0 ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${money(isExpense ? -t.amount : t.amount)}</div>`;
@@ -2057,9 +2218,11 @@
       const tbody = $('transactionsTableBody'); tbody.innerHTML = '';
       const filterCat = $('filterCategory').value;
       const q = $('searchTransactions').value.trim().toLowerCase();
+      const person = $('filterPerson').value;
       const filtered = monthTx
         .filter(t => filterCat === 'ALL' || t.mainCategory === filterCat)
-        .filter(t => !q || [t.description, t.mainCategory, t.subCategory, t.paymentMethod].some(v => String(v || '').toLowerCase().includes(q)))
+        .filter(t => person === 'ALL' || (person === 'UNKNOWN' ? !t.createdBy : (t.createdBy || '').toLowerCase() === person))
+        .filter(t => !q || [t.description, t.mainCategory, t.subCategory, t.paymentMethod, personName(t.createdBy)].some(v => String(v || '').toLowerCase().includes(q)))
         .sort((a, b) => b.date.localeCompare(a.date));
 
       $('emptyTableMessage').classList.toggle('hidden', filtered.length > 0);
@@ -2077,6 +2240,7 @@
           <td class="p-4 font-bold text-slate-800"><span class="inline-flex items-center gap-1.5"><span>${CATEGORY_ICONS[t.mainCategory] || '📁'}</span><span>${esc(t.mainCategory)}</span></span></td>
           <td class="p-4">${esc(t.subCategory)}</td>
           <td class="p-4 font-medium">${t.recurringId ? '<span title="תנועה קבועה">🔁</span> ' : ''}${esc(t.description)}</td>
+          <td class="p-4 text-xs text-slate-500">${esc(personName(t.createdBy))}</td>
           <td class="p-4 font-extrabold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${money(isExpense ? -t.amount : t.amount)}</td>
           <td class="p-4 text-center">
             <button onclick="editTransaction('${esc(t.id)}')" aria-label="ערוך" class="text-indigo-500 p-1"><i class="fa-solid fa-pen"></i></button>
@@ -2097,9 +2261,9 @@
     }
 
     function exportTableToCSV() {
-      const rows = ["\uFEFF" + ["תאריך", "אמצעי תשלום", "סוג", "קטגוריה", "תת-קטגוריה", "הערה", "סכום"].map(csvCell).join(",")];
+      const rows = ["\uFEFF" + ["תאריך", "אמצעי תשלום", "סוג", "קטגוריה", "תת-קטגוריה", "הערה", "הוזן ע\"י", "סכום"].map(csvCell).join(",")];
       getTransactionsForCurrentCycle().sort((a, b) => a.date.localeCompare(b.date)).forEach(t => {
-        rows.push([t.date, t.paymentMethod || '', t.type === 'expense' ? 'הוצאה' : 'הכנסה', t.mainCategory, t.subCategory, t.description, t.type === 'expense' ? -t.amount : t.amount].map(csvCell).join(","));
+        rows.push([t.date, t.paymentMethod || '', t.type === 'expense' ? 'הוצאה' : 'הכנסה', t.mainCategory, t.subCategory, t.description, personName(t.createdBy), t.type === 'expense' ? -t.amount : t.amount].map(csvCell).join(","));
       });
       const link = document.createElement("a");
       const url = URL.createObjectURL(new Blob([rows.join("\n")], { type: 'text/csv;charset=utf-8;' }));
