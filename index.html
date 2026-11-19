@@ -685,7 +685,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "2.2.0";
+    const APP_VERSION = "2.2.1";
     const GEMINI_MODEL = "gemini-2.5-flash"; // המודל המועדף
     const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.0-flash"]; // גיבוי אם המועדף לא זמין
     const GEMINI_KEY_STORAGE = "budget_gemini_key";
@@ -733,7 +733,7 @@
     // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId, recurringEndCycle, getSubCaps, budgetAlert, monthStatus, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan } = window.BudgetLogic;
+    const { pad, shiftMonth, cycleKeyForDate, cycleRange, planRecurringGenerations, recurringTxId, recurringEndCycle, getSubCaps, budgetAlert, monthStatus, effectiveBudgets, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan } = window.BudgetLogic;
     const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
     function money(n) {
@@ -1553,7 +1553,7 @@
 
     // "קבועה" בסוג ההוצאה ותיבת "תנועה קבועה" הן אותו דבר: מסמנים אחת והשנייה מתעדכנת
     function onExpenseTypeChange() {
-      if ($('expenseType').value === 'קבועות' && !editingTxId && !$('isRecurring').checked && !$('recurringFieldWrapper').classList.contains('hidden')) {
+      if ($('expenseType').value === 'קבועות' && !$('isRecurring').checked && !$('recurringFieldWrapper').classList.contains('hidden')) {
         $('isRecurring').checked = true; onRecurringToggle();
       }
     }
@@ -2161,8 +2161,9 @@
       const mainSpent = inCycle.filter(t => t.mainCategory === mainCat).reduce((a, t) => a + t.amount, 0);
       const subSpent = inCycle.filter(t => t.mainCategory === mainCat && t.subCategory === subCat).reduce((a, t) => a + t.amount, 0);
       const plan = (houseConfig.monthlyPlans || {})[monthKey] || {};
-      const mainBudget = (plan.categoryBudgets || {})[mainCat];
-      const subCap = getSubCaps(houseConfig, monthKey)[`${mainCat} > ${subCat}`];
+      const allCaps = getSubCaps(houseConfig, monthKey);
+      const mainBudget = effectiveBudgets(plan, allCaps)[mainCat];
+      const subCap = allCaps[`${mainCat} > ${subCat}`];
       const m = budgetAlert({ spent: mainSpent, amount, limit: mainBudget });
       const sc = budgetAlert({ spent: subSpent, amount, limit: subCap });
       let msg = "";
@@ -2269,21 +2270,25 @@
       }
 
       let html = `<div class="flex justify-between items-center text-xs font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border"><span>צפי הכנסות: ${money(plans.expectedIncome || 0)}</span><span class="text-emerald-700">בפועל: ${money(totalIncome)}</span></div>`;
-      const catBudgets = plans.categoryBudgets || {};
-      const catKeys = Object.keys(catBudgets);
       const catsData = catsNow();
       const caps = getSubCaps(houseConfig, monthKey);
+      const catBudgets = effectiveBudgets(plans, caps);
+      // קטגוריות עם הוצאות אבל בלי צפי מוצגות בסוף, כדי שלא יוסתרו
+      const unplanned = Object.keys(catTotals || {}).filter(c => catBudgets[c] === undefined && catTotals[c] > 0);
+      const catKeys = [...Object.keys(catBudgets), ...unplanned];
 
       if (catKeys.length === 0) {
         html += `<div class="text-center py-2 text-slate-400 text-xs">לא הוגדרו יעדי הוצאה לקטגוריות.</div>`;
       } else {
         html += `<div class="space-y-2.5 pt-1">`;
         catKeys.forEach(cat => {
+          const noPlan = catBudgets[cat] === undefined;
           const expected = catBudgets[cat] || 0; // 0 = לא מתכננים להוציא
           const actual = catTotals[cat] || 0;
-          const pct = expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : 0;
+          const pct = noPlan ? 100 : expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : 0;
           let barColor = "bg-indigo-500";
-          if (actual > expected) barColor = "bg-rose-500";
+          if (noPlan) barColor = "bg-slate-400";
+          else if (actual > expected) barColor = "bg-rose-500";
           else if (pct >= 75) barColor = "bg-amber-400";
 
           const subs = catsData[cat] || [];
@@ -2303,7 +2308,7 @@
               <div onclick="this.nextElementSibling.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-100/80">
                 <div class="flex items-center gap-2 font-bold text-slate-800 text-xs"><span>${CATEGORY_ICONS[cat] || '📁'}</span><span>${esc(cat)}</span></div>
                 <div class="flex items-center gap-3 text-xs">
-                  <span class="font-extrabold ${actual > expected ? 'text-rose-600' : 'text-slate-700'}">בפועל: ${money(actual)} / צפי: ${money(expected)}</span>
+                  <span class="font-extrabold ${!noPlan && actual > expected ? 'text-rose-600' : 'text-slate-700'}">בפועל: ${money(actual)} / ${noPlan ? 'ללא צפי' : 'צפי: ' + money(expected)}</span>
                   <i class="fa-solid fa-chevron-down text-slate-400 text-[10px]"></i>
                 </div>
               </div>
@@ -2340,7 +2345,8 @@
     function renderStatusCard(r) {
       const box = $('statusCard');
       const key = $('selectedMonth').value;
-      const plan = (houseConfig.monthlyPlans || {})[key];
+      const rawPlan = (houseConfig.monthlyPlans || {})[key];
+      const plan = rawPlan ? { ...rawPlan, categoryBudgets: effectiveBudgets(rawPlan, getSubCaps(houseConfig, key)) } : rawPlan;
       const st = monthStatus({ today: localDateStr(), cycleKey: key, cycleDay: houseConfig.cycleStartDay || 10, plan, catTotals: r.catTotals, totalExpenses: r.totalExpenses });
       const sub = st.state === 'current' ? `נותרו ${st.daysLeft} ימים מתוך ${st.totalDays}` : st.state === 'past' ? 'המחזור הסתיים' : 'המחזור עוד לא התחיל';
       const head = `<div class="flex justify-between items-baseline"><h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-indigo-500"></i> איפה אני עומד</h2><span class="text-[11px] text-slate-400 font-medium">${sub}</span></div>`;
