@@ -73,11 +73,6 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col pb-28">
 
-  <!-- Update Banner -->
-  <div id="updateBanner" class="hidden bg-[#F9B2D7] text-slate-900 px-4 py-2 text-xs font-bold text-center shadow-md items-center justify-center gap-3">
-    <span>יש גרסה חדשה ועדכנית לאפליקציה</span>
-    <button onclick="triggerAppUpdate()" class="bg-slate-900 text-white px-3 py-1 rounded-lg hover:bg-slate-800 transition">עדכן עכשיו</button>
-  </div>
 
   <!-- Toasts -->
   <div id="toastContainer" class="fixed top-4 inset-x-0 z-[60] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
@@ -120,7 +115,7 @@
         <button onclick="openRecurringModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-rotate text-sky-500 w-4"></i><span>תנועות קבועות</span></button>
         <button onclick="openSettingsModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-gear text-slate-500 w-4"></i><span>אזור אישי</span></button>
         <button id="themeToggleBtn" onclick="toggleTheme()" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i id="themeToggleIcon" class="fa-solid fa-moon text-indigo-400 w-4"></i><span id="themeToggleLabel">מצב כהה</span></button>
-        <button id="installAppBtn" onclick="installApp()" class="hidden w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-mobile-screen-button text-emerald-500 w-4"></i><span>התקנה כאפליקציה</span></button>
+        <button id="installAppBtn" onclick="installApp()" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-mobile-screen-button text-emerald-500 w-4"></i><span>התקנה כאפליקציה</span></button>
         <button onclick="openTutorialModal(); toggleSidebar();" class="w-full text-right p-3 rounded-xl hover:bg-slate-50 flex items-center gap-3 text-slate-700"><i class="fa-solid fa-circle-question text-amber-500 w-4"></i><span>מדריך למשתמש</span></button>
       </nav>
     </div>
@@ -463,7 +458,7 @@
           </div>
           <div id="expenseTypeFieldWrapper">
             <label for="expenseType" class="block text-xs font-semibold text-slate-600 mb-1">סוג הוצאה</label>
-            <select id="expenseType" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5">
+            <select id="expenseType" onchange="onExpenseTypeChange()" class="w-full text-sm bg-slate-50 border rounded-xl p-2.5">
               <option value="משתנות">משתנה</option>
               <option value="קבועות">קבועה</option>
               <option value="בלתי מתוכננות">בלתי מתוכננת (בלת"מ)</option>
@@ -690,7 +685,7 @@
   </script>
 
   <script>
-    const APP_VERSION = "2.1.0";
+    const APP_VERSION = "2.2.0";
     const GEMINI_MODEL = "gemini-2.5-flash"; // המודל המועדף
     const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.0-flash"]; // גיבוי אם המועדף לא זמין
     const GEMINI_KEY_STORAGE = "budget_gemini_key";
@@ -804,11 +799,10 @@
 
     // ---------- Init ----------
     window.addEventListener('DOMContentLoaded', () => {
-      checkAppVersionBanner();
       applyTheme(isDark(), false);
       $('appVersionLabel').textContent = `גרסה ${APP_VERSION}`;
       $('transactionDate').value = localDateStr();
-      $('transactionDate').addEventListener('change', updateRecurringLabel);
+      $('transactionDate').addEventListener('change', () => { dateTouched = true; updateRecurringLabel(); });
       updateRecurringLabel();
 
       initAuth();
@@ -827,15 +821,6 @@
       });
     });
 
-    function checkAppVersionBanner() {
-      const savedVersion = localStorage.getItem('app_user_version');
-      if (!savedVersion) { localStorage.setItem('app_user_version', APP_VERSION); }
-      else if (savedVersion !== APP_VERSION) { $('updateBanner').classList.remove('hidden'); $('updateBanner').classList.add('flex'); }
-    }
-    function triggerAppUpdate() {
-      localStorage.setItem('app_user_version', APP_VERSION);
-      location.reload();
-    }
 
 
     // ---------- Theme (dark mode) ----------
@@ -856,12 +841,20 @@
 
     // ---------- PWA ----------
     let deferredInstallPrompt = null;
-    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; $('installAppBtn')?.classList.remove('hidden'); });
+    const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; });
     window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; $('installAppBtn')?.classList.add('hidden'); toast('האפליקציה הותקנה'); });
     async function installApp() {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; $('installAppBtn').classList.add('hidden');
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; return;
+      }
+      // באייפון (ובדפדפנים אחרים) אין חלון התקנה אוטומטי, מסבירים את הדרך הידנית
+      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      alert(ios
+        ? 'באייפון: פתחו את האתר ב-Safari, לחצו על כפתור השיתוף (ריבוע עם חץ למעלה), ואז "הוסף למסך הבית".'
+        : 'באנדרואיד: בתפריט הדפדפן (שלוש נקודות) בחרו "התקנת אפליקציה" או "הוסף למסך הבית". אם האפשרות לא מופיעה, פתחו את האתר ב-Chrome.');
     }
+    window.addEventListener('DOMContentLoaded', () => { if (isStandalone()) $('installAppBtn')?.classList.add('hidden'); });
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
@@ -883,6 +876,7 @@
     function switchMainTab(tab) {
       if (currentTab === 'add' && tab !== 'add' && editingTxId) resetTransactionForm();
       currentTab = tab;
+      if (tab === 'add' && !editingTxId && !dateTouched) { $('transactionDate').value = defaultFormDate(); updateRecurringLabel(); }
       $('tabContentOverview').classList.toggle('hidden', tab !== 'overview');
       $('tabContentAdd').classList.toggle('hidden', tab !== 'add');
       $('tabContentDetails').classList.toggle('hidden', tab !== 'details');
@@ -1535,13 +1529,13 @@
 
     // יוצרת תנועות קבועות שהגיע זמנן. מזהה קבוע לכל תנועה (rec_<id>_<מחזור>) מבטיח שגם אם שני מכשירים
     // מריצים את זה באותו זמן, לא ייווצרו כפילויות.
-    async function runRecurringGenerator() {
+    async function runRecurringGenerator(lookback = 2) {
       if (!configLoaded || !txLoaded || recurringRunning) return;
       const list = houseConfig.recurring || [];
       if (!list.length) return;
       const plan = planRecurringGenerations({
         recurring: list, existingIds: transactions.map(t => t.id),
-        today: localDateStr(), cycleDay: houseConfig.cycleStartDay || 10
+        today: localDateStr(), cycleDay: houseConfig.cycleStartDay || 10, lookback
       });
       if (!plan.length) return;
       recurringRunning = true;
@@ -1557,8 +1551,15 @@
       $('recurringDayLabel').textContent = d ? String(parseInt(d.slice(8, 10), 10)) : '';
     }
 
+    // "קבועה" בסוג ההוצאה ותיבת "תנועה קבועה" הן אותו דבר: מסמנים אחת והשנייה מתעדכנת
+    function onExpenseTypeChange() {
+      if ($('expenseType').value === 'קבועות' && !editingTxId && !$('isRecurring').checked && !$('recurringFieldWrapper').classList.contains('hidden')) {
+        $('isRecurring').checked = true; onRecurringToggle();
+      }
+    }
     function onRecurringToggle() {
       const on = $('isRecurring').checked;
+      if (on && currentTransactionType === 'expense' && $('expenseType').value !== 'קבועות') $('expenseType').value = 'קבועות';
       $('recurringOptions').classList.toggle('hidden', !on);
       const mode = $('recurringMode').value;
       $('recurringEndMonth').classList.toggle('hidden', !(on && mode === 'until'));
@@ -1592,9 +1593,15 @@
         if (!(await updateHouse({ recurring: next }))) return;
         houseConfig.recurring = next;
         resetTransactionForm();
+        // עוברים למחזור שבו התנועה מתחילה, כדי שתראו אותה מיד (גם כשהתחלתם בחודש קודם)
+        $('selectedMonth').value = rec.startCycle;
+        loadCurrentMonthData();
         switchMainTab('overview');
         toast(`נשמרה תנועה קבועה: כל חודש ביום ${rec.dayOfMonth}${rec.endCycle ? ' עד ' + rec.endCycle : ''}`);
-        runRecurringGenerator();
+        // מילוי חודשים אחורה עד תחילת התנועה (עד שנתיים), למי שמגדיר תנועה קבועה שהתחילה בעבר
+        const cur = cycleKeyForDate(localDateStr(), houseConfig.cycleStartDay || 10);
+        const [cy, cm] = cur.split('-').map(Number), [sy, sm] = rec.startCycle.split('-').map(Number);
+        runRecurringGenerator(Math.min(24, Math.max(2, (cy * 12 + cm) - (sy * 12 + sm))));
       } finally { btn.disabled = false; }
     }
 
@@ -2045,10 +2052,17 @@
     }
 
     // ---------- Transactions CRUD ----------
+    let dateTouched = false;
+    // כשצופים במחזור אחר, ברירת המחדל לתאריך היא תחילת אותו מחזור ולא היום
+    function defaultFormDate() {
+      const day = houseConfig.cycleStartDay || 10, sel = $('selectedMonth').value, today = localDateStr();
+      if (!sel || sel === cycleKeyForDate(today, day)) return today;
+      return localDateStr(cycleRange(sel, day).start);
+    }
     function resetTransactionForm() {
-      editingTxId = null;
+      editingTxId = null; dateTouched = false;
       $('transactionForm').reset();
-      $('transactionDate').value = localDateStr();
+      $('transactionDate').value = defaultFormDate();
       $('transactionFormTitle').querySelector('span').textContent = 'הזנת תנועה חדשה למאזן';
       $('transactionSubmitBtn').textContent = 'הוסף תנועה למאזן';
       $('transactionCancelBtn').classList.add('hidden');

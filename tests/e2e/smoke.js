@@ -246,6 +246,39 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   check('חזרה למצב בהיר', await page.evaluate(() => !document.documentElement.classList.contains('dark')));
   check('manifest מקושר', await page.evaluate(() => !!document.querySelector('link[rel=manifest]')));
 
+  // 18. תנועה קבועה שהוגדרה כשצופים בחודש קודם
+  await page.evaluate(() => { document.getElementById('selectedMonth').value = '2026-09'; loadCurrentMonthData(); switchMainTab('add'); });
+  const dflt = await page.inputValue('#transactionDate');
+  check('תאריך ברירת מחדל נופל במחזור שנבחר', dflt === '2026-09-10', dflt);
+  await page.fill('#amount', '3000');
+  await page.selectOption('#expenseType', 'קבועות');
+  check('בחירת "קבועה" מסמנת תנועה קבועה', await page.isChecked('#isRecurring') && await page.isVisible('#recurringOptions'));
+  await page.selectOption('#recurringMode', 'none'); await page.fill('#recurringCount', '');
+  const before18 = (await house()).recurring.length;
+  if (process.env.DEBUG_E2E) console.log('FORM', await page.evaluate(() => JSON.stringify({m: document.getElementById('mainCategory').value, s: document.getElementById('subCategory').value, d: document.getElementById('transactionDate').value, valid: document.getElementById('transactionForm').checkValidity(), toast: document.getElementById('toastContainer').innerText})));
+  await page.click('#transactionSubmitBtn'); await page.waitForTimeout(800);
+  if (process.env.DEBUG_E2E) console.log('TOAST', await page.evaluate(() => document.getElementById('toastContainer').innerText));
+  h = await house();
+  const rent = h.recurring[h.recurring.length - 1];
+  check('נשמרה הגדרה קבועה במחזור שנצפה', h.recurring.length === before18 + 1 && rent.startCycle === '2026-09', JSON.stringify([rent.startCycle, rent.expenseType]));
+  check('סוג ההוצאה נשמר כקבועה', rent.expenseType === 'קבועות');
+  t = await txs();
+  const created = t.filter(x => x.recurringId === rent.id).map(x => x.monthKey).sort();
+  check('נוצרו תנועות לכל המחזורים מהעבר ועד היום', JSON.stringify(created) === JSON.stringify(['2026-09', '2026-10', '2026-11']), JSON.stringify(created));
+  check('התצוגה עברה למחזור ההתחלה', await page.inputValue('#selectedMonth') === '2026-09');
+  check('אין באנר עדכון', (await page.$('#updateBanner')) === null);
+
+  // 19. סריקה: פתיחת כל החלונות והמסכים בלי שגיאות
+  for (const fn of ['openSettingsModal', 'openRecurringModal', 'openCategoriesModal', 'openPaymentMethodsModal', 'openMonthlyPlanningModal', 'openTutorialModal']) {
+    await page.evaluate(f => window[f](), fn);
+    await page.keyboard.press('Escape');
+  }
+  for (const tab of ['overview', 'add', 'details', 'reports', 'overview']) await page.evaluate(t => switchMainTab(t), tab);
+  for (const sub of ['period', 'category', 'trend', 'types', 'period']) await page.evaluate(x => switchReportSubTab(x), sub);
+  for (const k of ['month', 'quarter', 'half', 'year']) await page.evaluate(x => setReportPeriod(x), k);
+  for (const m of ['2025-01', '2026-11']) await page.evaluate(x => { document.getElementById('selectedMonth').value = x; loadCurrentMonthData(); }, m);
+  check('החלונות והמסכים נפתחו', true);
+
   console.log(errors.length ? 'JS ERRORS:\n' + errors.join('\n') : 'no JS errors');
   if (errors.length) process.exitCode = 1;
   await browser.close();
