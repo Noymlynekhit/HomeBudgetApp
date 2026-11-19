@@ -161,6 +161,20 @@
     };
   }
 
+  // צפי אפקטיבי לכל קטגוריה: הצפי השמור, ואם אין כזה, סכום התקרות של תתי-הקטגוריות (גם כשנשמרו רק תקרות)
+  function effectiveBudgets(plan, caps) {
+    const out = { ...((plan && plan.categoryBudgets) || {}) };
+    Object.keys(caps || {}).forEach(key => {
+      const cat = key.split(' > ')[0];
+      if (out[cat] !== undefined) return;
+      out.__sum = out.__sum || {};
+      out.__sum[cat] = (out.__sum[cat] || 0) + (Number(caps[key]) || 0);
+    });
+    const sums = out.__sum || {}; delete out.__sum;
+    Object.keys(sums).forEach(cat => { if (sums[cat] > 0) out[cat] = sums[cat]; });
+    return out;
+  }
+
   // ---------- דוחות לפי תקופה ----------
   const PERIOD_LEN = { month: 1, quarter: 3, half: 6, year: 12 };
 
@@ -222,5 +236,5 @@
     return { status: 'ok', remaining, monthsLeft, perMonth: Math.ceil(remaining / monthsLeft) };
   }
 
-  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations, recurringEndCycle, getSubCaps, budgetAlert, daysLeftInCycle, monthStatus, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan };
+  return { pad, shiftMonth, cycleKeyForDate, cycleRange, dueDateForCycle, recurringTxId, planRecurringGenerations, recurringEndCycle, getSubCaps, budgetAlert, daysLeftInCycle, monthStatus, effectiveBudgets, periodCycles, shiftPeriod, aggregateTransactions, compareCategories, topChanges, savingsPlan };
 });

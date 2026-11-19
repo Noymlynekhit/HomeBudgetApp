@@ -193,3 +193,14 @@ test('savingsPlan: הפקדה חודשית נדרשת', () => {
   assert.equal(L.savingsPlan({ target: 5000, saved: 0, today: '2026-11-18' }).status, 'nodeadline');
   assert.equal(L.savingsPlan({ target: 1000, saved: 0, deadline: '2027-01', today: '2026-11-18' }).perMonth, 334); // עיגול כלפי מעלה
 });
+
+test('effectiveBudgets: צפי שמור גובר, ובלעדיו סכום התקרות', () => {
+  const plan = { categoryBudgets: { 'אוכל': 1500, 'פנאי': 0 } };
+  const caps = { 'הוצאות בית > שכר דירה': 4000, 'הוצאות בית > ארנונה': 400, 'אוכל > סופר': 900, 'פנאי > סרטים': 100, 'תחבורה > דלק': 0 };
+  const b = L.effectiveBudgets(plan, caps);
+  assert.equal(b['הוצאות בית'], 4400);
+  assert.equal(b['אוכל'], 1500);   // שמור גובר על סכום התקרות
+  assert.equal(b['פנאי'], 0);      // אפס מפורש נשמר
+  assert.equal(b['תחבורה'], undefined); // תקרות באפס בלבד לא יוצרות צפי
+  assert.deepEqual(L.effectiveBudgets(null, null), {});
+});

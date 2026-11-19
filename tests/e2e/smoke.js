@@ -279,6 +279,25 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   for (const m of ['2025-01', '2026-11']) await page.evaluate(x => { document.getElementById('selectedMonth').value = x; loadCurrentMonthData(); }, m);
   check('החלונות והמסכים נפתחו', true);
 
+  await page.evaluate(() => window.setDoc(window.doc(window.db, 'house_transactions', 'plain1'), { houseCode: 'testhome', type: 'expense', amount: 300, date: '2026-11-15', monthKey: '2026-11', mainCategory: 'תקשורת', subCategory: 'אחר', paymentMethod: 'אשראי', expenseType: 'משתנות', description: '-' }));
+  await page.waitForTimeout(400);
+  // 20. צפי שנשמר רק כתקרות מוצג, וקטגוריה בלי צפי מוצגת כ"ללא צפי"
+  await page.evaluate(() => {
+    document.getElementById('selectedMonth').value = '2026-11';
+    houseConfig.monthlyPlans['2026-11'].subCaps = { ...(houseConfig.monthlyPlans['2026-11'].subCaps || {}), 'הוצאות בית > דיור - שכר דירה / משכנתא': 4000 };
+    loadCurrentMonthData();
+  });
+  const ov = await page.textContent('#monthlyPlanOverviewContainer');
+  check('קטגוריה עם תקרות בלבד מוצגת עם הצפי המחושב', ov.includes('הוצאות בית') && ov.includes('4,000'), ov.slice(0, 200));
+  check('קטגוריה עם הוצאות בלי צפי מוצגת כ"ללא צפי"', ov.includes('ללא צפי'));
+
+  // 21. "קבועה" בעריכת תנועה רגילה פותחת את אפשרויות הקבועה
+  await page.evaluate(() => { editTransaction('plain1'); });
+  await page.selectOption('#expenseType', 'משתנות');
+  await page.selectOption('#expenseType', 'קבועות');
+  check('בעריכה: בחירת קבועה פותחת את "עד מתי"', await page.isChecked('#isRecurring') && await page.isVisible('#recurringOptions'));
+  await page.evaluate(() => cancelEditTransaction());
+
   console.log(errors.length ? 'JS ERRORS:\n' + errors.join('\n') : 'no JS errors');
   if (errors.length) process.exitCode = 1;
   await browser.close();
