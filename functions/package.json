@@ -2,7 +2,7 @@
   "name": "homebudgetapp-functions",
   "private": true,
   "description": "Server side for HomeBudgetApp: authenticated Gemini proxy",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "scripts": { "test": "node --test test/*.test.js" },
   "dependencies": {
