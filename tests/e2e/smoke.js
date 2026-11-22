@@ -37,6 +37,10 @@ export const signInWithEmailAndPassword = async () => {}; export const createUse
 export const sendEmailVerification = async () => {}; export const sendPasswordResetEmail = async () => {};
 export class GoogleAuthProvider {} export const signInWithPopup = async () => {}; export const signOut = async () => {};`;
 
+const fakeFunctions = `
+export const getFunctions = () => ({});
+export const httpsCallable = (f, name) => async (data) => { window.__fnCalls = (window.__fnCalls || []); window.__fnCalls.push({ name, data }); if (window.__fnMode === 'missing') { const e = new Error('not found'); e.code = 'functions/not-found'; throw e; } if (window.__fnMode === 'denied') { const e = new Error('אין הרשאה'); e.code = 'functions/permission-denied'; throw e; } return { data: { text: 'תשובה מהשרת' } }; };`;
+
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext();
@@ -53,6 +57,7 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
     if (u.includes('firebase-app.js')) return js(fakeApp);
     if (u.includes('firebase-firestore.js')) return js(fakeFirestore);
     if (u.includes('firebase-auth.js')) return js(fakeAuth);
+    if (u.includes('firebase-functions.js')) return js(fakeFunctions);
     if (u.includes('chart')) return js('window.Chart=function(){return{destroy(){}}};');
     if (u.includes('tailwind')) return js('');
     return route.fulfill({ contentType: 'text/css', body: '' });
@@ -297,6 +302,12 @@ export class GoogleAuthProvider {} export const signInWithPopup = async () => {}
   await page.selectOption('#expenseType', 'קבועות');
   check('בעריכה: בחירת קבועה פותחת את "עד מתי"', await page.isChecked('#isRecurring') && await page.isVisible('#recurringOptions'));
   await page.evaluate(() => cancelEditTransaction());
+
+  // 22. קריאה ל-AI דרך השרת, עם נפילה למפתח האישי כשהשרת לא פרוס
+  check('callGemini משתמש בשרת', await page.evaluate(async () => (await callGemini([{ text: 'שלום' }])) === 'תשובה מהשרת' && window.__fnCalls[0].name === 'askGemini' && window.__fnCalls[0].data.houseCode === activeHouseCode));
+  check('הרשאה נדחית מוצגת כשגיאה ולא עוקפת למפתח', await page.evaluate(async () => { window.__fnMode = 'denied'; try { await callGemini([{ text: 'x' }]); return false; } catch (e) { return e.message.includes('אין הרשאה'); } }));
+  check('שרת לא פרוס: ללא מפתח אישי מקבלים NO_KEY', await page.evaluate(async () => { window.__fnMode = 'missing'; localStorage.removeItem('budget_gemini_key'); try { await callGemini([{ text: 'x' }]); return false; } catch (e) { return e.message === 'NO_KEY'; } }));
+  await page.evaluate(() => { window.__fnMode = ''; });
 
   console.log(errors.length ? 'JS ERRORS:\n' + errors.join('\n') : 'no JS errors');
   if (errors.length) process.exitCode = 1;

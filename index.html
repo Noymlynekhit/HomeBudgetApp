@@ -665,6 +665,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // הערה: הגדרות Firebase בצד לקוח הן ציבוריות מטבען. האבטחה האמיתית נקבעת ב-Firestore Security Rules.
@@ -681,6 +682,7 @@
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
     Object.assign(window, { collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where });
+    window.fbFunctions = { askGemini: httpsCallable(getFunctions(app, 'europe-west1'), 'askGemini', { timeout: 90000 }) };
     window.fbAuth = { auth: getAuth(app), onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut };
   </script>
 
@@ -1102,7 +1104,24 @@
     }
 
     // ---------- Gemini AI ----------
+    // קודם פונים לשרת (המפתח שמור שם ולא בדפדפן). אם השרת עוד לא פרוס, נופלים חזרה למפתח האישי שהוזן באזור האישי.
     async function callGemini(parts) {
+      if (window.fbFunctions) {
+        try {
+          const res = await window.fbFunctions.askGemini({ houseCode: activeHouseCode, parts });
+          if (res.data && res.data.text) return res.data.text;
+          throw new Error('לא התקבלה תשובה תקינה ממודל ה-AI.');
+        } catch (e) {
+          const code = String(e.code || '');
+          const serverMissing = code.endsWith('not-found') || code.endsWith('unavailable') || code.endsWith('internal') && /not.?found|failed to fetch/i.test(e.message || '');
+          if (!serverMissing) throw new Error(e.message || 'שגיאה בתקשורת מול ה-AI.');
+          // השרת לא זמין: ממשיכים למפתח האישי אם יש
+        }
+      }
+      return callGeminiWithOwnKey(parts);
+    }
+
+    async function callGeminiWithOwnKey(parts) {
       const key = (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
       if (!key) throw new Error('NO_KEY');
       // מפתחות חדשים (שמתחילים ב-AQ) וישנים (AIza) נשלחים באותה דרך שעבדה באתר המקורי: key בכתובת.
