@@ -41,10 +41,10 @@ test('generateWithFallback: עובר למודל הבא כשהראשון לא נ�
   assert.ok(calls.every(c => c.key === 'SECRET' && !c.url.includes('SECRET')));
 });
 
-test('generateWithFallback: שגיאה אחרת לא מנסה מודל נוסף', async () => {
+test('generateWithFallback: שגיאת מפתח או בקשה לא מנסה מודל נוסף', async () => {
   let n = 0;
-  const fetchFn = async () => { n++; return { json: async () => ({ error: { code: 429, message: 'quota' } }) }; };
-  await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] }), /quota/);
+  const fetchFn = async () => { n++; return { json: async () => ({ error: { code: 400, message: 'API key not valid' } }) }; };
+  await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] }), /API key/);
   assert.equal(n, 1);
 });
 
