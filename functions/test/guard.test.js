@@ -126,3 +126,15 @@ test('generateWithFallback: כשכולם נכשלים מחזירים שגיאת 
   const fetchFn = async () => ({ json: async () => ({ error: n++ === 0 ? { code: 503, message: 'overloaded' } : { code: 404, message: 'not found' } }) });
   await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b', 'c'] }), e => e.code === 503);
 });
+
+test('generateWithFallback: טיימאאוט במודל אחד עובר למודל הבא', async () => {
+  let n = 0;
+  const fetchFn = async () => { if (n++ === 0) { const e = new Error('timed out'); e.name = 'TimeoutError'; throw e; } return { json: async () => ({ candidates: [{ content: { parts: [{ text: 'ענה' }] } }] }) }; };
+  const r = await generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['slow', 'fast'] });
+  assert.equal(r.text, 'ענה'); assert.equal(r.model, 'fast');
+});
+
+test('generateWithFallback: אם כולם נתקעים מחזירים TIMEOUT עם הודעה ברורה', async () => {
+  const fetchFn = async () => { const e = new Error('t'); e.name = 'TimeoutError'; throw e; };
+  await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] }), e => e.code === 'timeout' && describeGeminiError(e).status === 'timeout');
+});
