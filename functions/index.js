@@ -3,7 +3,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const { isHouseMember, validateRequest, usageDocId, withinLimit, DAILY_LIMIT } = require('./lib/guard');
-const { generateWithFallback } = require('./lib/gemini');
+const { generateWithFallback, describeGeminiError } = require('./lib/gemini');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -38,8 +38,9 @@ exports.askGemini = onCall(
       const { text, model } = await generateWithFallback({ apiKey: GEMINI_API_KEY.value(), parts: data.parts });
       return { text, model };
     } catch (e) {
-      console.error('Gemini failed', e.code, e.message); // בלי תוכן הבקשה, כדי לא לשמור נתונים פיננסיים בלוגים
-      throw new HttpsError('internal', 'שגיאה בתקשורת מול ה-AI. נסו שוב.');
+      const d = describeGeminiError(e);
+      console.error('Gemini failed', d.status, e.code, e.message); // בלי תוכן הבקשה, כדי לא לשמור נתונים פיננסיים בלוגים
+      throw new HttpsError('failed-precondition', d.text, { reason: d.status });
     }
   }
 );

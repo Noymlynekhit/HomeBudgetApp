@@ -27,4 +27,18 @@ async function generateWithFallback({ apiKey, parts, fetchFn = fetch, models = M
   throw lastError || new Error('NO_MODEL');
 }
 
-module.exports = { generateWithFallback, MODELS };
+// הודעה ברורה בעברית לפי סוג השגיאה מ-Gemini, כדי שיהיה אפשר להבין מה קרה בלי לקרוא לוגים
+function describeGeminiError(e) {
+  const code = Number(e && e.code) || 0;
+  const msg = String((e && e.message) || '');
+  if (code === 402 || /prepayment|credits are depleted|billing/i.test(msg)) return { status: 'billing', text: 'לפרויקט של מפתח ה-Gemini נגמרה היתרה (שגיאה 402). צריך מפתח מפרויקט בשכבה החינמית, או להוסיף יתרה ב-AI Studio.' };
+  if (code === 429 || /quota|rate.?limit|exhausted/i.test(msg)) return { status: 'quota', text: 'עברתם את מגבלת השימוש של Gemini (שגיאה 429). נסו שוב בעוד דקה.' };
+  if (code === 401 || code === 403 || (code === 400 && /api key/i.test(msg))) return { status: 'key', text: 'מפתח ה-Gemini לא תקין או חסרה לו הרשאה (שגיאה ' + (code || 400) + '). צריך ליצור מפתח חדש ולשמור אותו בשרת.' };
+  if (code === 404) return { status: 'model', text: 'מודל ה-AI לא זמין כרגע (שגיאה 404).' };
+  if (code === 503 || code === 500) return { status: 'overloaded', text: 'שרתי Gemini עמוסים כרגע (שגיאה ' + code + '). נסו שוב בעוד רגע.' };
+  if (msg === 'EMPTY_RESPONSE') return { status: 'empty', text: 'Gemini לא החזיר תשובה (ייתכן שהתוכן נחסם). נסו לנסח אחרת.' };
+  if (/fetch failed|ENOTFOUND|ETIMEDOUT|ECONNRESET/i.test(msg)) return { status: 'network', text: 'הייתה בעיית רשת בין השרת ל-Gemini. נסו שוב.' };
+  return { status: 'unknown', text: 'שגיאה בתקשורת מול ה-AI' + (code ? ' (קוד ' + code + ')' : '') + '. נסו שוב.' };
+}
+
+module.exports = { generateWithFallback, describeGeminiError, MODELS };
