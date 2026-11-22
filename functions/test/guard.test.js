@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { isHouseMember, validateRequest, usageDocId, withinLimit } = require('../lib/guard');
-const { generateWithFallback } = require('../lib/gemini');
+const { generateWithFallback, describeGeminiError } = require('../lib/gemini');
 
 test('isHouseMember: רשימת חברים, אותיות גדולות וקטנות, ובית ישן', () => {
   assert.equal(isHouseMember({ memberEmails: ['a@x.com', 'B@x.com'] }, 'b@X.com'), true);
@@ -51,4 +51,17 @@ test('generateWithFallback: שגיאה אחרת לא מנסה מודל נוסף'
 test('generateWithFallback: תשובה ריקה נכשלת', async () => {
   const fetchFn = async () => ({ json: async () => ({ candidates: [] }) });
   await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a'] }), /EMPTY_RESPONSE/);
+});
+
+test('describeGeminiError: הודעה ברורה לפי סוג השגיאה', () => {
+  assert.equal(describeGeminiError({ code: 402, message: 'Your prepayment credits are depleted' }).status, 'billing');
+  assert.equal(describeGeminiError({ code: 429, message: 'quota' }).status, 'quota');
+  assert.equal(describeGeminiError({ code: 400, message: 'API key not valid' }).status, 'key');
+  assert.equal(describeGeminiError({ code: 403, message: 'denied' }).status, 'key');
+  assert.equal(describeGeminiError({ code: 404, message: 'x' }).status, 'model');
+  assert.equal(describeGeminiError({ code: 503, message: 'x' }).status, 'overloaded');
+  assert.equal(describeGeminiError(new Error('EMPTY_RESPONSE')).status, 'empty');
+  assert.equal(describeGeminiError(new TypeError('fetch failed')).status, 'network');
+  assert.match(describeGeminiError({ code: 418, message: 'x' }).text, /418/);
+  assert.equal(describeGeminiError(null).status, 'unknown');
 });
