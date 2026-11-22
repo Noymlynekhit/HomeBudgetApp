@@ -2,18 +2,33 @@
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.0-flash'];
 
 // קורא ל-Gemini עם גיבוי למודלים אחרים אם המודל לא זמין. fetchFn מוזרק כדי שאפשר יהיה לבדוק.
-async function generateWithFallback({ apiKey, parts, fetchFn = fetch, models = MODELS }) {
+async function generateWithFallback({ apiKey, parts, fetchFn = fetch, models = MODELS, perCallMs = 20000, totalMs = 55000, log = () => {} }) {
+  const started = Date.now();
   let lastError = null, bestError = null;
   for (const model of models) {
+    if (Date.now() - started > totalMs - 5000) break; // לא מתחילים ניסיון חדש כשהזמן הכולל כמעט נגמר
+    const t0 = Date.now();
     let data;
-    const res = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      // המפתח נשלח בכותרת ולא בכתובת, כדי שלא יישמר בלוגים
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({ contents: [{ parts }] })
-    });
-    data = await res.json();
+    try {
+      const res = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        // המפתח נשלח בכותרת ולא בכתובת, כדי שלא יישמר בלוגים
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({ contents: [{ parts }] }),
+        signal: AbortSignal.timeout(perCallMs)
+      });
+      data = await res.json();
+    } catch (e) {
+      // טיימאאוט או שגיאת רשת באחד המודלים: מנסים את הבא
+      const timeout = e && (e.name === 'TimeoutError' || e.name === 'AbortError');
+      lastError = new Error(timeout ? 'TIMEOUT' : (e && e.message) || 'network error');
+      lastError.code = timeout ? 'timeout' : undefined;
+      if (!bestError) bestError = lastError;
+      log('model', model, timeout ? 'timeout' : 'network error', Date.now() - t0, 'ms');
+      continue;
+    }
     if (data.error) {
+      log('model', model, 'error', data.error.code, Date.now() - t0, 'ms');
       lastError = new Error(data.error.message || 'Gemini error');
       lastError.code = data.error.code;
       // אם כל המודלים נכשלו, מחזירים את השגיאה המשמעותית (עומס, מכסה) ולא את ה-404 האחרון
@@ -25,17 +40,17 @@ async function generateWithFallback({ apiKey, parts, fetchFn = fetch, models = M
     }
     const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || []).map(p => p.text || '').join('');
     if (!text) throw new Error('EMPTY_RESPONSE');
+    log('model', model, 'ok', Date.now() - t0, 'ms');
     return { text, model };
   }
   throw bestError || lastError || new Error('NO_MODEL');
 }
 
-
 // ---------- בחירת מודלים דינמית: שמות המודלים משתנים עם הזמן, אז שואלים את Gemini מה זמין למפתח ----------
 const STABLE_FLASH = /^gemini-(\d+(?:\.\d+)?)-flash(-lite)?$/;
 
 async function listModels({ apiKey, fetchFn = fetch }) {
-  const res = await fetchFn('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': apiKey } });
+  const res = await fetchFn('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': apiKey }, signal: AbortSignal.timeout(8000) });
   const data = await res.json();
   if (data.error) { const e = new Error(data.error.message || 'ListModels error'); e.code = data.error.code; throw e; }
   return (data.models || [])
@@ -71,7 +86,7 @@ async function generateSmart({ apiKey, parts, fetchFn = fetch, now = Date.now(),
     }
   }
   try {
-    return await generateWithFallback({ apiKey, parts, fetchFn, models: models || MODELS });
+    return await generateWithFallback({ apiKey, parts, fetchFn, models: models || MODELS, log });
   } catch (e) {
     if (e.code === 404) modelCache = { at: 0, models: null }; // הרשימה כנראה התיישנה
     throw e;
@@ -87,6 +102,7 @@ function describeGeminiError(e) {
   if (code === 402 || /prepayment|credits are depleted|billing/i.test(msg)) return { status: 'billing', text: 'לפרויקט של מפתח ה-Gemini נגמרה היתרה (שגיאה 402). צריך מפתח מפרויקט בשכבה החינמית, או להוסיף יתרה ב-AI Studio.' };
   if (code === 429 || /quota|rate.?limit|exhausted/i.test(msg)) return { status: 'quota', text: 'עברתם את מגבלת השימוש של Gemini (שגיאה 429). נסו שוב בעוד דקה.' };
   if (code === 401 || code === 403 || (code === 400 && /api key/i.test(msg))) return { status: 'key', text: 'מפתח ה-Gemini לא תקין או חסרה לו הרשאה (שגיאה ' + (code || 400) + '). צריך ליצור מפתח חדש ולשמור אותו בשרת.' };
+  if (e && e.code === 'timeout') return { status: 'timeout', text: 'Gemini לא ענה בזמן. נסו שוב בעוד רגע.' };
   if (code === 404) return { status: 'model', text: 'מודל ה-AI לא זמין כרגע (שגיאה 404).' };
   if (code === 503 || code === 500) return { status: 'overloaded', text: 'שרתי Gemini עמוסים כרגע (שגיאה ' + code + '). נסו שוב בעוד רגע.' };
   if (msg === 'EMPTY_RESPONSE') return { status: 'empty', text: 'Gemini לא החזיר תשובה (ייתכן שהתוכן נחסם). נסו לנסח אחרת.' };

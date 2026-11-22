@@ -11,7 +11,7 @@ const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 // פרוקסי מאובטח ל-Gemini: המפתח נשאר בשרת, ורק חברי בית מחוברים עם מייל מאומת יכולים להשתמש בו.
 exports.askGemini = onCall(
-  { region: 'europe-west1', secrets: [GEMINI_API_KEY], maxInstances: 3, timeoutSeconds: 90, memory: '256MiB' },
+  { region: 'europe-west1', secrets: [GEMINI_API_KEY], maxInstances: 3, timeoutSeconds: 70, memory: '256MiB' },
   async (request) => {
     const { auth, data } = request;
     if (!auth || !auth.token.email || auth.token.email_verified !== true) {

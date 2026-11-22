@@ -682,7 +682,7 @@
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
     Object.assign(window, { collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, onSnapshot, query, where });
-    window.fbFunctions = { askGemini: httpsCallable(getFunctions(app, 'europe-west1'), 'askGemini', { timeout: 90000 }) };
+    window.fbFunctions = { askGemini: httpsCallable(getFunctions(app, 'europe-west1'), 'askGemini', { timeout: 80000 }) };
     window.fbAuth = { auth: getAuth(app), onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signOut };
   </script>
 
@@ -1114,7 +1114,10 @@
         } catch (e) {
           const code = String(e.code || '');
           const serverMissing = code.endsWith('not-found') || code.endsWith('unavailable') || code.endsWith('internal') && /not.?found|failed to fetch/i.test(e.message || '');
-          if (!serverMissing) throw new Error(e.message || 'שגיאה בתקשורת מול ה-AI.');
+          if (!serverMissing) {
+            const friendly = { 'functions/deadline-exceeded': 'השרת לא הגיב בזמן. נסו שוב בעוד רגע.', 'functions/unauthenticated': 'צריך להתחבר מחדש כדי להשתמש ביועץ.', 'functions/resource-exhausted': e.message };
+            throw new Error(friendly[code] || e.message || 'שגיאה בתקשורת מול ה-AI.');
+          }
           // השרת לא זמין: ממשיכים למפתח האישי אם יש
         }
       }
