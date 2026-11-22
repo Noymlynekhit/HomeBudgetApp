@@ -3,7 +3,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const { isHouseMember, validateRequest, usageDocId, withinLimit, DAILY_LIMIT } = require('./lib/guard');
-const { generateWithFallback, describeGeminiError } = require('./lib/gemini');
+const { generateSmart, describeGeminiError } = require('./lib/gemini');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -35,7 +35,7 @@ exports.askGemini = onCall(
     });
 
     try {
-      const { text, model } = await generateWithFallback({ apiKey: GEMINI_API_KEY.value(), parts: data.parts });
+      const { text, model } = await generateSmart({ apiKey: GEMINI_API_KEY.value(), parts: data.parts, log: (...a) => console.log('gemini:', ...a) });
       return { text, model };
     } catch (e) {
       const d = describeGeminiError(e);

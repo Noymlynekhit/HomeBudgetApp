@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { isHouseMember, validateRequest, usageDocId, withinLimit } = require('../lib/guard');
-const { generateWithFallback, describeGeminiError } = require('../lib/gemini');
+const { generateWithFallback, generateSmart, pickModels, resetModelCache, describeGeminiError } = require('../lib/gemini');
 
 test('isHouseMember: רשימת חברים, אותיות גדולות וקטנות, ובית ישן', () => {
   assert.equal(isHouseMember({ memberEmails: ['a@x.com', 'B@x.com'] }, 'b@X.com'), true);
@@ -80,4 +80,49 @@ test('generateWithFallback: מודל עמוס (503) עובר למודל הבא',
 test('generateWithFallback: אם כל המודלים עמוסים מחזירים את השגיאה האחרונה', async () => {
   const fetchFn = async () => ({ json: async () => ({ error: { code: 503, message: 'overloaded' } }) });
   await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] }), e => e.code === 503);
+});
+
+test('pickModels: מועדפים קיימים קודם, ואז flash יציבים בגרסה יורדת, בלי preview', () => {
+  const avail = ['gemini-3-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', 'gemini-3.5-flash', 'embedding-001'];
+  const picked = pickModels(avail);
+  assert.deepEqual(picked.slice(0, 2), ['gemini-2.5-flash', 'gemini-2.5-flash-lite']); // המועדפים שקיימים
+  assert.ok(picked.includes('gemini-3.5-flash') && picked.includes('gemini-3-flash'));
+  assert.ok(!picked.some(m => /preview|pro|embedding/.test(m)));
+  assert.ok(picked.length <= 4);
+  assert.deepEqual(pickModels(['gemini-1.5-pro']), []); // אין flash: מחזיר ריק והקורא נופל לברירת מחדל
+});
+
+test('generateSmart: שואל מה זמין, מנסה רק מודלים קיימים, ומשתמש במטמון', async () => {
+  resetModelCache();
+  const urls = [];
+  const fetchFn = async (url) => {
+    urls.push(url);
+    if (url.includes('/models?')) return { json: async () => ({ models: [
+      { name: 'models/gemini-3-flash', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/text-embedding', supportedGenerationMethods: ['embedContent'] }] }) };
+    return { json: async () => ({ candidates: [{ content: { parts: [{ text: 'עובד' }] } }] }) };
+  };
+  const r = await generateSmart({ apiKey: 'k', parts: [{ text: 'x' }], fetchFn, now: 1000 });
+  assert.equal(r.text, 'עובד'); assert.equal(r.model, 'gemini-3-flash');
+  await generateSmart({ apiKey: 'k', parts: [{ text: 'x' }], fetchFn, now: 2000 });
+  assert.equal(urls.filter(u => u.includes('/models?')).length, 1); // הרשימה נשמרה במטמון
+});
+
+test('generateSmart: מפתח לא תקין ב-ListModels נעצר מיד', async () => {
+  resetModelCache();
+  const fetchFn = async () => ({ json: async () => ({ error: { code: 400, message: 'API key not valid' } }) });
+  await assert.rejects(generateSmart({ apiKey: 'bad', parts: [], fetchFn }), e => e.code === 400);
+});
+
+test('generateSmart: אם ListModels נכשל נופלים לרשימת ברירת המחדל', async () => {
+  resetModelCache();
+  const fetchFn = async (url) => url.includes('/models?') ? { json: async () => ({ error: { code: 500, message: 'oops' } }) }
+    : { json: async () => ({ candidates: [{ content: { parts: [{ text: 'בכל זאת' }] } }] }) };
+  assert.equal((await generateSmart({ apiKey: 'k', parts: [], fetchFn })).text, 'בכל זאת');
+});
+
+test('generateWithFallback: כשכולם נכשלים מחזירים שגיאת עומס ולא את ה-404 האחרון', async () => {
+  let n = 0;
+  const fetchFn = async () => ({ json: async () => ({ error: n++ === 0 ? { code: 503, message: 'overloaded' } : { code: 404, message: 'not found' } }) });
+  await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b', 'c'] }), e => e.code === 503);
 });
