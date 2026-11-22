@@ -16,8 +16,9 @@ async function generateWithFallback({ apiKey, parts, fetchFn = fetch, models = M
     if (data.error) {
       lastError = new Error(data.error.message || 'Gemini error');
       lastError.code = data.error.code;
-      const gone = data.error.code === 404 || /not found|not supported|deprecated/i.test(data.error.message || '');
-      if (gone) continue;
+      // מודל שלא קיים, עמוס או חרג מהמכסה שלו: עוברים למודל הבא (לכל מודל יש עומס ומכסה משלו)
+      const tryNext = [404, 429, 500, 503].includes(data.error.code) || /not found|not supported|deprecated|overloaded|unavailable/i.test(data.error.message || '');
+      if (tryNext) continue;
       throw lastError;
     }
     const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || []).map(p => p.text || '').join('');

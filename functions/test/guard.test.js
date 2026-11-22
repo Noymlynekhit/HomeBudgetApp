@@ -65,3 +65,19 @@ test('describeGeminiError: הודעה ברורה לפי סוג השגיאה', ()
   assert.match(describeGeminiError({ code: 418, message: 'x' }).text, /418/);
   assert.equal(describeGeminiError(null).status, 'unknown');
 });
+
+test('generateWithFallback: מודל עמוס (503) עובר למודל הבא', async () => {
+  const seen = [];
+  const fetchFn = async (url) => {
+    seen.push(url);
+    if (seen.length === 1) return { json: async () => ({ error: { code: 503, message: 'The model is overloaded' } }) };
+    return { json: async () => ({ candidates: [{ content: { parts: [{ text: 'בסדר' }] } }] }) };
+  };
+  const r = await generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] });
+  assert.equal(r.text, 'בסדר'); assert.equal(r.model, 'b');
+});
+
+test('generateWithFallback: אם כל המודלים עמוסים מחזירים את השגיאה האחרונה', async () => {
+  const fetchFn = async () => ({ json: async () => ({ error: { code: 503, message: 'overloaded' } }) });
+  await assert.rejects(generateWithFallback({ apiKey: 'k', parts: [], fetchFn, models: ['a', 'b'] }), e => e.code === 503);
+});
